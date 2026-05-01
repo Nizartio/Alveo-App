@@ -185,9 +185,8 @@ class _RegisterPageState extends State<RegisterPage> {
                                       onTap: () {
                                         if (_formKey.currentState?.validate() ??
                                             false) {
-                                          Navigator.of(
-                                            context,
-                                          ).pushReplacementNamed('/login');
+                                          Navigator.of(context)
+                                              .pushReplacementNamed('/medication');
                                         }
                                       },
                                       child: const Center(
@@ -219,9 +218,8 @@ class _RegisterPageState extends State<RegisterPage> {
                                   ),
                                   TextButton(
                                     onPressed: () {
-                                      Navigator.of(
-                                        context,
-                                      ).pushReplacementNamed('/login');
+                                      Navigator.of(context)
+                                          .pushReplacementNamed('/login');
                                     },
                                     style: TextButton.styleFrom(
                                       padding: EdgeInsets.zero,
