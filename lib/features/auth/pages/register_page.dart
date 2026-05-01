@@ -1,0 +1,423 @@
+import 'package:flutter/material.dart';
+
+class RegisterPage extends StatefulWidget {
+  const RegisterPage({super.key});
+
+  @override
+  State<RegisterPage> createState() => _RegisterPageState();
+}
+
+class _RegisterPageState extends State<RegisterPage> {
+  final _formKey = GlobalKey<FormState>();
+  final _fullNameController = TextEditingController(text: 'Alveo Leo');
+  final _emailController = TextEditingController(text: 'nama@email.com');
+  final _passwordController = TextEditingController();
+
+  @override
+  void dispose() {
+    _fullNameController.dispose();
+    _emailController.dispose();
+    _passwordController.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final size = MediaQuery.of(context).size;
+
+    return Scaffold(
+      body: SafeArea(
+        child: Container(
+          decoration: const BoxDecoration(
+            gradient: LinearGradient(
+              begin: Alignment.topCenter,
+              end: Alignment.bottomCenter,
+              colors: [Color(0xFFF2EEFF), Color(0xFFF8FAFF)],
+            ),
+          ),
+          child: Stack(
+            children: [
+              Positioned(
+                top: -40,
+                left: -25,
+                child: _SoftBlob(
+                  size: size.width * 0.5,
+                  colors: const [Color(0xFFE7E0FF), Color(0xFFF7F3FF)],
+                ),
+              ),
+              Positioned(
+                bottom: -30,
+                right: -40,
+                child: _SoftBlob(
+                  size: size.width * 0.42,
+                  colors: const [Color(0xFFEAF0FF), Color(0xFFF7FBFF)],
+                ),
+              ),
+              SingleChildScrollView(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 24,
+                  vertical: 20,
+                ),
+                child: ConstrainedBox(
+                  constraints: BoxConstraints(minHeight: size.height - 40),
+                  child: Column(
+                    children: [
+                      const SizedBox(height: 8),
+                      const _MascotCircle(),
+                      const SizedBox(height: 20),
+                      Container(
+                        width: double.infinity,
+                        padding: const EdgeInsets.fromLTRB(22, 26, 22, 22),
+                        decoration: BoxDecoration(
+                          color: Colors.white,
+                          borderRadius: BorderRadius.circular(28),
+                          boxShadow: const [
+                            BoxShadow(
+                              color: Color(0x12000000),
+                              blurRadius: 28,
+                              offset: Offset(0, 16),
+                            ),
+                          ],
+                        ),
+                        child: Form(
+                          key: _formKey,
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.stretch,
+                            children: [
+                              const SizedBox(height: 8),
+                              Text(
+                                'Mari kita jaga\nkesehatan paru-paru\nkita bersama-sama',
+                                textAlign: TextAlign.center,
+                                style: Theme.of(context).textTheme.headlineSmall
+                                    ?.copyWith(
+                                      fontSize: 28,
+                                      height: 1.12,
+                                      fontWeight: FontWeight.w800,
+                                      color: const Color(0xFF5B4BD8),
+                                    ),
+                              ),
+                              const SizedBox(height: 18),
+                              Text(
+                                'Buat akun Alveo Anda\nuntuk memulai.',
+                                textAlign: TextAlign.center,
+                                style: Theme.of(context).textTheme.titleMedium
+                                    ?.copyWith(
+                                      height: 1.35,
+                                      color: const Color(0xFF666666),
+                                    ),
+                              ),
+                              const SizedBox(height: 28),
+                              const _FieldLabel(text: 'Nama Lengkap'),
+                              const SizedBox(height: 10),
+                              _InputField(
+                                controller: _fullNameController,
+                                hintText: 'Alveo Leo',
+                                icon: Icons.person_outline_rounded,
+                                textCapitalization: TextCapitalization.words,
+                                validator: (value) {
+                                  if ((value ?? '').trim().isEmpty) {
+                                    return 'Nama lengkap wajib diisi';
+                                  }
+                                  return null;
+                                },
+                              ),
+                              const SizedBox(height: 18),
+                              const _FieldLabel(text: 'Email'),
+                              const SizedBox(height: 10),
+                              _InputField(
+                                controller: _emailController,
+                                hintText: 'nama@email.com',
+                                icon: Icons.mail_outline_rounded,
+                                keyboardType: TextInputType.emailAddress,
+                                validator: (value) {
+                                  final text = (value ?? '').trim();
+                                  if (text.isEmpty) {
+                                    return 'Email wajib diisi';
+                                  }
+                                  if (!text.contains('@')) {
+                                    return 'Email tidak valid';
+                                  }
+                                  return null;
+                                },
+                              ),
+                              const SizedBox(height: 18),
+                              const _FieldLabel(text: 'Kata Sandi'),
+                              const SizedBox(height: 10),
+                              _InputField(
+                                controller: _passwordController,
+                                hintText: '••••••••',
+                                icon: Icons.lock_outline_rounded,
+                                obscureText: true,
+                                validator: (value) {
+                                  if ((value ?? '').isEmpty) {
+                                    return 'Kata sandi wajib diisi';
+                                  }
+                                  if ((value ?? '').length < 6) {
+                                    return 'Minimal 6 karakter';
+                                  }
+                                  return null;
+                                },
+                              ),
+                              const SizedBox(height: 24),
+                              SizedBox(
+                                height: 56,
+                                child: DecoratedBox(
+                                  decoration: BoxDecoration(
+                                    borderRadius: BorderRadius.circular(28),
+                                    gradient: const LinearGradient(
+                                      colors: [
+                                        Color(0xFF6A57E6),
+                                        Color(0xFF8A75F0),
+                                      ],
+                                    ),
+                                    boxShadow: const [
+                                      BoxShadow(
+                                        color: Color(0x336A57E6),
+                                        blurRadius: 24,
+                                        offset: Offset(0, 12),
+                                      ),
+                                    ],
+                                  ),
+                                  child: Material(
+                                    color: Colors.transparent,
+                                    child: InkWell(
+                                      borderRadius: BorderRadius.circular(28),
+                                      onTap: () {
+                                        if (_formKey.currentState?.validate() ??
+                                            false) {
+                                          Navigator.of(
+                                            context,
+                                          ).pushReplacementNamed('/login');
+                                        }
+                                      },
+                                      child: const Center(
+                                        child: Text(
+                                          'Buat Akun →',
+                                          style: TextStyle(
+                                            color: Colors.white,
+                                            fontSize: 18,
+                                            fontWeight: FontWeight.w700,
+                                          ),
+                                        ),
+                                      ),
+                                    ),
+                                  ),
+                                ),
+                              ),
+                              const SizedBox(height: 16),
+                              Row(
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                children: [
+                                  Text(
+                                    'Sudah memiliki akun? ',
+                                    style: Theme.of(context)
+                                        .textTheme
+                                        .bodyMedium
+                                        ?.copyWith(
+                                          color: const Color(0xFF6B7280),
+                                        ),
+                                  ),
+                                  TextButton(
+                                    onPressed: () {
+                                      Navigator.of(
+                                        context,
+                                      ).pushReplacementNamed('/login');
+                                    },
+                                    style: TextButton.styleFrom(
+                                      padding: EdgeInsets.zero,
+                                      minimumSize: Size.zero,
+                                      tapTargetSize:
+                                          MaterialTapTargetSize.shrinkWrap,
+                                      foregroundColor: const Color(0xFF5B4BD8),
+                                    ),
+                                    child: const Text(
+                                      'Masuk',
+                                      style: TextStyle(
+                                        fontWeight: FontWeight.w700,
+                                      ),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                      const SizedBox(height: 24),
+                    ],
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _FieldLabel extends StatelessWidget {
+  const _FieldLabel({required this.text});
+
+  final String text;
+
+  @override
+  Widget build(BuildContext context) {
+    return Text(
+      text,
+      style: Theme.of(context).textTheme.titleMedium?.copyWith(
+        fontSize: 16,
+        fontWeight: FontWeight.w700,
+        color: const Color(0xFF666A70),
+      ),
+    );
+  }
+}
+
+class _InputField extends StatelessWidget {
+  const _InputField({
+    required this.controller,
+    required this.hintText,
+    required this.icon,
+    this.obscureText = false,
+    this.keyboardType,
+    this.textCapitalization = TextCapitalization.none,
+    this.validator,
+  });
+
+  final TextEditingController controller;
+  final String hintText;
+  final IconData icon;
+  final bool obscureText;
+  final TextInputType? keyboardType;
+  final TextCapitalization textCapitalization;
+  final String? Function(String?)? validator;
+
+  @override
+  Widget build(BuildContext context) {
+    return TextFormField(
+      controller: controller,
+      obscureText: obscureText,
+      keyboardType: keyboardType,
+      textCapitalization: textCapitalization,
+      validator: validator,
+      style: const TextStyle(
+        fontSize: 16,
+        fontWeight: FontWeight.w500,
+        color: Color(0xFF374151),
+      ),
+      decoration: InputDecoration(
+        filled: true,
+        fillColor: const Color(0xFFF1F4FB),
+        hintText: hintText,
+        hintStyle: const TextStyle(
+          color: Color(0xFFB7BCC8),
+          fontSize: 16,
+          fontWeight: FontWeight.w500,
+        ),
+        prefixIcon: Icon(icon, color: const Color(0xFFADB3BE)),
+        contentPadding: const EdgeInsets.symmetric(
+          horizontal: 16,
+          vertical: 18,
+        ),
+        border: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(14),
+          borderSide: BorderSide.none,
+        ),
+        enabledBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(14),
+          borderSide: BorderSide.none,
+        ),
+        focusedBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(14),
+          borderSide: const BorderSide(color: Color(0xFF8A75F0), width: 1.3),
+        ),
+        errorBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(14),
+          borderSide: const BorderSide(color: Color(0xFFE06565), width: 1),
+        ),
+        focusedErrorBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(14),
+          borderSide: const BorderSide(color: Color(0xFFE06565), width: 1.3),
+        ),
+      ),
+    );
+  }
+}
+
+class _MascotCircle extends StatelessWidget {
+  const _MascotCircle();
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: 146,
+      height: 146,
+      decoration: BoxDecoration(
+        shape: BoxShape.circle,
+        color: Colors.white,
+        border: Border.all(
+          color: Colors.white.withValues(alpha: 0.9),
+          width: 8,
+        ),
+        boxShadow: const [
+          BoxShadow(
+            color: Color(0x14000000),
+            blurRadius: 24,
+            offset: Offset(0, 12),
+          ),
+        ],
+      ),
+      child: Container(
+        margin: const EdgeInsets.all(8),
+        decoration: const BoxDecoration(
+          shape: BoxShape.circle,
+          gradient: LinearGradient(
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+            colors: [Color(0xFFF7F8FA), Color(0xFFEDEFF5)],
+          ),
+        ),
+        child: const Center(
+          child: Stack(
+            alignment: Alignment.center,
+            children: [
+              Icon(
+                Icons.favorite_border_rounded,
+                size: 54,
+                color: Color(0xFF6A57E6),
+              ),
+              Positioned(
+                bottom: 18,
+                child: Icon(
+                  Icons.air_rounded,
+                  size: 34,
+                  color: Color(0xFFFFA9B7),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _SoftBlob extends StatelessWidget {
+  const _SoftBlob({required this.size, required this.colors});
+
+  final double size;
+  final List<Color> colors;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: size,
+      height: size,
+      decoration: BoxDecoration(
+        shape: BoxShape.circle,
+        gradient: RadialGradient(colors: colors),
+      ),
+    );
+  }
+}
