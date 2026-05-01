@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import 'features/auth/pages/login_page.dart';
 import 'features/auth/pages/register_page.dart';
+import 'features/medication/pages/medication_plan_page.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -26,6 +27,7 @@ class AlveoApp extends StatelessWidget {
       routes: {
         '/login': (_) => const LoginPage(),
         '/register': (_) => const RegisterPage(),
+        '/medication': (_) => const MedicationPlanPage(),
       },
     );
   }
