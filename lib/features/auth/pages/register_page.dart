@@ -9,8 +9,8 @@ class RegisterPage extends StatefulWidget {
 
 class _RegisterPageState extends State<RegisterPage> {
   final _formKey = GlobalKey<FormState>();
-  final _fullNameController = TextEditingController(text: 'Alveo Leo');
-  final _emailController = TextEditingController(text: 'nama@email.com');
+  final _fullNameController = TextEditingController();
+  final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
 
   @override
@@ -185,8 +185,9 @@ class _RegisterPageState extends State<RegisterPage> {
                                       onTap: () {
                                         if (_formKey.currentState?.validate() ??
                                             false) {
-                                          Navigator.of(context)
-                                              .pushReplacementNamed('/medication');
+                                          Navigator.of(
+                                            context,
+                                          ).pushReplacementNamed('/medication');
                                         }
                                       },
                                       child: const Center(
@@ -218,8 +219,9 @@ class _RegisterPageState extends State<RegisterPage> {
                                   ),
                                   TextButton(
                                     onPressed: () {
-                                      Navigator.of(context)
-                                          .pushReplacementNamed('/login');
+                                      Navigator.of(
+                                        context,
+                                      ).pushReplacementNamed('/login');
                                     },
                                     style: TextButton.styleFrom(
                                       padding: EdgeInsets.zero,

@@ -30,8 +30,6 @@ class _MedicationPlanPageState extends State<MedicationPlanPage> {
 
   @override
   Widget build(BuildContext context) {
-    final size = MediaQuery.of(context).size;
-
     return Scaffold(
       body: SafeArea(
         child: Container(
@@ -50,17 +48,17 @@ class _MedicationPlanPageState extends State<MedicationPlanPage> {
                 Text(
                   'Ayo kita cek!',
                   style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                        fontWeight: FontWeight.w800,
-                        fontSize: 22,
-                      ),
+                    fontWeight: FontWeight.w800,
+                    fontSize: 22,
+                  ),
                 ),
                 const SizedBox(height: 8),
                 Text(
                   'Ceritakan kepada kami masalah yang Anda alami agar kami dapat membantu Anda mendapatkan bantuan yang paling tepat.',
                   textAlign: TextAlign.center,
                   style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                        color: const Color(0xFF6B7280),
-                      ),
+                    color: const Color(0xFF6B7280),
+                  ),
                 ),
                 const SizedBox(height: 20),
                 Form(
@@ -75,8 +73,16 @@ class _MedicationPlanPageState extends State<MedicationPlanPage> {
                       const SizedBox(height: 14),
                       _QuestionCard(
                         icon: Icons.medical_services_outlined,
-                        title: 'Tolong sebutkan obat-obatan yang sedang Anda konsumsi.',
+                        title:
+                            'Tolong sebutkan obat-obatan yang sedang Anda konsumsi.',
                         controller: _q2,
+                        items: const [
+                          'Isoniazid',
+                          'Rifampicin',
+                          'Pyrazinamide',
+                          'Ethambutol',
+                          'Streptomycin',
+                        ],
                       ),
                       const SizedBox(height: 14),
                       _QuestionCard(
@@ -138,11 +144,13 @@ class _QuestionCard extends StatelessWidget {
     required this.icon,
     required this.title,
     required this.controller,
+    this.items,
   });
 
   final IconData icon;
   final String title;
   final TextEditingController controller;
+  final List<String>? items;
 
   @override
   Widget build(BuildContext context) {
@@ -176,27 +184,50 @@ class _QuestionCard extends StatelessWidget {
               Expanded(
                 child: Text(
                   title,
-                  style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                        fontWeight: FontWeight.w700,
-                      ),
+                  style: Theme.of(
+                    context,
+                  ).textTheme.bodyLarge?.copyWith(fontWeight: FontWeight.w700),
                 ),
               ),
             ],
           ),
           const SizedBox(height: 12),
-          TextFormField(
-            controller: controller,
-            validator: (v) => (v ?? '').trim().isEmpty ? 'Wajib diisi' : null,
-            decoration: InputDecoration(
-              filled: true,
-              fillColor: const Color(0xFFF1F4FB),
-              hintText: 'Tulis di sini',
-              border: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(12),
-                borderSide: BorderSide.none,
+          if (items == null)
+            TextFormField(
+              controller: controller,
+              validator: (v) => (v ?? '').trim().isEmpty ? 'Wajib diisi' : null,
+              decoration: InputDecoration(
+                filled: true,
+                fillColor: const Color(0xFFF1F4FB),
+                hintText: 'Tulis di sini',
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(12),
+                  borderSide: BorderSide.none,
+                ),
+              ),
+            )
+          else
+            DropdownButtonFormField<String>(
+              initialValue: controller.text.isNotEmpty ? controller.text : null,
+              items: items!
+                  .map(
+                    (e) => DropdownMenuItem<String>(value: e, child: Text(e)),
+                  )
+                  .toList(),
+              onChanged: (v) {
+                controller.text = v ?? '';
+              },
+              validator: (v) => (v ?? '').trim().isEmpty ? 'Wajib diisi' : null,
+              decoration: InputDecoration(
+                filled: true,
+                fillColor: const Color(0xFFF1F4FB),
+                hintText: 'Pilih obat',
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(12),
+                  borderSide: BorderSide.none,
+                ),
               ),
             ),
-          ),
         ],
       ),
     );
