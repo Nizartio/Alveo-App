@@ -12,19 +12,61 @@ class _MedicationPlanPageState extends State<MedicationPlanPage> {
   final _q1 = TextEditingController();
   final _q2 = TextEditingController();
   final _q3 = TextEditingController();
+  final _frequencyCountController = TextEditingController();
+  final _frequencyDaysController = TextEditingController();
+
+  DateTime? _diseaseStartDate;
 
   @override
   void dispose() {
     _q1.dispose();
     _q2.dispose();
     _q3.dispose();
+    _frequencyCountController.dispose();
+    _frequencyDaysController.dispose();
     super.dispose();
+  }
+
+  Future<void> _pickDiseaseStartDate() async {
+    final now = DateTime.now();
+    final picked = await showDatePicker(
+      context: context,
+      initialDate: _diseaseStartDate ?? now,
+      firstDate: DateTime(now.year - 20),
+      lastDate: now,
+    );
+
+    if (picked == null) return;
+
+    setState(() {
+      _diseaseStartDate = picked;
+      _q1.text = MaterialLocalizations.of(context).formatMediumDate(picked);
+    });
   }
 
   void _submit() {
     if (_formKey.currentState?.validate() ?? false) {
-      // For now just navigate to login after completing the medication plan
-      Navigator.of(context).pushReplacementNamed('/login');
+      showDialog<void>(
+        context: context,
+        barrierDismissible: false,
+        builder: (dialogContext) {
+          return AlertDialog(
+            title: const Text('Data berhasil tersimpan'),
+            content: const Text(
+              'Medication plan Anda sudah disimpan. Silakan login untuk melanjutkan.',
+            ),
+            actions: [
+              TextButton(
+                onPressed: () {
+                  Navigator.of(dialogContext).pop();
+                  Navigator.of(context).pushReplacementNamed('/login');
+                },
+                child: const Text('OK'),
+              ),
+            ],
+          );
+        },
+      );
     }
   }
 
@@ -69,6 +111,13 @@ class _MedicationPlanPageState extends State<MedicationPlanPage> {
                         icon: Icons.air_rounded,
                         title: 'Sudah berapa lama Anda menderita penyakit ini?',
                         controller: _q1,
+                        readOnly: true,
+                        onTap: _pickDiseaseStartDate,
+                        hintText: _diseaseStartDate == null
+                            ? 'Pilih tanggal mulai penyakit'
+                            : MaterialLocalizations.of(
+                                context,
+                              ).formatMediumDate(_diseaseStartDate!),
                       ),
                       const SizedBox(height: 14),
                       _QuestionCard(
@@ -89,6 +138,60 @@ class _MedicationPlanPageState extends State<MedicationPlanPage> {
                         icon: Icons.schedule_rounded,
                         title: 'Seberapa sering Anda minum obat ini?',
                         controller: _q3,
+                        customChild: Row(
+                          children: [
+                            Expanded(
+                              child: TextFormField(
+                                controller: _frequencyCountController,
+                                keyboardType: TextInputType.number,
+                                validator: (v) => (v ?? '').trim().isEmpty
+                                    ? 'Wajib diisi'
+                                    : int.tryParse(v!.trim()) == null
+                                    ? 'Angka tidak valid'
+                                    : int.parse(v.trim()) <= 0
+                                    ? 'Harus lebih dari 0'
+                                    : null,
+                                decoration: InputDecoration(
+                                  filled: true,
+                                  fillColor: const Color(0xFFF1F4FB),
+                                  hintText: '2',
+                                  border: OutlineInputBorder(
+                                    borderRadius: BorderRadius.circular(12),
+                                    borderSide: BorderSide.none,
+                                  ),
+                                ),
+                              ),
+                            ),
+                            const SizedBox(width: 12),
+                            const Text(
+                              'x per',
+                              style: TextStyle(fontWeight: FontWeight.w700),
+                            ),
+                            const SizedBox(width: 12),
+                            Expanded(
+                              child: TextFormField(
+                                controller: _frequencyDaysController,
+                                keyboardType: TextInputType.number,
+                                validator: (v) => (v ?? '').trim().isEmpty
+                                    ? 'Wajib diisi'
+                                    : int.tryParse(v!.trim()) == null
+                                    ? 'Angka tidak valid'
+                                    : int.parse(v.trim()) <= 0
+                                    ? 'Harus lebih dari 0'
+                                    : null,
+                                decoration: InputDecoration(
+                                  filled: true,
+                                  fillColor: const Color(0xFFF1F4FB),
+                                  hintText: '1 day',
+                                  border: OutlineInputBorder(
+                                    borderRadius: BorderRadius.circular(12),
+                                    borderSide: BorderSide.none,
+                                  ),
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
                       ),
                       const SizedBox(height: 22),
                       SizedBox(
@@ -145,12 +248,20 @@ class _QuestionCard extends StatelessWidget {
     required this.title,
     required this.controller,
     this.items,
+    this.readOnly = false,
+    this.onTap,
+    this.hintText,
+    this.customChild,
   });
 
   final IconData icon;
   final String title;
   final TextEditingController controller;
   final List<String>? items;
+  final bool readOnly;
+  final VoidCallback? onTap;
+  final String? hintText;
+  final Widget? customChild;
 
   @override
   Widget build(BuildContext context) {
@@ -192,14 +303,18 @@ class _QuestionCard extends StatelessWidget {
             ],
           ),
           const SizedBox(height: 12),
-          if (items == null)
+          if (customChild != null)
+            customChild!
+          else if (items == null)
             TextFormField(
               controller: controller,
+              readOnly: readOnly,
+              onTap: onTap,
               validator: (v) => (v ?? '').trim().isEmpty ? 'Wajib diisi' : null,
               decoration: InputDecoration(
                 filled: true,
                 fillColor: const Color(0xFFF1F4FB),
-                hintText: 'Tulis di sini',
+                hintText: hintText ?? 'Tulis di sini',
                 border: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(12),
                   borderSide: BorderSide.none,
