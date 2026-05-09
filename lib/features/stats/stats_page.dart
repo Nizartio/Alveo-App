@@ -78,7 +78,7 @@ class _StatsPageState extends State<StatsPage> {
             const SizedBox(height: 28),
 
             // ── Achievements ─────────────────────────────────────────
-            // const AchievementsSection(),
+            // const AchievementsSection(),N
 
             const SizedBox(height: 20),
           ],
