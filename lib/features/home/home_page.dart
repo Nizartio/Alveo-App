@@ -14,7 +14,7 @@ class HomePage extends StatelessWidget {
           padding: EdgeInsets.all(8.0),
           child: CircleAvatar(
             backgroundImage: AssetImage(
-              'assets/avatar.png',
+              'assets/maskot-rmv.png',
             ), // Sesuaikan path asset Anda
           ),
         ),
@@ -64,7 +64,7 @@ class HomePage extends StatelessWidget {
                     ),
                   ),
                   Image.asset(
-                    'assets/mascot.png',
+                    'assets/maskot-rmv.png',
                     width: 80,
                   ), // Sesuaikan path asset Anda
                 ],
