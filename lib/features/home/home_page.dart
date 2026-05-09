@@ -13,9 +13,7 @@ class HomePage extends StatelessWidget {
         leading: const Padding(
           padding: EdgeInsets.all(8.0),
           child: CircleAvatar(
-            backgroundImage: AssetImage(
-              'assets/avatar.png',
-            ), // Sesuaikan path asset Anda
+            backgroundImage: AssetImage('lib/assets/maskot-rmv.png'),
           ),
         ),
         title: const Text(
@@ -63,10 +61,7 @@ class HomePage extends StatelessWidget {
                       style: TextStyle(color: Colors.grey, fontSize: 16),
                     ),
                   ),
-                  Image.asset(
-                    'assets/mascot.png',
-                    width: 80,
-                  ), // Sesuaikan path asset Anda
+                  Image.asset('lib/assets/maskot-rmv.png', width: 80),
                 ],
               ),
             ),

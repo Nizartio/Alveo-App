@@ -201,7 +201,7 @@ class _MedPlanSavedSheetContentState extends State<_MedPlanSavedSheetContent>
           child: Padding(
             padding: const EdgeInsets.all(12.0),
             child: Image.asset(
-              'assets/mascot.png',
+              'lib/assets/maskot-rmv.png',
               fit: BoxFit.contain,
               errorBuilder: (context, error, stackTrace) => const Center(
                 child: Icon(
