@@ -434,24 +434,13 @@ class _MascotCircle extends StatelessWidget {
             colors: [Color(0xFFF7F8FA), Color(0xFFEDEFF5)],
           ),
         ),
-        child: const Center(
-          child: Stack(
-            alignment: Alignment.center,
-            children: [
-              Icon(
-                Icons.favorite_border_rounded,
-                size: 54,
-                color: Color(0xFF6A57E6),
-              ),
-              Positioned(
-                bottom: 18,
-                child: Icon(
-                  Icons.air_rounded,
-                  size: 34,
-                  color: Color(0xFFFFA9B7),
-                ),
-              ),
-            ],
+        child: const Padding(
+          padding: EdgeInsets.all(10),
+          child: ClipOval(
+            child: Image(
+              image: AssetImage('lib/assets/maskot-rmv.png'),
+              fit: BoxFit.cover,
+            ),
           ),
         ),
       ),
