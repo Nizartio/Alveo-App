@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../widgets/med_plan_saved_sheet.dart';
 
 class MedicationPlanPage extends StatefulWidget {
   const MedicationPlanPage({super.key});
@@ -44,27 +45,13 @@ class _MedicationPlanPageState extends State<MedicationPlanPage> {
     });
   }
 
-  void _submit() {
+  Future<void> _submit() async {
     if (_formKey.currentState?.validate() ?? false) {
-      showDialog<void>(
-        context: context,
-        barrierDismissible: false,
-        builder: (dialogContext) {
-          return AlertDialog(
-            title: const Text('Data berhasil tersimpan'),
-            content: const Text(
-              'Medication plan Anda sudah disimpan. Silakan login untuk melanjutkan.',
-            ),
-            actions: [
-              TextButton(
-                onPressed: () {
-                  Navigator.of(dialogContext).pop();
-                  Navigator.of(context).pushReplacementNamed('/login');
-                },
-                child: const Text('OK'),
-              ),
-            ],
-          );
+      await showMedPlanSavedBottomSheet(
+        context,
+        xpAmount: 10,
+        onContinue: () {
+          Navigator.of(context).pushReplacementNamed('/login');
         },
       );
     }
@@ -164,31 +151,8 @@ class _MedicationPlanPageState extends State<MedicationPlanPage> {
                             ),
                             const SizedBox(width: 12),
                             const Text(
-                              'x per',
+                              'x per hari',
                               style: TextStyle(fontWeight: FontWeight.w700),
-                            ),
-                            const SizedBox(width: 12),
-                            Expanded(
-                              child: TextFormField(
-                                controller: _frequencyDaysController,
-                                keyboardType: TextInputType.number,
-                                validator: (v) => (v ?? '').trim().isEmpty
-                                    ? 'Wajib diisi'
-                                    : int.tryParse(v!.trim()) == null
-                                    ? 'Angka tidak valid'
-                                    : int.parse(v.trim()) <= 0
-                                    ? 'Harus lebih dari 0'
-                                    : null,
-                                decoration: InputDecoration(
-                                  filled: true,
-                                  fillColor: const Color(0xFFF1F4FB),
-                                  hintText: '1 day',
-                                  border: OutlineInputBorder(
-                                    borderRadius: BorderRadius.circular(12),
-                                    borderSide: BorderSide.none,
-                                  ),
-                                ),
-                              ),
                             ),
                           ],
                         ),
