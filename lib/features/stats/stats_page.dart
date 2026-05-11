@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../widgets/header.dart';
-import '../widgets/buttom_navbar.dart';
+import '../widgets/bottom_navbar.dart';
 import 'streak_card.dart';
 import 'calendar.dart';
 import 'progress_section_header.dart';
@@ -78,7 +78,7 @@ class _StatsPageState extends State<StatsPage> {
             const SizedBox(height: 28),
 
             // ── Achievements ─────────────────────────────────────────
-            // const AchievementsSection(),
+            // const AchievementsSection(),N
 
             const SizedBox(height: 20),
           ],
