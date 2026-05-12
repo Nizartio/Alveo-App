@@ -1,23 +1,21 @@
 import 'package:flutter/material.dart';
 
-class StatsHeader extends StatelessWidget
-    implements PreferredSizeWidget {
+class StatsHeader extends StatelessWidget {
   const StatsHeader({super.key});
 
   @override
-  Size get preferredSize => const Size.fromHeight(110);
-
-  @override
   Widget build(BuildContext context) {
-    return SafeArea(
-      child: Padding(
-        padding: const EdgeInsets.all(20),
+    return Positioned(
+      top: 20,
+      left: 20,
+      right: 20,
+      child: SafeArea(
         child: Container(
           height: 60,
           padding: const EdgeInsets.symmetric(horizontal: 20),
           decoration: BoxDecoration(
             color: Colors.white,
-            borderRadius: BorderRadius.circular(28),
+            borderRadius: BorderRadius.circular(10),
             boxShadow: [
               BoxShadow(
                 color: Colors.black.withOpacity(0.04),
@@ -28,10 +26,9 @@ class StatsHeader extends StatelessWidget
           ),
           child: Row(
             children: [
-              // Avatar
               Container(
-                width: 48,
-                height: 48,
+                width: 40,
+                height: 40,
                 decoration: BoxDecoration(
                   color: const Color(0xFFF5F3FF),
                   borderRadius: BorderRadius.circular(100),
@@ -40,20 +37,18 @@ class StatsHeader extends StatelessWidget
                   child: Container(
                     width: 48,
                     height: 48,
+                    padding: const EdgeInsets.all(2),
                     decoration: BoxDecoration(
                       shape: BoxShape.circle,
-                      border: Border.all(
-                        color: Colors.white,
-                        width: 2,
-                      ),
+                      border: Border.all(color: Colors.white, width: 2),
                     ),
-                    child: ClipOval(
+                    child: ClipPath(
                       child: Align(
                         alignment: Alignment.bottomCenter,
                         child: Image.asset(
-                          'assets/images/profile.png',
-                          width: 38,
-                          height: 38,
+                          'lib/assets/profile.png',
+                          width: 40,
+                          height: 40,
                           fit: BoxFit.contain,
                         ),
                       ),
@@ -62,23 +57,19 @@ class StatsHeader extends StatelessWidget
                 ),
               ),
 
-              // Spacer kiri-kanan
               const Spacer(),
 
-              // Title
               const Text(
                 'Alveo',
                 style: TextStyle(
                   color: Color(0xFF6B5CE7),
                   fontWeight: FontWeight.w800,
                   fontSize: 30,
-                  letterSpacing: -1,
                 ),
               ),
 
               const Spacer(),
 
-              // Notification
               GestureDetector(
                 onTap: () {},
                 child: Container(
@@ -86,7 +77,7 @@ class StatsHeader extends StatelessWidget
                   height: 48,
                   decoration: BoxDecoration(
                     color: Colors.transparent,
-                    borderRadius: BorderRadius.circular(18),
+                    borderRadius: BorderRadius.circular(100),
                   ),
                   child: Stack(
                     alignment: Alignment.center,
@@ -96,7 +87,6 @@ class StatsHeader extends StatelessWidget
                         color: Color(0xFF6B5CE7),
                         size: 30,
                       ),
-
                       Positioned(
                         top: 10,
                         right: 10,
