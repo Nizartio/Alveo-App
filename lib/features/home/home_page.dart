@@ -70,7 +70,10 @@ class _HomePageState extends State<HomePage> {
                       style: TextStyle(color: Colors.grey, fontSize: 16),
                     ),
                   ),
-                  Image.asset('lib/assets/maskot-rmv.png', width: 80),
+                  Image.asset(
+                    'lib/assets/maskot-rmv.png',
+                    width: 80,
+                  ), // Sesuaikan path asset Anda
                 ],
               ),
             ),
@@ -224,7 +227,7 @@ class _HomePageState extends State<HomePage> {
                   ElevatedButton(
                     onPressed: () {},
                     style: ElevatedButton.styleFrom(
-                      backgroundColor: const Color(0xFF4834DF),
+                      backgroundColor: const Color(0xFF7B66FF),
                       minimumSize: const Size(double.infinity, 55),
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(20),
