@@ -13,7 +13,7 @@ class StatsHeader extends StatelessWidget
       child: Padding(
         padding: const EdgeInsets.all(20),
         child: Container(
-          height: 80,
+          height: 60,
           padding: const EdgeInsets.symmetric(horizontal: 20),
           decoration: BoxDecoration(
             color: Colors.white,
