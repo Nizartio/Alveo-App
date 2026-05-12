@@ -160,7 +160,7 @@ class _MedPlanSavedSheetContentState extends State<_MedPlanSavedSheetContent>
                         onTap: widget.onContinue,
                         child: Center(
                           child: Text(
-                            'Lanjutkan ke Login',
+                            'Lanjut ke Dashboard',
                             style: const TextStyle(
                               color: AppColors.white,
                               fontSize: 18,
