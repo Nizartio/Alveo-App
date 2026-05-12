@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 
 class LoginPage extends StatefulWidget {
   const LoginPage({super.key});
@@ -21,9 +22,34 @@ class _LoginPageState extends State<LoginPage> {
 
   void _submit() {
     if (_formKey.currentState?.validate() ?? false) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Login siap dihubungkan ke Supabase.')),
+      _signIn();
+    }
+  }
+
+  bool _isBusy = false;
+
+  Future<void> _signIn() async {
+    setState(() => _isBusy = true);
+    final email = _emailController.text.trim();
+    final password = _passwordController.text;
+
+    try {
+      await Supabase.instance.client.auth.signInWithPassword(
+        email: email,
+        password: password,
       );
+      if (!mounted) return;
+      Navigator.of(context).pushReplacementNamed('/home');
+    } on AuthException catch (e) {
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text('Login gagal: ${e.message}')));
+    } catch (e) {
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text('Login error: $e')));
+    } finally {
+      if (mounted) setState(() => _isBusy = false);
     }
   }
 
@@ -272,6 +298,10 @@ class _LoginPageState extends State<LoginPage> {
       ),
     );
   }
+}
+
+extension on AuthResponse {
+  get error => null;
 }
 
 class _FieldLabel extends StatelessWidget {

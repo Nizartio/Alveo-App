@@ -76,3 +76,27 @@ insert into medicines (name) values
 3. Tap `Load medicines`.
 4. If the table is connected correctly, the app will show the rows from `medicines`.
 5. If you want a second check, type a medicine name and tap `Insert medicine`, then tap `Load medicines` again.
+
+## Reminder system (database)
+
+A SQL migration was added at `sql/20260505_add_reminder_triggers.sql` that creates a `notifications` table and helpers to enqueue reminders based on `medication_schedules`.
+
+What it provides:
+- `public.create_reminder_for_schedule(schedule_id, date)` — create a single reminder row for a schedule and date (idempotent).
+- Trigger `trg_medication_schedules_create_reminders` — when a schedule is inserted or updated, the trigger enqueues reminders for today + next 6 days.
+- `public.create_daily_reminders(date)` — a function that inserts reminders for all active schedules for the given date; intended to be called from a Supabase scheduled job (or pg_cron) once per day.
+
+How to use:
+1. Run the migration in the Supabase SQL editor.
+2. In the Supabase Dashboard go to "Database -> Scheduled Jobs" and schedule a job to run this SQL once per day, calling:
+
+```sql
+select public.create_daily_reminders(current_date);
+```
+
+3. Clients (mobile app) should `select` from `notifications` for the authenticated user to show upcoming reminders and mark `sent = true` when delivered (or handled).
+
+Notes:
+- The migration adds RLS so users only see their own notifications. Inserts are intended to be performed by the server-side scheduled job or the DB trigger; client inserts are not required.
+- The trigger creates reminders for the next 7 days at schedule creation/update time — adjust the range in `trg_create_reminders_on_schedule` if you prefer a different window.
+

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 
 class RegisterPage extends StatefulWidget {
   const RegisterPage({super.key});
@@ -182,12 +183,67 @@ class _RegisterPageState extends State<RegisterPage> {
                                     color: Colors.transparent,
                                     child: InkWell(
                                       borderRadius: BorderRadius.circular(28),
-                                      onTap: () {
-                                        if (_formKey.currentState?.validate() ??
-                                            false) {
-                                          Navigator.of(
+                                      onTap: () async {
+                                        if (!(_formKey.currentState
+                                                ?.validate() ??
+                                            false))
+                                          return;
+
+                                        if (!mounted) return;
+                                        setState(() {});
+                                        final name = _fullNameController.text
+                                            .trim();
+                                        final email = _emailController.text
+                                            .trim();
+                                        final password =
+                                            _passwordController.text;
+
+                                        try {
+                                          final res = await Supabase
+                                              .instance
+                                              .client
+                                              .auth
+                                              .signUp(
+                                                email: email,
+                                                password: password,
+                                                data: {'full_name': name},
+                                              );
+
+                                          if (!mounted) return;
+
+                                          // signUp can succeed even when email confirmation is required.
+                                          // In that case, session is null and the user should log in after confirming.
+                                          final session = res.session;
+                                          final user = res.user;
+
+                                          if (session != null && user != null) {
+                                            Navigator.of(
+                                              context,
+                                            ).pushReplacementNamed(
+                                              '/medication',
+                                            );
+                                          } else {
+                                            ScaffoldMessenger.of(
+                                              context,
+                                            ).showSnackBar(
+                                              const SnackBar(
+                                                content: Text(
+                                                  'Akun berhasil dibuat. Silakan lanjut isi medication plans.',
+                                                ),
+                                              ),
+                                            );
+                                            Navigator.of(
+                                              context,
+                                            ).pushReplacementNamed('/login');
+                                          }
+                                        } catch (e) {
+                                          ScaffoldMessenger.of(
                                             context,
-                                          ).pushReplacementNamed('/medication');
+                                          ).showSnackBar(
+                                            SnackBar(
+                                              content: Text('Error: $e'),
+                                            ),
+                                          );
                                         }
                                       },
                                       child: const Center(
