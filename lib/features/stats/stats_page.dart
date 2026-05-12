@@ -85,8 +85,16 @@ class _StatsPageState extends State<StatsPage> {
         ),
       ),
       bottomNavigationBar: BottomNavbar(
-        currentIndex: _currentNavIndex,
-        onTap: (index) => setState(() => _currentNavIndex = index),
+        currentIndex: 2,
+        onTap: (index) {
+          if (index == 0) {
+            Navigator.pushReplacementNamed(context, '/home');
+          } else if (index == 1) {
+            Navigator.pushReplacementNamed(context, '/medication');
+          } else if (index == 2) {
+            Navigator.pushReplacementNamed(context, '/stats');
+          }
+        },
       ),
     );
   }

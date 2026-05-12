@@ -225,11 +225,15 @@ class _HomePageState extends State<HomePage> {
         ),
       ),
       bottomNavigationBar: BottomNavbar(
-        currentIndex: _currentNavIndex,
+        currentIndex: 0,
         onTap: (index) {
-          setState(() {
-            _currentNavIndex = index;
-          });
+          if (index == 0) {
+            Navigator.pushReplacementNamed(context, '/home');
+          } else if (index == 1) {
+            Navigator.pushReplacementNamed(context, '/medication');
+          } else if (index == 2) {
+            Navigator.pushReplacementNamed(context, '/stats');
+          }
         },
       ),
     );

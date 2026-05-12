@@ -34,15 +34,29 @@ class StatsHeader extends StatelessWidget
                 height: 48,
                 decoration: BoxDecoration(
                   color: const Color(0xFFF5F3FF),
-                  borderRadius: BorderRadius.circular(18),
+                  borderRadius: BorderRadius.circular(100),
                 ),
                 child: Center(
-                  child: ClipOval(
-                    child: Image.asset(
-                      'assets/images/profile.png',
-                      width: 60,
-                      height: 60,
-                      fit: BoxFit.cover,
+                  child: Container(
+                    width: 48,
+                    height: 48,
+                    decoration: BoxDecoration(
+                      shape: BoxShape.circle,
+                      border: Border.all(
+                        color: Colors.white,
+                        width: 2,
+                      ),
+                    ),
+                    child: ClipOval(
+                      child: Align(
+                        alignment: Alignment.bottomCenter,
+                        child: Image.asset(
+                          'assets/images/profile.png',
+                          width: 38,
+                          height: 38,
+                          fit: BoxFit.contain,
+                        ),
+                      ),
                     ),
                   ),
                 ),
