@@ -71,11 +71,13 @@ class SplashPage extends StatelessWidget {
                               ],
                             ),
                           ),
-                          child: const Center(
-                            child: Icon(
-                              Icons.air_rounded,
-                              size: 92,
-                              color: Color(0xFF7B66FF),
+                          child: Padding(
+                            padding: const EdgeInsets.all(14),
+                            child: ClipOval(
+                              child: Image.asset(
+                                'lib/assets/maskot-rmv.png',
+                                fit: BoxFit.cover,
+                              ),
                             ),
                           ),
                         ),

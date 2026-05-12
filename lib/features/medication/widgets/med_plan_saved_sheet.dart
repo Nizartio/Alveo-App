@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 
+import '../../../core/theme/app_colors.dart';
+
 /// Shows a reusable, themed confirmation bottom sheet when a medication plan
 /// is successfully saved. The sheet handles its own entrance and calls
 /// [onContinue] after the user taps the primary CTA.
@@ -35,10 +37,9 @@ Future<void> showMedPlanSavedBottomSheet(
 
 class _MedPlanSavedSheetContent extends StatefulWidget {
   const _MedPlanSavedSheetContent({
-    Key? key,
     required this.xpAmount,
     required this.onContinue,
-  }) : super(key: key);
+  });
 
   final int xpAmount;
   final VoidCallback onContinue;
@@ -75,9 +76,8 @@ class _MedPlanSavedSheetContentState extends State<_MedPlanSavedSheetContent>
 
   @override
   Widget build(BuildContext context) {
-    final colorScheme = Theme.of(context).colorScheme;
-    final primary = colorScheme.primary;
-    final accent = colorScheme.primaryContainer;
+    final primary = AppColors.primary;
+    final accent = AppColors.primaryLight;
 
     final gradient = LinearGradient(
       colors: [primary, accent],
@@ -101,7 +101,7 @@ class _MedPlanSavedSheetContentState extends State<_MedPlanSavedSheetContent>
                     width: 48,
                     height: 6,
                     decoration: BoxDecoration(
-                      color: Colors.grey[300],
+                      color: AppColors.chipBackground,
                       borderRadius: BorderRadius.circular(3),
                     ),
                   ),
@@ -119,7 +119,7 @@ class _MedPlanSavedSheetContentState extends State<_MedPlanSavedSheetContent>
                 ),
                 const SizedBox(height: 18),
                 Text(
-                  'Your Progress Has Been Saved!',
+                  'Progress kamu telah disimpan!',
                   textAlign: TextAlign.center,
                   style: Theme.of(context).textTheme.headlineSmall?.copyWith(
                     fontWeight: FontWeight.w800,
@@ -127,10 +127,10 @@ class _MedPlanSavedSheetContentState extends State<_MedPlanSavedSheetContent>
                 ),
                 const SizedBox(height: 12),
                 Text(
-                  'Your treatment journey is ready to begin. Stay consistent and keep your streak alive.',
+                  'Perjalanan penyembuhanmu akan dimulai. Tetap konsisten dan jaga terus streak-mu!',
                   textAlign: TextAlign.center,
                   style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                    color: Theme.of(context).colorScheme.onSurfaceVariant,
+                    color: AppColors.textSecondary,
                   ),
                 ),
                 const SizedBox(height: 18),
@@ -147,25 +147,25 @@ class _MedPlanSavedSheetContentState extends State<_MedPlanSavedSheetContent>
                       borderRadius: BorderRadius.circular(28),
                       boxShadow: [
                         BoxShadow(
-                          color: primary.withOpacity(0.18),
+                          color: AppColors.loginShadow,
                           blurRadius: 24,
                           offset: const Offset(0, 12),
                         ),
                       ],
                     ),
                     child: Material(
-                      color: Colors.transparent,
+                      color: AppColors.transparent,
                       child: InkWell(
                         borderRadius: BorderRadius.circular(28),
                         onTap: widget.onContinue,
                         child: Center(
                           child: Text(
-                            'Continue to Login',
-                            style: Theme.of(context).textTheme.labelLarge
-                                ?.copyWith(
-                                  color: Colors.white,
-                                  fontWeight: FontWeight.w700,
-                                ),
+                            'Lanjut ke Dashboard',
+                            style: const TextStyle(
+                              color: AppColors.white,
+                              fontSize: 18,
+                              fontWeight: FontWeight.w700,
+                            ),
                           ),
                         ),
                       ),
@@ -191,7 +191,7 @@ class _MedPlanSavedSheetContentState extends State<_MedPlanSavedSheetContent>
           shape: BoxShape.circle,
           boxShadow: [
             BoxShadow(
-              color: Theme.of(context).colorScheme.primary.withOpacity(0.14),
+              color: AppColors.primary.withValues(alpha: 0.14),
               blurRadius: 20,
               offset: const Offset(0, 10),
             ),
@@ -201,13 +201,13 @@ class _MedPlanSavedSheetContentState extends State<_MedPlanSavedSheetContent>
           child: Padding(
             padding: const EdgeInsets.all(12.0),
             child: Image.asset(
-              'assets/mascot.png',
+              'lib/assets/maskot-rmv.png',
               fit: BoxFit.contain,
               errorBuilder: (context, error, stackTrace) => const Center(
                 child: Icon(
                   Icons.emoji_emotions_outlined,
                   size: 56,
-                  color: Colors.white,
+                  color: AppColors.white,
                 ),
               ),
             ),
@@ -227,7 +227,7 @@ class _MedPlanSavedSheetContentState extends State<_MedPlanSavedSheetContent>
           borderRadius: BorderRadius.circular(999),
           boxShadow: [
             BoxShadow(
-              color: Theme.of(context).colorScheme.primary.withOpacity(0.12),
+              color: AppColors.primary.withValues(alpha: 0.12),
               blurRadius: 18,
               offset: const Offset(0, 8),
             ),
@@ -236,12 +236,12 @@ class _MedPlanSavedSheetContentState extends State<_MedPlanSavedSheetContent>
         child: Row(
           mainAxisSize: MainAxisSize.min,
           children: [
-            const Icon(Icons.celebration, color: Colors.white),
+            const Icon(Icons.celebration, color: AppColors.white),
             const SizedBox(width: 8),
             Text(
               '+$xp XP Earned 🎉',
               style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                color: Colors.white,
+                color: AppColors.white,
                 fontWeight: FontWeight.w700,
               ),
             ),
