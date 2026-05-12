@@ -36,10 +36,14 @@ class StatsHeader extends StatelessWidget
                   color: const Color(0xFFF5F3FF),
                   borderRadius: BorderRadius.circular(18),
                 ),
-                child: const Center(
-                  child: Text(
-                    '🐷',
-                    style: TextStyle(fontSize: 24),
+                child: Center(
+                  child: ClipOval(
+                    child: Image.asset(
+                      'assets/images/profile.png',
+                      width: 60,
+                      height: 60,
+                      fit: BoxFit.cover,
+                    ),
                   ),
                 ),
               ),
