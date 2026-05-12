@@ -219,9 +219,7 @@ class _RegisterPageState extends State<RegisterPage> {
                                           if (session != null && user != null) {
                                             Navigator.of(
                                               context,
-                                            ).pushReplacementNamed(
-                                              '/medication',
-                                            );
+                                            ).pushReplacementNamed('/main');
                                           } else {
                                             ScaffoldMessenger.of(
                                               context,

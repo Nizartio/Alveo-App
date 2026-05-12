@@ -6,7 +6,9 @@ import '../widgets/medication_card.dart';
 import '../widgets/med_plan_saved_sheet.dart';
 
 class MedicationPlanPage extends StatefulWidget {
-  const MedicationPlanPage({super.key});
+  final Map<String, dynamic>? existingMedication;
+
+  const MedicationPlanPage({super.key, this.existingMedication});
 
   @override
   State<MedicationPlanPage> createState() => _MedicationPlanPageState();
@@ -32,6 +34,14 @@ class _MedicationPlanPageState extends State<MedicationPlanPage> {
   void initState() {
     super.initState();
     _loadMedicines();
+    if (widget.existingMedication != null) {
+      _loadExistingMedication();
+    }
+  }
+
+  void _loadExistingMedication() {
+    // In edit mode, populate form fields from existing medication
+    // This is currently a placeholder for future edit mode implementation
   }
 
   Future<void> _loadMedicines() async {
@@ -132,7 +142,7 @@ class _MedicationPlanPageState extends State<MedicationPlanPage> {
           context,
           xpAmount: 10,
           onContinue: () {
-            Navigator.of(context).pushReplacementNamed('/home');
+            Navigator.of(context).pop();
           },
         );
       }

@@ -38,7 +38,7 @@ class _LoginPageState extends State<LoginPage> {
         password: password,
       );
       if (!mounted) return;
-      Navigator.of(context).pushReplacementNamed('/home');
+      Navigator.of(context).pushReplacementNamed('/main');
     } on AuthException catch (e) {
       ScaffoldMessenger.of(
         context,
