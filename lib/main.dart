@@ -1,11 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
+import 'core/theme/app_colors.dart';
 import 'features/auth/pages/login_page.dart';
 import 'features/auth/pages/register_page.dart';
 import 'features/home/home_page.dart';
 import 'features/medication/pages/medication_plan_page.dart';
 import 'features/splash/pages/splash_page.dart';
+import 'features/stats/stats_page.dart';
 
 const String supabaseUrl = 'https://yklgtddjazemzmxiunsq.supabase.co';
 const String supabaseAnonKey = 'sb_publishable_2C9GSA4i0vdN7O_R4dXSTQ_BXt4Xn8e';
@@ -21,14 +23,12 @@ class AlveoApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    const seedColor = Color(0xFF5B4BD8);
-
     return MaterialApp(
       debugShowCheckedModeBanner: false,
       theme: ThemeData(
         useMaterial3: true,
-        colorScheme: ColorScheme.fromSeed(seedColor: seedColor),
-        scaffoldBackgroundColor: const Color(0xFFF5F7FF),
+        colorScheme: ColorScheme.fromSeed(seedColor: AppColors.seed),
+        scaffoldBackgroundColor: AppColors.scaffoldBottom,
       ),
       home: const SplashPage(),
       routes: {
@@ -37,6 +37,7 @@ class AlveoApp extends StatelessWidget {
         '/register': (_) => const RegisterPage(),
         '/home': (_) => const HomePage(),
         '/medication': (_) => const MedicationPlanPage(),
+        '/stats': (_) => const StatsPage(),
       },
     );
   }
