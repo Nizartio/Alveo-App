@@ -128,33 +128,46 @@ class MedicationService {
         throw Exception('User not authenticated');
       }
 
+      // Query treatment_plans for the current user and select nested user_medications
       final response = await supabase
-      .from('user_medications')
-      .select('''
-        id,
-        treatment_plan_id,
-        medicine_id,
-        dosage,
-        frequency_per_day,
-        intake_rule,
-        special_instruction,
-        reminder_minutes_before,
-        is_active,
-        medicines:medicine_id(
-          id,
-          name
-        ),
-        medication_schedules(
-          time
-        ),
-        treatment_plans!inner(
-          user_id
-        )
-      ''')
-      .eq('treatment_plans.user_id', user.id)
-      .order('id', ascending: false);
+          .from('treatment_plans')
+          .select('''
+            user_medications(
+              id,
+              treatment_plan_id,
+              medicine_id,
+              dosage,
+              frequency_per_day,
+              intake_rule,
+              special_instruction,
+              reminder_minutes_before,
+              is_active,
+              medicines:medicine_id(
+                id,
+                name
+              ),
+              medication_schedules(
+                time
+              )
+            )
+          ''')
+          .eq('user_id', user.id);
 
-      return List<Map<String, dynamic>>.from(response);
+
+      final plans = List<Map<String, dynamic>>.from(response);
+      final meds = <Map<String, dynamic>>[];
+
+      for (final plan in plans) {
+        final userMeds = plan['user_medications'] as List? ?? [];
+        for (final m in userMeds) {
+          meds.add(Map<String, dynamic>.from(m));
+        }
+      }
+
+      // Sort by id descending to match previous behavior
+      meds.sort((a, b) => (b['id'] as String).compareTo(a['id'] as String));
+
+      return meds;
     } catch (e) {
       throw Exception('Failed to fetch active medications: $e');
     }
@@ -383,12 +396,11 @@ class MedicationService {
     }
   }
 
-  Future<void> updateUserMedicationStatus(
-    String userMedicationId,
-  ) async {
+  Future<void> updateUserMedicationStatus(String userMedicationId) async {
     try {
       await supabase
           .from('user_medications')
+          .update({'is_active': false})
           .eq('id', userMedicationId);
     } catch (e) {
       throw Exception('Failed to update medication status: $e');

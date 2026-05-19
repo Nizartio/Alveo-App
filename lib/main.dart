@@ -5,12 +5,10 @@ import 'core/theme/app_colors.dart';
 import 'core/supabase_config.dart';
 import 'features/auth/pages/login_page.dart';
 import 'features/auth/pages/register_page.dart';
-import 'features/home/main_navigation_page.dart';
-import 'features/medication/pages/meds_page.dart';
+import 'features/home/home_page.dart';
 import 'features/medication/pages/medication_plan_page.dart';
-import 'features/medication/pages/medication_management_page.dart';
-import 'features/medication/pages/medication_history_page.dart';
 import 'features/splash/pages/splash_page.dart';
+import 'features/stats/stats_page.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -27,7 +25,8 @@ class AlveoApp extends StatelessWidget {
       debugShowCheckedModeBanner: false,
       theme: ThemeData(
         useMaterial3: true,
-        colorScheme: ColorScheme.fromSeed(seedColor: AppColors.seed),
+        fontFamily: 'Poppins',
+        colorScheme: ColorScheme.fromSeed(seedColor: const Color.fromARGB(255, 72, 68, 102)),
         scaffoldBackgroundColor: AppColors.scaffoldBottom,
       ),
       home: const SplashPage(),
@@ -35,12 +34,11 @@ class AlveoApp extends StatelessWidget {
         '/splash': (_) => const SplashPage(),
         '/login': (_) => const LoginPage(),
         '/register': (_) => const RegisterPage(),
-        '/main': (_) => const MainNavigationPage(),
-        '/meds': (_) => const MedsPage(),
-        '/medication_plan': (_) => const MedicationPlanPage(),
-        '/medication_management': (_) => const MedicationManagementPage(),
-        '/medication_history': (_) => const MedicationHistoryPage(),
+        '/home': (_) => const HomePage(),
+        '/medication': (_) => const MedicationPlanPage(),
+        '/stats': (_) => const StatsPage(),
       },
     );
   }
 }
+

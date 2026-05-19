@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import '../medication/pages/meds_page.dart';
+import '../stats/stats_page.dart';
 import '../widgets/bottom_navbar.dart';
 import 'home_page.dart';
-import 'stats_page.dart';
 
 class MainNavigationPage extends StatefulWidget {
   const MainNavigationPage({super.key});
