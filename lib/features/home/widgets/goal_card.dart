@@ -28,7 +28,6 @@ class GoalCard extends StatelessWidget {
                 'DAILY GOAL',
                 style: TextStyle(
                   color: Colors.grey,
-                  fontWeight: FontWeight.bold,
                   fontSize: 16,
                 ),
               ),

@@ -37,7 +37,7 @@ class HeaderContent extends StatelessWidget {
                 ],
               ),
               child: const Text(
-                'Kamu hebat hari ini!\nTarik napas dalam-dalam dan teruslah berusaha.',
+                'Kamu hebat hari ini! Tarik napas dalam-dalam dan teruslah berusaha.',
                 style: TextStyle(
                   color: Color(0xFF6B6B6B),
                   fontSize: 16,
