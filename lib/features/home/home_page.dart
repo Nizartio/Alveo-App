@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../widgets/bottom_navbar.dart';
 import '../widgets/header.dart';
+import 'home_content.dart';
 
 import 'widgets/header.dart';
 import 'widgets/streak_card.dart';
