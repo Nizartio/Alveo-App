@@ -59,9 +59,9 @@ class _MedicationPlanPageState extends State<MedicationPlanPage> {
     } catch (e) {
       if (mounted) {
         setState(() => _isLoading = false);
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Error loading medicines: $e')),
-        );
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('Error loading medicines: $e')));
       }
     }
   }
@@ -157,261 +157,238 @@ class _MedicationPlanPageState extends State<MedicationPlanPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: Stack(
-        children: [
-          // ✅ Konten utama
-          Container(
-            decoration: const BoxDecoration(
-              gradient: AppColors.appBackgroundGradient,
-            ),
-            child: _isLoading
-                ? const Center(child: CircularProgressIndicator())
-                : SingleChildScrollView(
-                    padding: const EdgeInsets.fromLTRB(20, 140, 20, 136),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Container(
-                          padding: const EdgeInsets.all(20),
-                          decoration: BoxDecoration(
-                            gradient: AppColors.primaryGradient,
-                            borderRadius: BorderRadius.circular(24),
+      appBar: AppBar(
+        backgroundColor: Colors.transparent,
+        elevation: 0,
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back, color: AppColors.primary),
+          onPressed: () => Navigator.of(context).maybePop(),
+        ),
+      ),
+      body: Container(
+        decoration: const BoxDecoration(
+          gradient: AppColors.appBackgroundGradient,
+        ),
+        child: _isLoading
+            ? const Center(child: CircularProgressIndicator())
+            : SingleChildScrollView(
+                padding: const EdgeInsets.fromLTRB(20, 20, 20, 36),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.all(20),
+                      decoration: BoxDecoration(
+                        gradient: AppColors.primaryGradient,
+                        borderRadius: BorderRadius.circular(24),
+                      ),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            'Treatment Setup',
+                            style: Theme.of(context).textTheme.headlineSmall
+                                ?.copyWith(
+                                  color: Colors.white,
+                                  fontWeight: FontWeight.w800,
+                                  fontSize: 22,
+                                ),
                           ),
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(
-                                'Treatment Setup',
-                                style: Theme.of(context)
-                                    .textTheme
-                                    .headlineSmall
-                                    ?.copyWith(
-                                      color: Colors.white,
-                                      fontWeight: FontWeight.w800,
-                                      fontSize: 22,
-                                    ),
+                          const SizedBox(height: 8),
+                          const Text(
+                            'Let\'s set up your medication plan. You can add multiple medicines below.',
+                            style: TextStyle(
+                              color: Colors.white70,
+                              fontSize: 14,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    const SizedBox(height: 24),
+
+                    Text(
+                      'Treatment Start Date',
+                      style: Theme.of(context).textTheme.headlineSmall
+                          ?.copyWith(fontWeight: FontWeight.w700, fontSize: 16),
+                    ),
+                    const SizedBox(height: 12),
+                    Container(
+                      padding: const EdgeInsets.all(14),
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        borderRadius: BorderRadius.circular(16),
+                        boxShadow: const [
+                          BoxShadow(
+                            color: AppColors.bottomSheetShadow,
+                            blurRadius: 12,
+                            offset: Offset(0, 8),
+                          ),
+                        ],
+                      ),
+                      child: GestureDetector(
+                        onTap: _pickTreatmentStartDate,
+                        child: Row(
+                          children: [
+                            Container(
+                              padding: const EdgeInsets.all(10),
+                              decoration: BoxDecoration(
+                                color: AppColors.chipBackground,
+                                borderRadius: BorderRadius.circular(10),
                               ),
-                              const SizedBox(height: 8),
-                              const Text(
-                                'Let\'s set up your medication plan. You can add multiple medicines below.',
+                              child: const Icon(
+                                Icons.calendar_today,
+                                color: AppColors.primary,
+                                size: 20,
+                              ),
+                            ),
+                            const SizedBox(width: 12),
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  const Text(
+                                    'Start Date',
+                                    style: TextStyle(
+                                      fontSize: 12,
+                                      color: AppColors.textSecondary,
+                                      fontWeight: FontWeight.w600,
+                                    ),
+                                  ),
+                                  const SizedBox(height: 4),
+                                  Text(
+                                    _treatmentStartDate == null
+                                        ? 'When did you begin?'
+                                        : MaterialLocalizations.of(
+                                            context,
+                                          ).formatMediumDate(
+                                            _treatmentStartDate!,
+                                          ),
+                                    style: const TextStyle(
+                                      fontSize: 14,
+                                      color: AppColors.textPrimary,
+                                      fontWeight: FontWeight.w600,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 30),
+
+                    Text(
+                      'Medications',
+                      style: Theme.of(context).textTheme.headlineSmall
+                          ?.copyWith(fontWeight: FontWeight.w700, fontSize: 16),
+                    ),
+                    const SizedBox(height: 12),
+
+                    ..._medications.asMap().entries.map((entry) {
+                      final index = entry.key;
+                      return MedicationCard(
+                        key: ValueKey('med_$index'),
+                        medication: entry.value,
+                        medicines: _medicines,
+                        onUpdate: (updated) {
+                          setState(() => _medications[index] = updated);
+                        },
+                        onRemove: () => _removeMedication(index),
+                        canRemove: _medications.length > 1,
+                      );
+                    }).toList(),
+
+                    Container(
+                      width: double.infinity,
+                      padding: const EdgeInsets.symmetric(vertical: 14),
+                      decoration: BoxDecoration(
+                        border: Border.all(
+                          color: AppColors.primary,
+                          width: 1.5,
+                        ),
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      child: Material(
+                        color: Colors.transparent,
+                        child: InkWell(
+                          onTap: _addMedication,
+                          borderRadius: BorderRadius.circular(12),
+                          child: Row(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              const Icon(
+                                Icons.add_circle_outline,
+                                color: AppColors.primary,
+                                size: 20,
+                              ),
+                              const SizedBox(width: 8),
+                              Text(
+                                'Add Another Medication',
                                 style: TextStyle(
-                                  color: Colors.white70,
+                                  color: AppColors.primary,
+                                  fontWeight: FontWeight.w700,
                                   fontSize: 14,
                                 ),
                               ),
                             ],
                           ),
                         ),
-                        const SizedBox(height: 24),
+                      ),
+                    ),
+                    const SizedBox(height: 24),
 
-                        Text(
-                          'Treatment Start Date',
-                          style: Theme.of(context)
-                              .textTheme
-                              .headlineSmall
-                              ?.copyWith(
-                                fontWeight: FontWeight.w700,
-                                fontSize: 16,
-                              ),
-                        ),
-                        const SizedBox(height: 12),
-                        Container(
-                          padding: const EdgeInsets.all(14),
-                          decoration: BoxDecoration(
-                            color: Colors.white,
-                            borderRadius: BorderRadius.circular(16),
-                            boxShadow: const [
-                              BoxShadow(
-                                color: AppColors.bottomSheetShadow,
-                                blurRadius: 12,
-                                offset: Offset(0, 8),
-                              ),
-                            ],
-                          ),
-                          child: GestureDetector(
-                            onTap: _pickTreatmentStartDate,
-                            child: Row(
-                              children: [
-                                Container(
-                                  padding: const EdgeInsets.all(10),
-                                  decoration: BoxDecoration(
-                                    color: AppColors.chipBackground,
-                                    borderRadius: BorderRadius.circular(10),
-                                  ),
-                                  child: const Icon(
-                                    Icons.calendar_today,
-                                    color: AppColors.primary,
-                                    size: 20,
-                                  ),
-                                ),
-                                const SizedBox(width: 12),
-                                Expanded(
-                                  child: Column(
-                                    crossAxisAlignment: CrossAxisAlignment.start,
-                                    children: [
-                                      const Text(
-                                        'Start Date',
-                                        style: TextStyle(
-                                          fontSize: 12,
-                                          color: AppColors.textSecondary,
-                                          fontWeight: FontWeight.w600,
-                                        ),
-                                      ),
-                                      const SizedBox(height: 4),
-                                      Text(
-                                        _treatmentStartDate == null
-                                            ? 'When did you begin?'
-                                            : MaterialLocalizations.of(context)
-                                                .formatMediumDate(_treatmentStartDate!),
-                                        style: const TextStyle(
-                                          fontSize: 14,
-                                          color: AppColors.textPrimary,
-                                          fontWeight: FontWeight.w600,
-                                        ),
-                                      ),
-                                    ],
-                                  ),
-                                ),
-                              ],
+                    SizedBox(
+                      width: double.infinity,
+                      height: 56,
+                      child: DecoratedBox(
+                        decoration: BoxDecoration(
+                          gradient: AppColors.primaryGradient,
+                          borderRadius: BorderRadius.circular(28),
+                          boxShadow: const [
+                            BoxShadow(
+                              color: AppColors.loginShadow,
+                              blurRadius: 24,
+                              offset: Offset(0, 12),
                             ),
-                          ),
+                          ],
                         ),
-                        const SizedBox(height: 30),
-
-                        Text(
-                          'Medications',
-                          style: Theme.of(context)
-                              .textTheme
-                              .headlineSmall
-                              ?.copyWith(
-                                fontWeight: FontWeight.w700,
-                                fontSize: 16,
-                              ),
-                        ),
-                        const SizedBox(height: 12),
-
-                        ..._medications.asMap().entries.map((entry) {
-                          final index = entry.key;
-                          return MedicationCard(
-                            key: ValueKey('med_$index'),
-                            medication: entry.value,
-                            medicines: _medicines,
-                            onUpdate: (updated) {
-                              setState(() => _medications[index] = updated);
-                            },
-                            onRemove: () => _removeMedication(index),
-                            canRemove: _medications.length > 1,
-                          );
-                        }).toList(),
-
-                        Container(
-                          width: double.infinity,
-                          padding: const EdgeInsets.symmetric(vertical: 14),
-                          decoration: BoxDecoration(
-                            border: Border.all(
-                              color: AppColors.primary,
-                              width: 1.5,
-                            ),
-                            borderRadius: BorderRadius.circular(12),
-                          ),
-                          child: Material(
-                            color: Colors.transparent,
-                            child: InkWell(
-                              onTap: _addMedication,
-                              borderRadius: BorderRadius.circular(12),
-                              child: Row(
-                                mainAxisAlignment: MainAxisAlignment.center,
-                                children: [
-                                  const Icon(
-                                    Icons.add_circle_outline,
-                                    color: AppColors.primary,
-                                    size: 20,
-                                  ),
-                                  const SizedBox(width: 8),
-                                  Text(
-                                    'Add Another Medication',
-                                    style: TextStyle(
-                                      color: AppColors.primary,
-                                      fontWeight: FontWeight.w700,
-                                      fontSize: 14,
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ),
-                          ),
-                        ),
-                        const SizedBox(height: 24),
-
-                        SizedBox(
-                          width: double.infinity,
-                          height: 56,
-                          child: DecoratedBox(
-                            decoration: BoxDecoration(
-                              gradient: AppColors.primaryGradient,
-                              borderRadius: BorderRadius.circular(28),
-                              boxShadow: const [
-                                BoxShadow(
-                                  color: AppColors.loginShadow,
-                                  blurRadius: 24,
-                                  offset: Offset(0, 12),
-                                ),
-                              ],
-                            ),
-                            child: Material(
-                              color: Colors.transparent,
-                              child: InkWell(
-                                borderRadius: BorderRadius.circular(28),
-                                onTap: _isSaving ? null : _saveTreatmentPlan,
-                                child: Center(
-                                  child: _isSaving
-                                      ? const SizedBox(
-                                          width: 20,
-                                          height: 20,
-                                          child: CircularProgressIndicator(
-                                            strokeWidth: 2,
-                                            valueColor: AlwaysStoppedAnimation<Color>(
+                        child: Material(
+                          color: Colors.transparent,
+                          child: InkWell(
+                            borderRadius: BorderRadius.circular(28),
+                            onTap: _isSaving ? null : _saveTreatmentPlan,
+                            child: Center(
+                              child: _isSaving
+                                  ? const SizedBox(
+                                      width: 20,
+                                      height: 20,
+                                      child: CircularProgressIndicator(
+                                        strokeWidth: 2,
+                                        valueColor:
+                                            AlwaysStoppedAnimation<Color>(
                                               Colors.white,
                                             ),
-                                          ),
-                                        )
-                                      : const Text(
-                                          'Save Treatment Plan',
-                                          style: TextStyle(
-                                            color: Colors.white,
-                                            fontSize: 16,
-                                            fontWeight: FontWeight.w700,
-                                          ),
-                                        ),
-                                ),
-                              ),
+                                      ),
+                                    )
+                                  : const Text(
+                                      'Save Treatment Plan',
+                                      style: TextStyle(
+                                        color: Colors.white,
+                                        fontSize: 16,
+                                        fontWeight: FontWeight.w700,
+                                      ),
+                                    ),
                             ),
                           ),
                         ),
-                        const SizedBox(height: 24),
-                      ],
+                      ),
                     ),
-                  ),
-          ),
-
-          // ✅ Header mengambang
-          const StatsHeader(),
-
-          // ✅ Navbar mengambang
-          BottomNavbar(
-            currentIndex: _currentNavIndex,
-            onTap: (index) {
-              setState(() => _currentNavIndex = index);
-              if (index == 0) {
-                Navigator.pushReplacementNamed(context, '/home');
-              } else if (index == 1) {
-                Navigator.pushReplacementNamed(context, '/medication');
-              } else if (index == 2) {
-                Navigator.pushReplacementNamed(context, '/stats');
-              }
-            },
-          ),
-        ],
+                    const SizedBox(height: 24),
+                  ],
+                ),
+              ),
       ),
     );
   }

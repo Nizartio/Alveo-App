@@ -21,7 +21,7 @@ class _LoginPageState extends State<LoginPage> {
     _passwordController.dispose();
     super.dispose();
   }
-  
+
   void _submit() {
     if (_formKey.currentState?.validate() ?? false) {
       _signIn();
@@ -38,7 +38,7 @@ class _LoginPageState extends State<LoginPage> {
         password: password,
       );
       if (!mounted) return;
-      Navigator.of(context).pushReplacementNamed('/main');
+      Navigator.of(context).pushReplacementNamed('/home');
     } on AuthException catch (e) {
       ScaffoldMessenger.of(
         context,
@@ -47,7 +47,7 @@ class _LoginPageState extends State<LoginPage> {
       ScaffoldMessenger.of(
         context,
       ).showSnackBar(SnackBar(content: Text('Login error: $e')));
-    } finally {}
+    }
   }
 
   @override

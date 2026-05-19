@@ -149,38 +149,21 @@ class _MedsPageState extends State<MedsPage>
   @override
   Widget build(BuildContext context) {
     super.build(context);
+    final mq = MediaQuery.of(context);
+    final navHeight = (mq.size.height * 0.09).clamp(60.0, 80.0);
+    final bottomInset = mq.viewPadding.bottom;
 
     return Scaffold(
       backgroundColor: const Color(0xFFF8F9FE),
-      appBar: AppBar(
-        backgroundColor: Colors.transparent,
-        elevation: 0,
-        automaticallyImplyLeading: false,
-        title: const Text(
-          'Medications',
-          style: TextStyle(
-            color: AppColors.textPrimary,
-            fontSize: 20,
-            fontWeight: FontWeight.w700,
-          ),
-        ),
-        actions: [
-          Padding(
-            padding: const EdgeInsets.all(8.0),
-            child: IconButton(
-              icon: const Icon(
-                Icons.notifications_outlined,
-                color: AppColors.textPrimary,
-              ),
-              onPressed: () {},
-            ),
-          ),
-        ],
-      ),
       body: _isLoading
           ? const Center(child: CircularProgressIndicator())
           : SingleChildScrollView(
-              padding: const EdgeInsets.all(20),
+              padding: EdgeInsets.fromLTRB(
+                20,
+                8,
+                20,
+                navHeight + bottomInset + 28,
+              ),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [

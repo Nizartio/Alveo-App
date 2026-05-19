@@ -1,7 +1,5 @@
 import 'package:flutter/material.dart';
 
-import '../widgets/header.dart';
-import '../widgets/bottom_navbar.dart';
 import 'streak_card.dart';
 import 'calendar.dart';
 import 'progress_section_header.dart';
@@ -36,71 +34,46 @@ class StatsPage extends StatefulWidget {
 }
 
 class _StatsPageState extends State<StatsPage> {
-  int _currentNavIndex = 2;
-
   @override
   Widget build(BuildContext context) {
+    final mq = MediaQuery.of(context);
+    final navHeight = (mq.size.height * 0.09).clamp(60.0, 80.0);
+    final bottomInset = mq.viewPadding.bottom;
+
     return Scaffold(
       backgroundColor: const Color(0xFFF5F3FF),
-      body: Stack(
-        children: [
-          // ✅ Konten utama — padding top 100 agar tidak tertutup header
-          SingleChildScrollView(
-            physics: const BouncingScrollPhysics(),
-            padding: const EdgeInsets.fromLTRB(20, 140, 20, 136),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                // ── Progress title ──────────────────────────────────────
-                const ProgressSectionHeader(),
+      body: SingleChildScrollView(
+        physics: const BouncingScrollPhysics(),
+        padding: EdgeInsets.fromLTRB(20, 8, 20, navHeight + bottomInset + 28),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const ProgressSectionHeader(),
 
-                const SizedBox(height: 20),
+            const SizedBox(height: 20),
 
-                // ── Streak card ─────────────────────────────────────────
-                const StreakCard(streakDays: 7, personalBest: 9),
+            const StreakCard(streakDays: 7, personalBest: 9),
 
-                const SizedBox(height: 28),
+            const SizedBox(height: 28),
 
-                // ── Weekly adherence title ───────────────────────────────
-                const Text(
-                  'Weekly Adherence',
-                  style: TextStyle(
-                    fontSize: 20,
-                    fontWeight: FontWeight.w700,
-                    color: Color(0xFF1A1640),
-                  ),
-                ),
-
-                const SizedBox(height: 14),
-
-                // ── Calendar ─────────────────────────────────────────────
-                const WeeklyAdherenceCalendar(dayStatuses: _sampleDayStatuses),
-
-                const SizedBox(height: 28),
-
-                const SizedBox(height: 20),
-              ],
+            const Text(
+              'Weekly Adherence',
+              style: TextStyle(
+                fontSize: 20,
+                fontWeight: FontWeight.w700,
+                color: Color(0xFF1A1640),
+              ),
             ),
-          ),
 
-          // ✅ Header mengambang
-          const StatsHeader(),
+            const SizedBox(height: 14),
 
-          // ✅ Navbar mengambang
-          BottomNavbar(
-            currentIndex: _currentNavIndex,
-            onTap: (index) {
-              setState(() => _currentNavIndex = index);
-              if (index == 0) {
-                Navigator.pushReplacementNamed(context, '/home');
-              } else if (index == 1) {
-                Navigator.pushReplacementNamed(context, '/medication');
-              } else if (index == 2) {
-                Navigator.pushReplacementNamed(context, '/stats');
-              }
-            },
-          ),
-        ],
+            const WeeklyAdherenceCalendar(dayStatuses: _sampleDayStatuses),
+
+            const SizedBox(height: 28),
+
+            const SizedBox(height: 20),
+          ],
+        ),
       ),
     );
   }
