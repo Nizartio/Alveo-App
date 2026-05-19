@@ -7,6 +7,7 @@ class MedicationFormModel {
   int frequencyPerDay;
   String intakeRule;
   String? specialInstruction;
+  int reminderMinutesBefore;
   List<TimeOfDay> schedules;
 
   MedicationFormModel({
@@ -16,6 +17,7 @@ class MedicationFormModel {
     required this.frequencyPerDay,
     required this.intakeRule,
     this.specialInstruction,
+    this.reminderMinutesBefore = 15,
     required this.schedules,
   });
 
@@ -33,6 +35,7 @@ class MedicationFormModel {
     'frequencyPerDay': frequencyPerDay,
     'intakeRule': intakeRule,
     'specialInstruction': specialInstruction,
+    'reminderMinutesBefore': reminderMinutesBefore,
     'schedules': schedules
         .map(
           (t) =>

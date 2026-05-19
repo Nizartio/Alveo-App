@@ -26,6 +26,7 @@ class _MedicationPlanPageState extends State<MedicationPlanPage> {
       dosage: '',
       frequencyPerDay: 1,
       intakeRule: 'anytime',
+      reminderMinutesBefore: 15,
       schedules: [],
     ),
   ];
@@ -85,6 +86,7 @@ class _MedicationPlanPageState extends State<MedicationPlanPage> {
           dosage: '',
           frequencyPerDay: 1,
           intakeRule: 'anytime',
+          reminderMinutesBefore: 15,
           schedules: [],
         ),
       );
@@ -186,7 +188,7 @@ class _MedicationPlanPageState extends State<MedicationPlanPage> {
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Text(
-                            'Treatment Setup',
+                            'Prescription Medication Setup',
                             style: Theme.of(context).textTheme.headlineSmall
                                 ?.copyWith(
                                   color: Colors.white,
@@ -196,7 +198,7 @@ class _MedicationPlanPageState extends State<MedicationPlanPage> {
                           ),
                           const SizedBox(height: 8),
                           const Text(
-                            'Let\'s set up your medication plan. You can add multiple medicines below.',
+                            'Add medicines from the doctor\'s prescription, set the dosage, schedule, and reminder alarm.',
                             style: TextStyle(
                               color: Colors.white70,
                               fontSize: 14,
@@ -274,6 +276,36 @@ class _MedicationPlanPageState extends State<MedicationPlanPage> {
                               ),
                             ),
                           ],
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 30),
+
+                    Text(
+                      'Reminder Alarm',
+                      style: Theme.of(context).textTheme.headlineSmall
+                          ?.copyWith(fontWeight: FontWeight.w700, fontSize: 16),
+                    ),
+                    const SizedBox(height: 12),
+                    Container(
+                      padding: const EdgeInsets.all(16),
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        borderRadius: BorderRadius.circular(16),
+                        boxShadow: const [
+                          BoxShadow(
+                            color: AppColors.bottomSheetShadow,
+                            blurRadius: 12,
+                            offset: Offset(0, 8),
+                          ),
+                        ],
+                      ),
+                      child: const Text(
+                        'Each medicine can store a reminder alarm time before the schedule. Edit it inside each medicine card below.',
+                        style: TextStyle(
+                          fontSize: 13,
+                          height: 1.5,
+                          color: AppColors.textSecondary,
                         ),
                       ),
                     ),

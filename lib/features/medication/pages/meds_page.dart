@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../../core/theme/app_colors.dart';
 import '../services/medication_service.dart';
-import 'medication_plan_page.dart';
-import 'medication_management_page.dart';
 import 'medication_history_page.dart';
+import 'medication_management_page.dart';
 
 class MedsPage extends StatefulWidget {
   const MedsPage({super.key});
@@ -15,10 +15,12 @@ class MedsPage extends StatefulWidget {
 class _MedsPageState extends State<MedsPage>
     with AutomaticKeepAliveClientMixin {
   final _medicationService = MedicationService();
+  final _supabase = Supabase.instance.client;
   Map<String, dynamic>? _nextMedication;
   List<Map<String, dynamic>> _todaySchedule = [];
   List<Map<String, dynamic>> _activeMedications = [];
   bool _isLoading = true;
+  String _greetingName = 'there';
   int _adherencePercentage = 92;
   int _dayStreak = 7;
 
@@ -28,7 +30,42 @@ class _MedsPageState extends State<MedsPage>
   @override
   void initState() {
     super.initState();
+    _loadGreetingName();
     _loadMedicationData();
+  }
+
+  Future<void> _loadGreetingName() async {
+    final user = _supabase.auth.currentUser;
+    if (user == null) return;
+
+    try {
+      final profile = await _supabase
+          .from('user_profile')
+          .select('full_name')
+          .eq('user_id', user.id)
+          .maybeSingle();
+
+      final fullName =
+          (profile?['full_name'] ??
+                  user.userMetadata?['full_name'] ??
+                  user.email)
+              ?.toString();
+
+      if (!mounted) return;
+
+      setState(() {
+        if (fullName == null || fullName.trim().isEmpty) {
+          _greetingName = 'there';
+        } else {
+          _greetingName = fullName.trim().split(RegExp(r'\s+')).first;
+        }
+      });
+    } catch (_) {
+      if (!mounted) return;
+      setState(() {
+        _greetingName = 'there';
+      });
+    }
   }
 
   Future<void> _loadMedicationData() async {
@@ -174,9 +211,9 @@ class _MedsPageState extends State<MedsPage>
                       Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          const Text(
-                            'Good Morning, Sarah',
-                            style: TextStyle(
+                          Text(
+                            'Good Morning, $_greetingName',
+                            style: const TextStyle(
                               fontSize: 20,
                               fontWeight: FontWeight.w700,
                               color: AppColors.textPrimary,
@@ -447,22 +484,12 @@ class _MedsPageState extends State<MedsPage>
                   ),
                   const SizedBox(height: 12),
                   GridView.count(
-                    crossAxisCount: 3,
+                    crossAxisCount: 2,
                     shrinkWrap: true,
                     physics: const NeverScrollableScrollPhysics(),
                     mainAxisSpacing: 12,
                     crossAxisSpacing: 12,
                     children: [
-                      _buildQuickAction(
-                        'Add Med',
-                        Icons.add_circle_outline,
-                        () => Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                            builder: (_) => const MedicationPlanPage(),
-                          ),
-                        ),
-                      ),
                       _buildQuickAction(
                         'Manage Meds',
                         Icons.calendar_today,
@@ -484,57 +511,6 @@ class _MedsPageState extends State<MedsPage>
                         ),
                       ),
                     ],
-                  ),
-                  const SizedBox(height: 24),
-
-                  // Adherence Summary
-                  Container(
-                    padding: const EdgeInsets.all(16),
-                    decoration: BoxDecoration(
-                      color: Colors.white,
-                      borderRadius: BorderRadius.circular(16),
-                      boxShadow: const [
-                        BoxShadow(
-                          color: AppColors.bottomSheetShadow,
-                          blurRadius: 8,
-                          offset: Offset(0, 4),
-                        ),
-                      ],
-                    ),
-                    child: Row(
-                      children: [
-                        const Icon(
-                          Icons.trending_up,
-                          color: AppColors.primary,
-                          size: 24,
-                        ),
-                        const SizedBox(width: 12),
-                        Expanded(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(
-                                '${_adherencePercentage.toString()}% adherence this week 🎉',
-                                style: const TextStyle(
-                                  fontSize: 14,
-                                  fontWeight: FontWeight.w700,
-                                  color: AppColors.textPrimary,
-                                ),
-                              ),
-                              const SizedBox(height: 4),
-                              Text(
-                                "You've taken ${(_todaySchedule.where((s) => s['status'] == 'taken').length)} medications on time.\nKeep it up!",
-                                style: const TextStyle(
-                                  fontSize: 12,
-                                  color: AppColors.textSecondary,
-                                  height: 1.4,
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                      ],
-                    ),
                   ),
                   const SizedBox(height: 24),
 
@@ -754,31 +730,7 @@ class _MedsPageState extends State<MedsPage>
                         ),
                       );
                     }).toList(),
-                  ] else
-                    Container(
-                      padding: const EdgeInsets.all(20),
-                      decoration: BoxDecoration(
-                        color: Colors.white,
-                        borderRadius: BorderRadius.circular(16),
-                        boxShadow: const [
-                          BoxShadow(
-                            color: AppColors.bottomSheetShadow,
-                            blurRadius: 8,
-                            offset: Offset(0, 4),
-                          ),
-                        ],
-                      ),
-                      child: const Center(
-                        child: Text(
-                          'No medications scheduled for today',
-                          style: TextStyle(
-                            fontSize: 14,
-                            color: AppColors.textSecondary,
-                          ),
-                        ),
-                      ),
-                    ),
-                  const SizedBox(height: 24),
+                  ],
                 ],
               ),
             ),
