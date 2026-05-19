@@ -7,6 +7,7 @@ import 'features/auth/pages/register_page.dart';
 import 'features/home/home_page.dart';
 import 'features/medication/pages/medication_plan_page.dart';
 import 'features/splash/pages/splash_page.dart';
+import 'features/stats/stats_page.dart';
 
 const String supabaseUrl = 'https://yklgtddjazemzmxiunsq.supabase.co';
 const String supabaseAnonKey = 'sb_publishable_2C9GSA4i0vdN7O_R4dXSTQ_BXt4Xn8e';
@@ -26,7 +27,8 @@ class AlveoApp extends StatelessWidget {
       debugShowCheckedModeBanner: false,
       theme: ThemeData(
         useMaterial3: true,
-        colorScheme: ColorScheme.fromSeed(seedColor: AppColors.seed),
+        fontFamily: 'Poppins',
+        colorScheme: ColorScheme.fromSeed(seedColor: const Color.fromARGB(255, 72, 68, 102)),
         scaffoldBackgroundColor: AppColors.scaffoldBottom,
       ),
       home: const SplashPage(),
@@ -36,7 +38,9 @@ class AlveoApp extends StatelessWidget {
         '/register': (_) => const RegisterPage(),
         '/home': (_) => const HomePage(),
         '/medication': (_) => const MedicationPlanPage(),
+        '/stats': (_) => const StatsPage(),
       },
     );
   }
 }
+
