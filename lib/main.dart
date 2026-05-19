@@ -27,7 +27,8 @@ class AlveoApp extends StatelessWidget {
       debugShowCheckedModeBanner: false,
       theme: ThemeData(
         useMaterial3: true,
-        colorScheme: ColorScheme.fromSeed(seedColor: AppColors.seed),
+        fontFamily: 'Poppins',
+        colorScheme: ColorScheme.fromSeed(seedColor: const Color.fromARGB(255, 72, 68, 102)),
         scaffoldBackgroundColor: AppColors.scaffoldBottom,
       ),
       home: const SplashPage(),
@@ -42,3 +43,4 @@ class AlveoApp extends StatelessWidget {
     );
   }
 }
+
