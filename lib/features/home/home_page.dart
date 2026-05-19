@@ -12,15 +12,16 @@ class HomePage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final mq = MediaQuery.of(context);
-    final navHeight = (mq.size.height * 0.09).clamp(60.0, 80.0);
-    final bottomInset = mq.viewPadding.bottom;
+    final topPad = mq.padding.top;
+    final bottomPad = mq.padding.bottom;
 
     return Scaffold(
       backgroundColor: AppColors.background,
       body: ListView(
-        padding: EdgeInsets.fromLTRB(20, 4, 20, navHeight + bottomInset + 28),
+        padding: EdgeInsets.fromLTRB(36, topPad + 16, 36, bottomPad + 16),
         children: [
           const HeaderContent(),
+          const SizedBox(height: 20),
           Row(
             children: const [
               Expanded(child: StreakCard()),

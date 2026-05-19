@@ -12,12 +12,9 @@ class BottomNavbar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final mq = MediaQuery.of(context);
-    final navHeight = (mq.size.height * 0.09).clamp(60.0, 80.0);
-
     return Container(
-      height: navHeight,
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+      height: 80,
+      padding: const EdgeInsets.symmetric(horizontal: 16),
       decoration: BoxDecoration(
         color: Colors.white.withOpacity(0.88),
         borderRadius: BorderRadius.circular(40),
@@ -75,61 +72,46 @@ class _NavItem extends StatelessWidget {
     const activeColor = Color(0xFF6B5CE7);
     const inactiveColor = Color(0xFF94A3B8);
 
-    return LayoutBuilder(
-      builder: (context, constraints) {
-        final availHeight = constraints.maxHeight.isFinite
-            ? constraints.maxHeight
-            : 72.0;
-        final iconSize = (availHeight * 0.45).clamp(16.0, 32.0);
-        final gap = (availHeight * 0.06).clamp(4.0, 8.0);
-        final fontSize = (availHeight * 0.18).clamp(10.0, 14.0);
-
-        return GestureDetector(
-          onTap: onTap,
-          child: AnimatedContainer(
-            duration: const Duration(milliseconds: 250),
-            curve: Curves.easeInOut,
-            constraints: const BoxConstraints(minWidth: 64),
-            padding: EdgeInsets.symmetric(
-              horizontal: 12,
-              vertical: availHeight * 0.08,
-            ),
-            decoration: BoxDecoration(
-              color: isActive ? activeColor : Colors.transparent,
-              borderRadius: BorderRadius.circular(50),
-              boxShadow: isActive
-                  ? [
-                      BoxShadow(
-                        color: activeColor.withOpacity(0.35),
-                        blurRadius: 12,
-                        offset: const Offset(0, 6),
-                      ),
-                    ]
-                  : [],
-            ),
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Icon(
-                  icon,
-                  color: isActive ? Colors.white : inactiveColor,
-                  size: iconSize,
-                ),
-                SizedBox(height: gap),
-                Text(
-                  label,
-                  style: TextStyle(
-                    color: isActive ? Colors.white : inactiveColor,
-                    fontSize: fontSize,
-                    fontWeight: isActive ? FontWeight.w600 : FontWeight.w400,
+    return GestureDetector(
+      onTap: onTap,
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 250),
+        curve: Curves.easeInOut,
+        constraints: const BoxConstraints(minWidth: 96),
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+        decoration: BoxDecoration(
+          color: isActive ? activeColor : Colors.transparent,
+          borderRadius: BorderRadius.circular(50),
+          boxShadow: isActive
+              ? [
+                  BoxShadow(
+                    color: activeColor.withOpacity(0.35),
+                    blurRadius: 12,
+                    offset: const Offset(0, 6),
                   ),
-                ),
-              ],
+                ]
+              : [],
+        ),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(
+              icon,
+              color: isActive ? Colors.white : inactiveColor,
+              size: 26,
             ),
-          ),
-        );
-      },
+            const SizedBox(height: 4),
+            Text(
+              label,
+              style: TextStyle(
+                color: isActive ? Colors.white : inactiveColor,
+                fontSize: 14,
+                fontWeight: isActive ? FontWeight.w600 : FontWeight.w400,
+              ),
+            ),
+          ],
+        ),
+      ),
     );
   }
 }
