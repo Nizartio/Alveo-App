@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 
-class HeaderContent extends StatelessWidget {
-  const HeaderContent({super.key});
+class GreetingCard extends StatelessWidget {
+  const GreetingCard({super.key});
 
   @override
   Widget build(BuildContext context) {
