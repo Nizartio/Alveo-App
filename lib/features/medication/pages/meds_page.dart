@@ -154,7 +154,7 @@ class _MedsPageState extends State<MedsPage>
     final bottomInset = mq.viewPadding.bottom;
 
     return Scaffold(
-      backgroundColor: const Color(0xFFF8F9FE),
+      backgroundColor: AppColors.scaffoldNeutral,
       body: _isLoading
           ? const Center(child: CircularProgressIndicator())
           : SingleChildScrollView(
@@ -187,7 +187,7 @@ class _MedsPageState extends State<MedsPage>
                             children: [
                               const Icon(
                                 Icons.local_fire_department,
-                                color: Colors.orange,
+                                color: AppColors.danger,
                                 size: 18,
                               ),
                               const SizedBox(width: 4),

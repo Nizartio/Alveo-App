@@ -44,7 +44,7 @@ class _MedicationCardState extends State<MedicationCard> {
       margin: const EdgeInsets.only(bottom: 16),
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: AppColors.white,
         borderRadius: BorderRadius.circular(16),
         boxShadow: const [
           BoxShadow(
@@ -71,7 +71,10 @@ class _MedicationCardState extends State<MedicationCard> {
               ),
               if (widget.canRemove)
                 IconButton(
-                  icon: const Icon(Icons.delete_outline, color: Colors.red),
+                  icon: const Icon(
+                    Icons.delete_outline,
+                    color: AppColors.dangerSoft,
+                  ),
                   onPressed: widget.onRemove,
                   constraints: const BoxConstraints(),
                   padding: EdgeInsets.zero,
@@ -170,7 +173,7 @@ class _MedicationCardState extends State<MedicationCard> {
                             style: TextStyle(
                               fontWeight: FontWeight.w600,
                               color: _medication.frequencyPerDay == freq
-                                  ? Colors.white
+                                  ? AppColors.white
                                   : AppColors.textSecondary,
                             ),
                           ),

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
+import '../../../core/theme/app_colors.dart';
 
 class RegisterPage extends StatefulWidget {
   const RegisterPage({super.key});
@@ -30,11 +31,7 @@ class _RegisterPageState extends State<RegisterPage> {
       body: SafeArea(
         child: Container(
           decoration: const BoxDecoration(
-            gradient: LinearGradient(
-              begin: Alignment.topCenter,
-              end: Alignment.bottomCenter,
-              colors: [Color(0xFFF2EEFF), Color(0xFFF8FAFF)],
-            ),
+            gradient: AppColors.appBackgroundGradient,
           ),
           child: Stack(
             children: [
@@ -43,7 +40,10 @@ class _RegisterPageState extends State<RegisterPage> {
                 left: -25,
                 child: _SoftBlob(
                   size: size.width * 0.5,
-                  colors: const [Color(0xFFE7E0FF), Color(0xFFF7F3FF)],
+                  colors: const [
+                    AppColors.bubbleMuted,
+                    AppColors.bubbleMutedAlt,
+                  ],
                 ),
               ),
               Positioned(
@@ -51,7 +51,7 @@ class _RegisterPageState extends State<RegisterPage> {
                 right: -40,
                 child: _SoftBlob(
                   size: size.width * 0.42,
-                  colors: const [Color(0xFFEAF0FF), Color(0xFFF7FBFF)],
+                  colors: const [AppColors.bubbleCool, AppColors.bubbleCoolAlt],
                 ),
               ),
               SingleChildScrollView(
@@ -70,11 +70,11 @@ class _RegisterPageState extends State<RegisterPage> {
                         width: double.infinity,
                         padding: const EdgeInsets.fromLTRB(22, 26, 22, 22),
                         decoration: BoxDecoration(
-                          color: Colors.white,
+                          color: AppColors.white,
                           borderRadius: BorderRadius.circular(28),
                           boxShadow: const [
                             BoxShadow(
-                              color: Color(0x12000000),
+                              color: AppColors.black12,
                               blurRadius: 28,
                               offset: Offset(0, 16),
                             ),
@@ -94,7 +94,7 @@ class _RegisterPageState extends State<RegisterPage> {
                                       fontSize: 28,
                                       height: 1.12,
                                       fontWeight: FontWeight.w800,
-                                      color: const Color(0xFF5B4BD8),
+                                      color: AppColors.seed,
                                     ),
                               ),
                               const SizedBox(height: 18),
@@ -104,7 +104,7 @@ class _RegisterPageState extends State<RegisterPage> {
                                 style: Theme.of(context).textTheme.titleMedium
                                     ?.copyWith(
                                       height: 1.35,
-                                      color: const Color(0xFF666666),
+                                      color: AppColors.textBody,
                                     ),
                               ),
                               const SizedBox(height: 28),
@@ -165,15 +165,10 @@ class _RegisterPageState extends State<RegisterPage> {
                                 child: DecoratedBox(
                                   decoration: BoxDecoration(
                                     borderRadius: BorderRadius.circular(28),
-                                    gradient: const LinearGradient(
-                                      colors: [
-                                        Color(0xFF6A57E6),
-                                        Color(0xFF8A75F0),
-                                      ],
-                                    ),
+                                    gradient: AppColors.primaryGradient,
                                     boxShadow: const [
                                       BoxShadow(
-                                        color: Color(0x336A57E6),
+                                        color: AppColors.loginShadow,
                                         blurRadius: 24,
                                         offset: Offset(0, 12),
                                       ),
@@ -248,7 +243,7 @@ class _RegisterPageState extends State<RegisterPage> {
                                         child: Text(
                                           'Buat Akun →',
                                           style: TextStyle(
-                                            color: Colors.white,
+                                            color: AppColors.white,
                                             fontSize: 18,
                                             fontWeight: FontWeight.w700,
                                           ),
@@ -268,7 +263,7 @@ class _RegisterPageState extends State<RegisterPage> {
                                         .textTheme
                                         .bodyMedium
                                         ?.copyWith(
-                                          color: const Color(0xFF6B7280),
+                                          color: AppColors.textSecondary,
                                         ),
                                   ),
                                   TextButton(
@@ -282,7 +277,7 @@ class _RegisterPageState extends State<RegisterPage> {
                                       minimumSize: Size.zero,
                                       tapTargetSize:
                                           MaterialTapTargetSize.shrinkWrap,
-                                      foregroundColor: const Color(0xFF5B4BD8),
+                                      foregroundColor: AppColors.seed,
                                     ),
                                     child: const Text(
                                       'Masuk',
@@ -322,7 +317,7 @@ class _FieldLabel extends StatelessWidget {
       style: Theme.of(context).textTheme.titleMedium?.copyWith(
         fontSize: 16,
         fontWeight: FontWeight.w700,
-        color: const Color(0xFF666A70),
+        color: AppColors.textLabel,
       ),
     );
   }
@@ -358,18 +353,18 @@ class _InputField extends StatelessWidget {
       style: const TextStyle(
         fontSize: 16,
         fontWeight: FontWeight.w500,
-        color: Color(0xFF374151),
+        color: AppColors.textNavy,
       ),
       decoration: InputDecoration(
         filled: true,
-        fillColor: const Color(0xFFF1F4FB),
+        fillColor: AppColors.surfaceSoft,
         hintText: hintText,
         hintStyle: const TextStyle(
-          color: Color(0xFFB7BCC8),
+          color: AppColors.textMutedSoft,
           fontSize: 16,
           fontWeight: FontWeight.w500,
         ),
-        prefixIcon: Icon(icon, color: const Color(0xFFADB3BE)),
+        prefixIcon: Icon(icon, color: AppColors.iconMuted),
         contentPadding: const EdgeInsets.symmetric(
           horizontal: 16,
           vertical: 18,
@@ -384,15 +379,18 @@ class _InputField extends StatelessWidget {
         ),
         focusedBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(14),
-          borderSide: const BorderSide(color: Color(0xFF8A75F0), width: 1.3),
+          borderSide: const BorderSide(
+            color: AppColors.primaryLight,
+            width: 1.3,
+          ),
         ),
         errorBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(14),
-          borderSide: const BorderSide(color: Color(0xFFE06565), width: 1),
+          borderSide: const BorderSide(color: AppColors.danger, width: 1),
         ),
         focusedErrorBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(14),
-          borderSide: const BorderSide(color: Color(0xFFE06565), width: 1.3),
+          borderSide: const BorderSide(color: AppColors.danger, width: 1.3),
         ),
       ),
     );
@@ -409,14 +407,11 @@ class _MascotCircle extends StatelessWidget {
       height: 146,
       decoration: BoxDecoration(
         shape: BoxShape.circle,
-        color: Colors.white,
-        border: Border.all(
-          color: Colors.white.withValues(alpha: 0.9),
-          width: 8,
-        ),
+        color: AppColors.white,
+        border: Border.all(color: AppColors.white90, width: 8),
         boxShadow: const [
           BoxShadow(
-            color: Color(0x14000000),
+            color: AppColors.black14,
             blurRadius: 24,
             offset: Offset(0, 12),
           ),
@@ -426,11 +421,7 @@ class _MascotCircle extends StatelessWidget {
         margin: const EdgeInsets.all(8),
         decoration: const BoxDecoration(
           shape: BoxShape.circle,
-          gradient: LinearGradient(
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
-            colors: [Color(0xFFF7F8FA), Color(0xFFEDEFF5)],
-          ),
+          gradient: AppColors.mascotInnerGradient,
         ),
         child: const Padding(
           padding: EdgeInsets.all(10),

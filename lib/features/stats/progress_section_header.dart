@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../core/theme/app_colors.dart';
 
 class ProgressSectionHeader extends StatelessWidget {
   final String title;
@@ -20,7 +21,7 @@ class ProgressSectionHeader extends StatelessWidget {
           style: const TextStyle(
             fontSize: 26,
             fontWeight: FontWeight.w800,
-            color: Color(0xFF1A1640),
+            color: AppColors.textTitleDark,
             letterSpacing: -0.5,
           ),
         ),
@@ -29,7 +30,7 @@ class ProgressSectionHeader extends StatelessWidget {
           subtitle,
           style: const TextStyle(
             fontSize: 14,
-            color: Color(0xFF9E9AB8),
+            color: AppColors.textSubtle,
             fontWeight: FontWeight.w400,
           ),
         ),

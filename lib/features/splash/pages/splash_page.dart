@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../../core/theme/app_colors.dart';
 
 class SplashPage extends StatelessWidget {
   const SplashPage({super.key});
@@ -11,11 +12,7 @@ class SplashPage extends StatelessWidget {
       body: SafeArea(
         child: Container(
           decoration: const BoxDecoration(
-            gradient: LinearGradient(
-              begin: Alignment.topCenter,
-              end: Alignment.bottomCenter,
-              colors: [Color(0xFFF6F3FF), Color(0xFFF9FBFF)],
-            ),
+            gradient: AppColors.splashBackgroundGradient,
           ),
           child: Stack(
             children: [
@@ -24,7 +21,7 @@ class SplashPage extends StatelessWidget {
                 left: -60,
                 child: _GlowBlob(
                   size: size.width * 0.62,
-                  colors: const [Color(0xFFB39DFF), Color(0xFF78F1D9)],
+                  colors: const [AppColors.bubbleSky, AppColors.bubbleMint],
                 ),
               ),
               Positioned(
@@ -32,7 +29,7 @@ class SplashPage extends StatelessWidget {
                 left: size.width * 0.18,
                 child: _GlowBlob(
                   size: size.width * 0.58,
-                  colors: const [Color(0xFF8FB8FF), Color(0xFFD9EEFF)],
+                  colors: const [AppColors.bubbleBlue, AppColors.bubbleBlueAlt],
                 ),
               ),
               Center(
@@ -45,11 +42,11 @@ class SplashPage extends StatelessWidget {
                     width: double.infinity,
                     padding: const EdgeInsets.fromLTRB(24, 28, 24, 28),
                     decoration: BoxDecoration(
-                      color: const Color(0xFFFDFDFF),
+                      color: AppColors.textLabel,
                       borderRadius: BorderRadius.circular(28),
                       boxShadow: const [
                         BoxShadow(
-                          color: Color(0x16000000),
+                          color: AppColors.black16,
                           blurRadius: 36,
                           offset: Offset(0, 18),
                         ),
@@ -64,11 +61,8 @@ class SplashPage extends StatelessWidget {
                           height: 170,
                           decoration: BoxDecoration(
                             shape: BoxShape.circle,
-                            gradient: RadialGradient(
-                              colors: [
-                                const Color(0xFFFFFFFF),
-                                const Color(0xFFECE9FF).withValues(alpha: 0.9),
-                              ],
+                            gradient: const RadialGradient(
+                              colors: [AppColors.white, AppColors.white90],
                             ),
                           ),
                           child: Padding(
@@ -88,7 +82,7 @@ class SplashPage extends StatelessWidget {
                           style: Theme.of(context).textTheme.headlineMedium
                               ?.copyWith(
                                 fontWeight: FontWeight.w800,
-                                color: const Color(0xFF6A57E6),
+                                color: AppColors.primary,
                               ),
                         ),
                         const SizedBox(height: 12),
@@ -98,7 +92,7 @@ class SplashPage extends StatelessWidget {
                           style: Theme.of(context).textTheme.titleMedium
                               ?.copyWith(
                                 height: 1.4,
-                                color: const Color(0xFF6B7280),
+                                color: AppColors.textSecondary,
                               ),
                         ),
                         const SizedBox(height: 32),
@@ -112,7 +106,7 @@ class SplashPage extends StatelessWidget {
                               ).pushReplacementNamed('/register');
                             },
                             style: ElevatedButton.styleFrom(
-                              backgroundColor: const Color(0xFF7B66FF),
+                              backgroundColor: AppColors.brandPurple,
                               shape: RoundedRectangleBorder(
                                 borderRadius: BorderRadius.circular(28),
                               ),
@@ -123,7 +117,7 @@ class SplashPage extends StatelessWidget {
                               style: TextStyle(
                                 fontSize: 18,
                                 fontWeight: FontWeight.w700,
-                                color: Colors.white,
+                                color: AppColors.white,
                               ),
                             ),
                           ),
@@ -139,18 +133,18 @@ class SplashPage extends StatelessWidget {
                               ).pushReplacementNamed('/login');
                             },
                             style: OutlinedButton.styleFrom(
-                              side: const BorderSide(color: Color(0xFFD6D9E6)),
+                              side: const BorderSide(color: AppColors.textMutedSoft),
                               shape: RoundedRectangleBorder(
                                 borderRadius: BorderRadius.circular(28),
                               ),
-                              backgroundColor: const Color(0xFFE3E6EF),
+                              backgroundColor: AppColors.surfaceMutedAlt,
                             ),
                             child: const Text(
                               'I already have an account',
                               style: TextStyle(
                                 fontSize: 16,
                                 fontWeight: FontWeight.w600,
-                                color: Color(0xFF2F3440),
+                                color: AppColors.textNavy,
                               ),
                             ),
                           ),

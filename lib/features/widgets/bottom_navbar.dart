@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../core/theme/app_colors.dart';
 
 class BottomNavbar extends StatelessWidget {
   final int currentIndex;
@@ -19,11 +20,11 @@ class BottomNavbar extends StatelessWidget {
       height: navHeight,
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
       decoration: BoxDecoration(
-        color: Colors.white.withOpacity(0.88),
+        color: AppColors.white88,
         borderRadius: BorderRadius.circular(40),
-        boxShadow: [
+        boxShadow: const [
           BoxShadow(
-            color: const Color(0xFF6B5CE7).withOpacity(0.18),
+            color: AppColors.navShadow,
             blurRadius: 30,
             spreadRadius: 12,
             offset: const Offset(0, 10),
@@ -72,8 +73,8 @@ class _NavItem extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    const activeColor = Color(0xFF6B5CE7);
-    const inactiveColor = Color(0xFF94A3B8);
+    const activeColor = AppColors.brandBlue;
+    const inactiveColor = AppColors.textMutedSoft;
 
     return LayoutBuilder(
       builder: (context, constraints) {
@@ -100,7 +101,7 @@ class _NavItem extends StatelessWidget {
               boxShadow: isActive
                   ? [
                       BoxShadow(
-                        color: activeColor.withOpacity(0.35),
+                        color: AppColors.navShadow,
                         blurRadius: 12,
                         offset: const Offset(0, 6),
                       ),
@@ -113,14 +114,14 @@ class _NavItem extends StatelessWidget {
               children: [
                 Icon(
                   icon,
-                  color: isActive ? Colors.white : inactiveColor,
+                  color: isActive ? AppColors.white : inactiveColor,
                   size: iconSize,
                 ),
                 SizedBox(height: gap),
                 Text(
                   label,
                   style: TextStyle(
-                    color: isActive ? Colors.white : inactiveColor,
+                    color: isActive ? AppColors.white : inactiveColor,
                     fontSize: fontSize,
                     fontWeight: isActive ? FontWeight.w600 : FontWeight.w400,
                   ),

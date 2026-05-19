@@ -21,6 +21,7 @@ class HomePage extends StatelessWidget {
         padding: EdgeInsets.fromLTRB(20, 4, 20, navHeight + bottomInset + 28),
         children: [
           const HeaderContent(),
+          const SizedBox(height: 24),
           Row(
             children: const [
               Expanded(child: StreakCard()),
@@ -34,7 +35,7 @@ class HomePage extends StatelessWidget {
             style: Theme.of(context).textTheme.titleLarge?.copyWith(
               fontSize: 22,
               fontWeight: FontWeight.w800,
-              color: const Color(0xFF1A1640),
+              color: AppColors.textTitleDark,
             ),
           ),
           const SizedBox(height: 12),

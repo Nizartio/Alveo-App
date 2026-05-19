@@ -58,6 +58,7 @@ CREATE TABLE public.user_medications (
   intake_rule text CHECK (intake_rule IS NULL OR (intake_rule = ANY (ARRAY['before_meal'::text, 'after_meal'::text, 'with_meal'::text, 'empty_stomach'::text, 'anytime'::text]))),
   reminder_minutes_before integer NOT NULL DEFAULT 15 CHECK (reminder_minutes_before >= 0),
   special_instruction text,
+  is_active boolean NOT NULL DEFAULT true,
   CONSTRAINT user_medications_pkey PRIMARY KEY (id),
   CONSTRAINT user_medications_treatment_plan_id_fkey FOREIGN KEY (treatment_plan_id) REFERENCES public.treatment_plans(id),
   CONSTRAINT user_medications_medicine_id_fkey FOREIGN KEY (medicine_id) REFERENCES public.medicines(id)

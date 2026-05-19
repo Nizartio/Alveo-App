@@ -1,14 +1,11 @@
 import 'package:flutter/material.dart';
+import '../../core/theme/app_colors.dart';
 
 class StreakCard extends StatelessWidget {
   final int streakDays;
   final int personalBest;
 
-  const StreakCard({
-    super.key,
-    this.streakDays = 7,
-    this.personalBest = 9,
-  });
+  const StreakCard({super.key, this.streakDays = 7, this.personalBest = 9});
 
   @override
   Widget build(BuildContext context) {
@@ -19,7 +16,11 @@ class StreakCard extends StatelessWidget {
       padding: const EdgeInsets.all(24),
       decoration: BoxDecoration(
         gradient: const LinearGradient(
-          colors: [Color(0xFF8B7FE8), Color(0xFF6B5CE7), Color(0xFF5B4FD4)],
+          colors: [
+            AppColors.brandPurple,
+            AppColors.brandBlue,
+            AppColors.primaryDeep,
+          ],
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
           stops: [0.0, 0.5, 1.0],
@@ -27,7 +28,7 @@ class StreakCard extends StatelessWidget {
         borderRadius: BorderRadius.circular(20),
         boxShadow: [
           BoxShadow(
-            color: const Color(0xFF6B5CE7).withOpacity(0.35),
+            color: AppColors.navShadow,
             blurRadius: 20,
             offset: const Offset(0, 8),
           ),
@@ -43,7 +44,7 @@ class StreakCard extends StatelessWidget {
                 Text(
                   'CURRENT STREAK',
                   style: TextStyle(
-                    color: Colors.white.withOpacity(0.65),
+                    color: AppColors.white85,
                     fontSize: 11,
                     fontWeight: FontWeight.w600,
                     letterSpacing: 1.2,
@@ -56,7 +57,7 @@ class StreakCard extends StatelessWidget {
                     Text(
                       '$streakDays',
                       style: const TextStyle(
-                        color: Colors.white,
+                        color: AppColors.white,
                         fontSize: 52,
                         fontWeight: FontWeight.w800,
                         height: 1.0,
@@ -68,7 +69,7 @@ class StreakCard extends StatelessWidget {
                       child: Text(
                         'Days',
                         style: TextStyle(
-                          color: Colors.white,
+                          color: AppColors.white,
                           fontSize: 20,
                           fontWeight: FontWeight.w500,
                         ),
@@ -82,7 +83,7 @@ class StreakCard extends StatelessWidget {
                       ? 'Just $daysTobeat more days to beat\nyour personal best!'
                       : 'You\'ve beaten your personal best! 🎉',
                   style: TextStyle(
-                    color: Colors.white.withOpacity(0.85),
+                    color: AppColors.white90,
                     fontSize: 13,
                     height: 1.4,
                   ),
@@ -105,19 +106,11 @@ class _FlameIcon extends StatelessWidget {
       width: 70,
       height: 70,
       decoration: BoxDecoration(
-        color: Colors.white.withOpacity(0.15),
+        color: AppColors.white15,
         shape: BoxShape.circle,
-        border: Border.all(
-          color: Colors.white.withOpacity(0.2),
-          width: 1.5,
-        ),
+        border: Border.all(color: AppColors.white20, width: 1.5),
       ),
-      child: const Center(
-        child: Text(
-          '🔥',
-          style: TextStyle(fontSize: 32),
-        ),
-      ),
+      child: const Center(child: Text('🔥', style: TextStyle(fontSize: 32))),
     );
   }
 }

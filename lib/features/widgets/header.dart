@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../core/theme/app_colors.dart';
 
 class StatsHeader extends StatelessWidget {
   const StatsHeader({super.key});
@@ -9,16 +10,16 @@ class StatsHeader extends StatelessWidget {
       child: Padding(
         padding: const EdgeInsets.fromLTRB(20, 8, 20, 8),
         child: Container(
-          constraints: const BoxConstraints(minHeight: 48),
-          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+          constraints: const BoxConstraints(minHeight: 52),
+          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
           decoration: BoxDecoration(
-            color: Colors.white,
-            borderRadius: BorderRadius.circular(10),
-            boxShadow: [
+            color: AppColors.white,
+            borderRadius: BorderRadius.circular(16),
+            boxShadow: const [
               BoxShadow(
-                color: Colors.black.withOpacity(0.04),
+                color: AppColors.headerShadow,
                 blurRadius: 20,
-                offset: const Offset(0, 6),
+                offset: Offset(0, 6),
               ),
             ],
           ),
@@ -28,7 +29,7 @@ class StatsHeader extends StatelessWidget {
                 width: 40,
                 height: 40,
                 decoration: BoxDecoration(
-                  color: const Color(0xFFF5F3FF),
+                  color: AppColors.surfaceTint,
                   borderRadius: BorderRadius.circular(100),
                 ),
                 child: Center(
@@ -38,7 +39,7 @@ class StatsHeader extends StatelessWidget {
                     padding: const EdgeInsets.all(2),
                     decoration: BoxDecoration(
                       shape: BoxShape.circle,
-                      border: Border.all(color: Colors.white, width: 2),
+                      border: Border.all(color: AppColors.white, width: 2),
                     ),
                     child: ClipPath(
                       child: Align(
@@ -60,9 +61,9 @@ class StatsHeader extends StatelessWidget {
               const Text(
                 'Alveo',
                 style: TextStyle(
-                  color: Color(0xFF6B5CE7),
+                  color: AppColors.brandBlue,
                   fontWeight: FontWeight.w800,
-                  fontSize: 30,
+                  fontSize: 28,
                 ),
               ),
 
@@ -74,7 +75,7 @@ class StatsHeader extends StatelessWidget {
                   width: 48,
                   height: 48,
                   decoration: BoxDecoration(
-                    color: Colors.transparent,
+                    color: AppColors.transparent,
                     borderRadius: BorderRadius.circular(100),
                   ),
                   child: Stack(
@@ -82,7 +83,7 @@ class StatsHeader extends StatelessWidget {
                     children: [
                       const Icon(
                         Icons.notifications_none_rounded,
-                        color: Color(0xFF6B5CE7),
+                        color: AppColors.brandBlue,
                         size: 30,
                       ),
                       Positioned(
@@ -92,7 +93,7 @@ class StatsHeader extends StatelessWidget {
                           width: 8,
                           height: 8,
                           decoration: const BoxDecoration(
-                            color: Color(0xFFFF6B6B),
+                            color: AppColors.dangerSoft,
                             shape: BoxShape.circle,
                           ),
                         ),

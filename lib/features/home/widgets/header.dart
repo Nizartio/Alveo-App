@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../../core/theme/app_colors.dart';
 
 class HeaderContent extends StatelessWidget {
   const HeaderContent({super.key});
@@ -13,7 +14,7 @@ class HeaderContent extends StatelessWidget {
           style: TextStyle(
             fontSize: 28,
             fontWeight: FontWeight.bold,
-            color: Color(0xFF2D2D2D),
+            color: AppColors.textHeading,
           ),
         ),
 
@@ -26,11 +27,11 @@ class HeaderContent extends StatelessWidget {
               width: double.infinity,
               padding: const EdgeInsets.fromLTRB(24, 24, 140, 24),
               decoration: BoxDecoration(
-                color: Colors.white,
+                color: AppColors.white,
                 borderRadius: BorderRadius.circular(36),
                 boxShadow: [
                   BoxShadow(
-                    color: Colors.black.withOpacity(0.03),
+                    color: AppColors.black03,
                     blurRadius: 20,
                     offset: const Offset(0, 8),
                   ),
@@ -39,7 +40,7 @@ class HeaderContent extends StatelessWidget {
               child: const Text(
                 'Kamu hebat hari ini! Tarik napas dalam-dalam dan teruslah berusaha.',
                 style: TextStyle(
-                  color: Color(0xFF6B6B6B),
+                  color: AppColors.textBody,
                   fontSize: 16,
                   height: 1.5,
                   fontWeight: FontWeight.w500,
@@ -55,10 +56,10 @@ class HeaderContent extends StatelessWidget {
                 height: 120,
                 decoration: BoxDecoration(
                   shape: BoxShape.circle,
-                  color: const Color(0xFFE6E6E6),
+                  color: AppColors.surfaceWarm,
                   boxShadow: [
                     BoxShadow(
-                      color: Colors.black.withOpacity(0.12),
+                      color: AppColors.black12,
                       blurRadius: 18,
                       offset: const Offset(0, 10),
                     ),

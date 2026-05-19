@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../../core/theme/app_colors.dart';
 
 class NextActionCard extends StatelessWidget {
   const NextActionCard({super.key});
@@ -8,7 +9,7 @@ class NextActionCard extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: AppColors.white,
         borderRadius: BorderRadius.circular(28),
       ),
       child: Column(
@@ -17,12 +18,12 @@ class NextActionCard extends StatelessWidget {
             children: [
               CircleAvatar(
                 radius: 24,
-                backgroundColor: const Color(0xFFD7E3FF),
+                backgroundColor: AppColors.surfaceBlueTint,
                 child: Transform.rotate(
                   angle: -0.5,
                   child: const Icon(
                     Icons.medication_outlined,
-                    color: Color(0xFF4361EE),
+                    color: AppColors.brandBlueAlt,
                   ),
                 ),
               ),
@@ -34,19 +35,14 @@ class NextActionCard extends StatelessWidget {
                 children: [
                   Text(
                     'Take Medicine',
-                    style: TextStyle(
-                      fontSize: 20,
-                      fontWeight: FontWeight.bold,
-                    ),
+                    style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
                   ),
 
                   SizedBox(height: 4),
 
                   Text(
                     '🕛 12:00 PM • After Lunch',
-                    style: TextStyle(
-                      color: Colors.grey,
-                    ),
+                    style: TextStyle(color: AppColors.textMutedSoft),
                   ),
                 ],
               ),
@@ -58,7 +54,7 @@ class NextActionCard extends StatelessWidget {
           ElevatedButton(
             onPressed: () {},
             style: ElevatedButton.styleFrom(
-              backgroundColor: const Color(0xFF4834DF),
+              backgroundColor: AppColors.primaryDeep,
               minimumSize: const Size(double.infinity, 55),
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(50),
@@ -69,18 +65,12 @@ class NextActionCard extends StatelessWidget {
               children: [
                 Text(
                   'Mark as Taken',
-                  style: TextStyle(
-                    color: Colors.white,
-                    fontSize: 16,
-                  ),
+                  style: TextStyle(color: AppColors.white, fontSize: 16),
                 ),
 
                 SizedBox(width: 8),
 
-                Icon(
-                  Icons.check_circle_outline,
-                  color: Colors.white,
-                ),
+                Icon(Icons.check_circle_outline, color: AppColors.white),
               ],
             ),
           ),

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../core/theme/app_colors.dart';
 
 import 'streak_card.dart';
 import 'calendar.dart';
@@ -41,7 +42,7 @@ class _StatsPageState extends State<StatsPage> {
     final bottomInset = mq.viewPadding.bottom;
 
     return Scaffold(
-      backgroundColor: const Color(0xFFF5F3FF),
+      backgroundColor: AppColors.background,
       body: SingleChildScrollView(
         physics: const BouncingScrollPhysics(),
         padding: EdgeInsets.fromLTRB(20, 8, 20, navHeight + bottomInset + 28),
@@ -61,7 +62,7 @@ class _StatsPageState extends State<StatsPage> {
               style: TextStyle(
                 fontSize: 20,
                 fontWeight: FontWeight.w700,
-                color: Color(0xFF1A1640),
+                color: AppColors.textTitleDark,
               ),
             ),
 
