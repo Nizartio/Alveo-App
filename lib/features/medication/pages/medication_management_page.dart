@@ -118,7 +118,7 @@ class _MedicationManagementPageState extends State<MedicationManagementPage> {
   void _editMedication(Map<String, dynamic> medication) {
     ScaffoldMessenger.of(context).showSnackBar(
       const SnackBar(
-        content: Text('Edit from medication plan is not moved yet'),
+        content: Text('Edit from medication input is not moved yet'),
       ),
     );
   }

@@ -4,7 +4,7 @@ import '../../../core/theme/app_colors.dart';
 import '../models/medication_form_model.dart';
 import '../services/medication_service.dart';
 import '../widgets/medication_card.dart';
-import '../widgets/med_plan_saved_sheet.dart';
+import '../widgets/meds_saved_sheet.dart';
 
 class MedsCreatePage extends StatefulWidget {
   const MedsCreatePage({super.key});
@@ -15,7 +15,7 @@ class MedsCreatePage extends StatefulWidget {
 
 class _MedsCreatePageState extends State<MedsCreatePage> {
   final _medicationService = MedicationService();
-  DateTime? _treatmentStartDate;
+  DateTime? _medicationStartDate;
   List<MedicationFormModel> _medications = [
     MedicationFormModel(
       medicineName: '',
@@ -55,15 +55,15 @@ class _MedsCreatePageState extends State<MedsCreatePage> {
     }
   }
 
-  Future<void> _pickTreatmentStartDate() async {
+  Future<void> _pickMedicationStartDate() async {
     final now = DateTime.now();
     final picked = await showDatePicker(
       context: context,
-      initialDate: _treatmentStartDate ?? now,
+      initialDate: _medicationStartDate ?? now,
       firstDate: DateTime(now.year - 20),
       lastDate: now,
     );
-    if (picked != null) setState(() => _treatmentStartDate = picked);
+    if (picked != null) setState(() => _medicationStartDate = picked);
   }
 
   void _addMedication() {
@@ -86,15 +86,15 @@ class _MedsCreatePageState extends State<MedsCreatePage> {
       setState(() => _medications.removeAt(index));
     } else {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('At least one medication is required')),
+        const SnackBar(content: Text('At least one medicine is required')),
       );
     }
   }
 
   bool _validateForm() {
-    if (_treatmentStartDate == null) {
+    if (_medicationStartDate == null) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Please select a treatment start date')),
+        const SnackBar(content: Text('Please select a medication start date')),
       );
       return false;
     }
@@ -113,17 +113,17 @@ class _MedsCreatePageState extends State<MedsCreatePage> {
     return true;
   }
 
-  Future<void> _saveTreatmentPlan() async {
+  Future<void> _saveMedication() async {
     if (!_validateForm()) return;
 
     setState(() => _isSaving = true);
     try {
       await _medicationService.saveTreatmentPlan(
-        startDate: _treatmentStartDate!,
+        startDate: _medicationStartDate!,
         medications: _medications,
       );
       if (mounted) {
-        await showMedPlanSavedBottomSheet(
+        await showMedsSavedBottomSheet(
           context,
           xpAmount: 10,
           onContinue: () {
@@ -135,7 +135,7 @@ class _MedsCreatePageState extends State<MedsCreatePage> {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('Error saving treatment plan: $e'),
+            content: Text('Error saving medication: $e'),
             backgroundColor: Colors.red,
           ),
         );
@@ -189,7 +189,7 @@ class _MedsCreatePageState extends State<MedsCreatePage> {
                                   crossAxisAlignment: CrossAxisAlignment.start,
                                   children: [
                                     Text(
-                                      'Prescription Medication Setup',
+                                      'Medication Input',
                                       style: Theme.of(context)
                                           .textTheme
                                           .headlineSmall
@@ -201,7 +201,7 @@ class _MedsCreatePageState extends State<MedsCreatePage> {
                                     ),
                                     const SizedBox(height: 8),
                                     const Text(
-                                      'Add medicines from the doctor\'s prescription, set the dosage, schedule, and reminder alarm.',
+                                      'Add medicines, set the dosage, schedule, and reminder alarm.',
                                       style: TextStyle(
                                         color: Colors.white70,
                                         fontSize: 14,
@@ -212,7 +212,7 @@ class _MedsCreatePageState extends State<MedsCreatePage> {
                               ),
                               const SizedBox(height: 24),
                               Text(
-                                'Medications',
+                                'Medicines',
                                 style: Theme.of(context).textTheme.headlineSmall
                                     ?.copyWith(
                                       fontWeight: FontWeight.w700,
@@ -277,7 +277,7 @@ class _MedsCreatePageState extends State<MedsCreatePage> {
                               ),
                               const SizedBox(height: 20),
                               Text(
-                                'Treatment Start Date',
+                                'Medication Start Date',
                                 style: Theme.of(context).textTheme.headlineSmall
                                     ?.copyWith(
                                       fontWeight: FontWeight.w700,
@@ -299,7 +299,7 @@ class _MedsCreatePageState extends State<MedsCreatePage> {
                                   ],
                                 ),
                                 child: GestureDetector(
-                                  onTap: _pickTreatmentStartDate,
+                                  onTap: _pickMedicationStartDate,
                                   child: Row(
                                     children: [
                                       Container(
@@ -332,12 +332,12 @@ class _MedsCreatePageState extends State<MedsCreatePage> {
                                             ),
                                             const SizedBox(height: 4),
                                             Text(
-                                              _treatmentStartDate == null
+                                              _medicationStartDate == null
                                                   ? 'When did you begin?'
                                                   : MaterialLocalizations.of(
                                                       context,
                                                     ).formatMediumDate(
-                                                      _treatmentStartDate!,
+                                                      _medicationStartDate!,
                                                     ),
                                               style: const TextStyle(
                                                 fontSize: 14,
@@ -404,9 +404,7 @@ class _MedsCreatePageState extends State<MedsCreatePage> {
                                     color: Colors.transparent,
                                     child: InkWell(
                                       borderRadius: BorderRadius.circular(28),
-                                      onTap: _isSaving
-                                          ? null
-                                          : _saveTreatmentPlan,
+                                      onTap: _isSaving ? null : _saveMedication,
                                       child: Center(
                                         child: _isSaving
                                             ? const SizedBox(
@@ -421,7 +419,7 @@ class _MedsCreatePageState extends State<MedsCreatePage> {
                                                 ),
                                               )
                                             : const Text(
-                                                'Save Treatment Plan',
+                                                'Save Medication',
                                                 style: TextStyle(
                                                   color: Colors.white,
                                                   fontSize: 16,
