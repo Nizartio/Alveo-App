@@ -127,7 +127,10 @@ class _MedicationPlanPageState extends State<MedicationPlanPage> {
           context,
           xpAmount: 10,
           onContinue: () {
-            Navigator.of(context).pop();
+            Navigator.of(
+              context,
+              rootNavigator: true,
+            ).pushNamedAndRemoveUntil('/home', (route) => false);
           },
         );
       }
@@ -163,7 +166,7 @@ class _MedicationPlanPageState extends State<MedicationPlanPage> {
         child: _isLoading
             ? const Center(child: CircularProgressIndicator())
             : SingleChildScrollView(
-                padding: const EdgeInsets.fromLTRB(20, 20, 20, 36),
+                padding: const EdgeInsets.fromLTRB(20, 72, 20, 36),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: _buildPlanContent(context),
