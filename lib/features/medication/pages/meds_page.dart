@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../../core/theme/app_colors.dart';
 import '../services/medication_service.dart';
+import '../widgets/meds_btn_action.dart';
 import 'medication_history_page.dart';
 import 'medication_management_page.dart';
 
@@ -21,7 +22,6 @@ class _MedsPageState extends State<MedsPage>
   List<Map<String, dynamic>> _activeMedications = [];
   bool _isLoading = true;
   String _greetingName = 'there';
-  int _adherencePercentage = 92;
   int _dayStreak = 7;
 
   @override
@@ -124,49 +124,6 @@ class _MedsPageState extends State<MedsPage>
     ScaffoldMessenger.of(context).showSnackBar(
       const SnackBar(
         content: Text('Snooze set. You\'ll get a reminder in 15 minutes.'),
-      ),
-    );
-  }
-
-  Widget _buildQuickAction(String label, IconData icon, VoidCallback onTap) {
-    return GestureDetector(
-      onTap: onTap,
-      child: Container(
-        padding: const EdgeInsets.symmetric(vertical: 16),
-        decoration: BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.circular(14),
-          boxShadow: const [
-            BoxShadow(
-              color: AppColors.bottomSheetShadow,
-              blurRadius: 8,
-              offset: Offset(0, 4),
-            ),
-          ],
-        ),
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Container(
-              padding: const EdgeInsets.all(12),
-              decoration: BoxDecoration(
-                color: AppColors.chipBackground,
-                borderRadius: BorderRadius.circular(12),
-              ),
-              child: Icon(icon, color: AppColors.primary, size: 24),
-            ),
-            const SizedBox(height: 8),
-            Text(
-              label,
-              textAlign: TextAlign.center,
-              style: const TextStyle(
-                fontSize: 12,
-                fontWeight: FontWeight.w600,
-                color: AppColors.textPrimary,
-              ),
-            ),
-          ],
-        ),
       ),
     );
   }
@@ -483,30 +440,30 @@ class _MedsPageState extends State<MedsPage>
                     ),
                   ),
                   const SizedBox(height: 12),
-                  GridView.count(
-                    crossAxisCount: 2,
-                    shrinkWrap: true,
-                    physics: const NeverScrollableScrollPhysics(),
-                    mainAxisSpacing: 12,
-                    crossAxisSpacing: 12,
+                  Row(
                     children: [
-                      _buildQuickAction(
-                        'Manage Meds',
-                        Icons.calendar_today,
-                        () => Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                            builder: (_) => const MedicationManagementPage(),
+                      Expanded(
+                        child: MedsBtnAction(
+                          label: 'Manage Meds',
+                          icon: Icons.calendar_today,
+                          onTap: () => Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (_) => const MedicationManagementPage(),
+                            ),
                           ),
                         ),
                       ),
-                      _buildQuickAction(
-                        'History',
-                        Icons.history,
-                        () => Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                            builder: (_) => const MedicationHistoryPage(),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: MedsBtnAction(
+                          label: 'History',
+                          icon: Icons.history,
+                          onTap: () => Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (_) => const MedicationHistoryPage(),
+                            ),
                           ),
                         ),
                       ),

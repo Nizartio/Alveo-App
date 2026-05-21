@@ -38,12 +38,8 @@ class _MedicationCardState extends State<MedicationCard> {
     widget.onUpdate(updated);
   }
 
-  InputDecoration _fieldDecoration({
-    required String label,
-    required String hint,
-  }) {
+  InputDecoration _fieldDecoration({required String hint}) {
     return InputDecoration(
-      labelText: label,
       hintText: hint,
       filled: true,
       fillColor: const Color(0xFFF1F3F8),
@@ -99,14 +95,6 @@ class _MedicationCardState extends State<MedicationCard> {
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              const Text(
-                'Medicine',
-                style: TextStyle(
-                  fontSize: 16,
-                  fontWeight: FontWeight.w700,
-                  color: AppColors.textPrimary,
-                ),
-              ),
               if (widget.canRemove)
                 IconButton(
                   icon: const Icon(Icons.delete_outline, color: Colors.red),
@@ -118,53 +106,78 @@ class _MedicationCardState extends State<MedicationCard> {
           ),
           const SizedBox(height: 12),
 
-          // Medicine Dropdown
-          DropdownButtonFormField<String>(
-            value: _medication.medicineId,
-            isExpanded: true,
-            items: widget.medicines
-                .map(
-                  (med) => DropdownMenuItem<String>(
-                    value: med['id'],
-                    child: Text(med['name'] ?? ''),
-                  ),
-                )
-                .toList(),
-            onChanged: (value) {
-              if (value != null) {
-                final medName = widget.medicines.firstWhere(
-                  (m) => m['id'] == value,
-                )['name'];
-                _updateMedication(
-                  _medication
-                    ..medicineId = value
-                    ..medicineName = medName,
-                );
-              }
-            },
-            decoration: _fieldDecoration(
-              label: 'Medicine',
-              hint: 'Jawaban Anda',
-            ),
-            validator: (v) => v == null ? 'Please select a medicine' : null,
-          ),
-          const SizedBox(height: 16),
-
-          // Dosage
-          const Text(
-            'Dosage',
-            style: TextStyle(
-              fontSize: 14,
-              fontWeight: FontWeight.w700,
-              color: AppColors.textPrimary,
-            ),
-          ),
-          const SizedBox(height: 8),
-          TextFormField(
-            initialValue: _medication.dosage,
-            onChanged: (v) => _updateMedication(_medication..dosage = v),
-            decoration: _fieldDecoration(label: 'Dosage', hint: 'Jawaban Anda'),
-            validator: (v) => (v ?? '').isEmpty ? 'Dosage required' : null,
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const Text(
+                      'Medicine',
+                      style: TextStyle(
+                        fontSize: 14,
+                        fontWeight: FontWeight.w700,
+                        color: AppColors.textPrimary,
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+                    DropdownButtonFormField<String>(
+                      value: _medication.medicineId,
+                      isExpanded: true,
+                      items: widget.medicines
+                          .map(
+                            (med) => DropdownMenuItem<String>(
+                              value: med['id'],
+                              child: Text(med['name'] ?? ''),
+                            ),
+                          )
+                          .toList(),
+                      onChanged: (value) {
+                        if (value != null) {
+                          final medName = widget.medicines.firstWhere(
+                            (m) => m['id'] == value,
+                          )['name'];
+                          _updateMedication(
+                            _medication
+                              ..medicineId = value
+                              ..medicineName = medName,
+                          );
+                        }
+                      },
+                      decoration: _fieldDecoration(hint: 'Pilih obat'),
+                      validator: (v) =>
+                          v == null ? 'Please select a medicine' : null,
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const Text(
+                      'Dosage',
+                      style: TextStyle(
+                        fontSize: 14,
+                        fontWeight: FontWeight.w700,
+                        color: AppColors.textPrimary,
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+                    TextFormField(
+                      initialValue: _medication.dosage,
+                      onChanged: (v) =>
+                          _updateMedication(_medication..dosage = v),
+                      decoration: _fieldDecoration(hint: 'Masukkan dosis'),
+                      validator: (v) =>
+                          (v ?? '').isEmpty ? 'Dosage required' : null,
+                    ),
+                  ],
+                ),
+              ),
+            ],
           ),
           const SizedBox(height: 16),
 
@@ -307,10 +320,7 @@ class _MedicationCardState extends State<MedicationCard> {
                 _updateMedication(_medication..reminderMinutesBefore = parsed);
               }
             },
-            decoration: _fieldDecoration(
-              label: 'Reminder Alarm',
-              hint: 'Jawaban Anda',
-            ),
+            decoration: _fieldDecoration(hint: 'Masukkan menit alarm'),
           ),
           const SizedBox(height: 16),
 
@@ -329,10 +339,7 @@ class _MedicationCardState extends State<MedicationCard> {
             onChanged: (v) =>
                 _updateMedication(_medication..specialInstruction = v),
             maxLines: 2,
-            decoration: _fieldDecoration(
-              label: 'Special Instructions',
-              hint: 'Jawaban Anda',
-            ),
+            decoration: _fieldDecoration(hint: 'Masukkan catatan khusus'),
           ),
         ],
       ),
