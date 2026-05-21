@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import '../../../core/theme/app_colors.dart';
+import '../widgets/meds_list_action.dart';
+import '../widgets/meds_modal_input.dart';
 import '../services/medication_service.dart';
-import 'medication_plan_page.dart';
 
 class MedicationManagementPage extends StatefulWidget {
   const MedicationManagementPage({super.key});
@@ -41,11 +43,25 @@ class _MedicationManagementPageState extends State<MedicationManagementPage> {
     }
   }
 
+  void _showAddMedicationSheet() {
+    showModalBottomSheet<void>(
+      context: context,
+      isScrollControlled: true,
+      isDismissible: true,
+      enableDrag: true,
+      useSafeArea: true,
+      backgroundColor: Colors.transparent,
+      builder: (_) => const MedsModalInput(),
+    ).then((_) {
+      if (mounted) {
+        _loadMedications();
+      }
+    });
+  }
+
   Future<void> _pauseMedication(String userMedicationId) async {
     try {
-      await _medicationService.updateUserMedicationStatus(
-        userMedicationId
-      );
+      await _medicationService.updateUserMedicationStatus(userMedicationId);
 
       if (mounted) {
         ScaffoldMessenger.of(
@@ -100,201 +116,11 @@ class _MedicationManagementPageState extends State<MedicationManagementPage> {
   }
 
   void _editMedication(Map<String, dynamic> medication) {
-    Navigator.push(
-      context,
-      MaterialPageRoute(
-        builder: (_) => MedicationPlanPage(existingMedication: medication),
-      ),
-    ).then((_) => _loadMedications());
-  }
-
-  Widget _buildMedicationCard(Map<String, dynamic> medication) {
-    final schedules = medication['medication_schedules'] as List? ?? [];
-    final schedulesList = schedules
-        .map((s) => _formatTime(s['time'] as String))
-        .join(', ');
-
-    return Container(
-      margin: const EdgeInsets.only(bottom: 12),
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(16),
-        boxShadow: const [
-          BoxShadow(
-            color: AppColors.bottomSheetShadow,
-            blurRadius: 8,
-            offset: Offset(0, 4),
-          ),
-        ],
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Container(
-                width: 50,
-                height: 50,
-                decoration: BoxDecoration(
-                  color: AppColors.chipBackground,
-                  borderRadius: BorderRadius.circular(12),
-                ),
-                child: const Center(
-                  child: Icon(
-                    Icons.medication,
-                    color: AppColors.primary,
-                    size: 24,
-                  ),
-                ),
-              ),
-              const SizedBox(width: 12),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      medication['medicines']?['name'] ?? 'Medicine',
-                      style: const TextStyle(
-                        fontSize: 16,
-                        fontWeight: FontWeight.w700,
-                        color: AppColors.textPrimary,
-                      ),
-                    ),
-                    const SizedBox(height: 4),
-                    Text(
-                      '${medication['dosage'] ?? '0'} • ${medication['frequency_per_day'] ?? 1}x/day',
-                      style: const TextStyle(
-                        fontSize: 13,
-                        color: AppColors.textSecondary,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-              PopupMenuButton(
-                itemBuilder: (context) => [
-                  PopupMenuItem(
-                    onTap: () => _editMedication(medication),
-                    child: const Row(
-                      children: [
-                        Icon(
-                          Icons.edit,
-                          size: 18,
-                          color: AppColors.textSecondary,
-                        ),
-                        SizedBox(width: 8),
-                        Text('Edit'),
-                      ],
-                    ),
-                  ),
-                  PopupMenuItem(
-                    onTap: () => _pauseMedication(medication['id']),
-                    child: const Row(
-                      children: [
-                        Icon(
-                          Icons.pause,
-                          size: 18,
-                          color: AppColors.textSecondary,
-                        ),
-                        SizedBox(width: 8),
-                        Text('Pause'),
-                      ],
-                    ),
-                  ),
-                  PopupMenuItem(
-                    onTap: () => _deleteMedication(medication['id']),
-                    child: const Row(
-                      children: [
-                        Icon(Icons.delete, size: 18, color: Colors.red),
-                        SizedBox(width: 8),
-                        Text('Delete', style: TextStyle(color: Colors.red)),
-                      ],
-                    ),
-                  ),
-                ],
-              ),
-            ],
-          ),
-          const SizedBox(height: 12),
-          Container(
-            padding: const EdgeInsets.all(12),
-            decoration: BoxDecoration(
-              color: const Color(0xFFF8F9FE),
-              borderRadius: BorderRadius.circular(8),
-            ),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                const Text(
-                  'Schedule',
-                  style: TextStyle(
-                    fontSize: 12,
-                    fontWeight: FontWeight.w700,
-                    color: AppColors.textSecondary,
-                  ),
-                ),
-                const SizedBox(height: 4),
-                Text(
-                  schedulesList.isNotEmpty ? schedulesList : 'No schedule set',
-                  style: const TextStyle(
-                    fontSize: 13,
-                    fontWeight: FontWeight.w600,
-                    color: AppColors.textPrimary,
-                  ),
-                ),
-              ],
-            ),
-          ),
-          const SizedBox(height: 12),
-          if (medication['special_instructions'] != null &&
-              (medication['special_instructions'] as String).isNotEmpty)
-            Container(
-              padding: const EdgeInsets.all(12),
-              decoration: BoxDecoration(
-                color: const Color(0xFFFFF8E1),
-                borderRadius: BorderRadius.circular(8),
-                border: Border.all(color: const Color(0xFFFFE082)),
-              ),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  const Text(
-                    'Special Instructions',
-                    style: TextStyle(
-                      fontSize: 12,
-                      fontWeight: FontWeight.w700,
-                      color: Color(0xFFF57C00),
-                    ),
-                  ),
-                  const SizedBox(height: 4),
-                  Text(
-                    medication['special_instructions'] ?? '',
-                    style: const TextStyle(
-                      fontSize: 13,
-                      fontWeight: FontWeight.w400,
-                      color: Color(0xFFF57C00),
-                    ),
-                  ),
-                ],
-              ),
-            ),
-        ],
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(
+        content: Text('Edit from medication input is not moved yet'),
       ),
     );
-  }
-
-  String _formatTime(String timeStr) {
-    try {
-      final parts = timeStr.split(':');
-      final hour = int.parse(parts[0]);
-      final minute = int.parse(parts[1]);
-      final timeOfDay = TimeOfDay(hour: hour, minute: minute);
-      return timeOfDay.format(context);
-    } catch (e) {
-      return timeStr;
-    }
   }
 
   @override
@@ -304,118 +130,101 @@ class _MedicationManagementPageState extends State<MedicationManagementPage> {
       appBar: AppBar(
         backgroundColor: Colors.transparent,
         elevation: 0,
+        centerTitle: false,
+        systemOverlayStyle: const SystemUiOverlayStyle(
+          statusBarColor: Colors.transparent,
+          statusBarIconBrightness: Brightness.dark,
+          statusBarBrightness: Brightness.light,
+        ),
         automaticallyImplyLeading: false,
-        leading: Container(
-          margin: const EdgeInsets.all(8),
-          decoration: BoxDecoration(
-            color: Colors.white,
-            borderRadius: BorderRadius.circular(12),
-            boxShadow: const [
-              BoxShadow(
-                color: AppColors.loginShadow,
-                blurRadius: 8,
-                offset: Offset(0, 4),
-              ),
-            ],
-          ),
-          child: Material(
-            color: Colors.transparent,
-            child: InkWell(
-              borderRadius: BorderRadius.circular(12),
-              onTap: () => Navigator.pop(context),
-              child: const Center(
-                child: Icon(Icons.arrow_back, color: AppColors.primary),
+        leadingWidth: 54,
+        titleSpacing: 0,
+        leading: Padding(
+          padding: const EdgeInsets.only(left: 30),
+          child: IconButton(
+            onPressed: () => Navigator.pop(context),
+            padding: EdgeInsets.zero,
+            splashColor: Colors.transparent,
+            highlightColor: Colors.transparent,
+            icon: const Text(
+              '<',
+              style: TextStyle(
+                fontSize: 24,
+                fontWeight: FontWeight.w700,
+                color: AppColors.primary,
               ),
             ),
           ),
         ),
-        title: const Text(
-          'Manage Medications',
-          style: TextStyle(
-            color: AppColors.textPrimary,
-            fontSize: 18,
-            fontWeight: FontWeight.w700,
+        title: const Padding(
+          padding: EdgeInsets.only(right: 30),
+          child: Text(
+            'Daftar Obat Tersimpan',
+            style: TextStyle(
+              color: AppColors.textPrimary,
+              fontSize: 18,
+              fontWeight: FontWeight.w700,
+            ),
           ),
         ),
       ),
       body: _isLoading
           ? const Center(child: CircularProgressIndicator())
-          : _activeMedications.isEmpty
-          ? Center(
+          : Padding(
+              padding: const EdgeInsets.fromLTRB(30, 8, 30, 16),
               child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
+                crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Container(
-                    padding: const EdgeInsets.all(24),
-                    decoration: BoxDecoration(
-                      color: AppColors.chipBackground,
-                      borderRadius: BorderRadius.circular(20),
-                    ),
-                    child: const Icon(
-                      Icons.medication,
-                      size: 48,
-                      color: AppColors.primary,
-                    ),
+                  Expanded(
+                    child: _activeMedications.isEmpty
+                        ? Container(
+                            width: double.infinity,
+                            padding: const EdgeInsets.all(18),
+                            decoration: BoxDecoration(
+                              color: Colors.white,
+                              borderRadius: BorderRadius.circular(16),
+                              boxShadow: const [
+                                BoxShadow(
+                                  color: AppColors.bottomSheetShadow,
+                                  blurRadius: 8,
+                                  offset: Offset(0, 4),
+                                ),
+                              ],
+                            ),
+                            child: const Text(
+                              'Belum ada obat aktif. Tekan tombol + untuk menambah obat baru.',
+                              style: TextStyle(
+                                fontSize: 14,
+                                color: AppColors.textSecondary,
+                              ),
+                            ),
+                          )
+                        : ListView.builder(
+                            itemCount: _activeMedications.length,
+                            itemBuilder: (context, index) {
+                              final medication = _activeMedications[index];
+                              return MedsListAction(
+                                medication: medication,
+                                onEdit: () => _editMedication(medication),
+                                onPause: () => _pauseMedication(
+                                  medication['id'] as String,
+                                ),
+                                onDelete: () => _deleteMedication(
+                                  medication['id'] as String,
+                                ),
+                              );
+                            },
+                          ),
                   ),
-                  const SizedBox(height: 16),
-                  const Text(
-                    'No Active Medications',
-                    style: TextStyle(
-                      fontSize: 18,
-                      fontWeight: FontWeight.w700,
-                      color: AppColors.textPrimary,
-                    ),
-                  ),
-                  const SizedBox(height: 8),
-                  const Text(
-                    'Add a medication to get started',
-                    style: TextStyle(
-                      fontSize: 14,
-                      color: AppColors.textSecondary,
-                    ),
-                  ),
-                  const SizedBox(height: 24),
-                  ElevatedButton(
-                    onPressed: () {
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (_) => const MedicationPlanPage(),
-                        ),
-                      ).then((_) => _loadMedications());
-                    },
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: AppColors.primary,
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 24,
-                        vertical: 12,
-                      ),
-                    ),
-                    child: const Text(
-                      'Add Medication',
-                      style: TextStyle(
-                        color: Colors.white,
-                        fontWeight: FontWeight.w600,
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-            )
-          : SingleChildScrollView(
-              padding: const EdgeInsets.all(20),
-              child: Column(
-                children: [
-                  ..._activeMedications.map((med) {
-                    return _buildMedicationCard(med);
-                  }).toList(),
-                  const SizedBox(height: 24),
                 ],
               ),
             ),
+      floatingActionButton: FloatingActionButton(
+        onPressed: _showAddMedicationSheet,
+        backgroundColor: AppColors.primary,
+        child: const Icon(Icons.add, color: Colors.white),
+      ),
+      floatingActionButtonLocation: FloatingActionButtonLocation.endFloat,
     );
   }
 }

@@ -46,6 +46,7 @@ class MedicationService {
     required int frequencyPerDay,
     required String intakeRule,
     required String? specialInstruction,
+    required int reminderMinutesBefore,
   }) async {
     try {
       final response = await supabase
@@ -57,7 +58,7 @@ class MedicationService {
             'frequency_per_day': frequencyPerDay,
             'intake_rule': intakeRule,
             'special_instruction': specialInstruction ?? '',
-            'reminder_minutes_before': 15,
+            'reminder_minutes_before': reminderMinutesBefore,
           })
           .select()
           .single();
@@ -65,6 +66,41 @@ class MedicationService {
       return response['id'] as String;
     } catch (e) {
       throw Exception('Failed to create user medication: $e');
+    }
+  }
+
+  Future<String> ensureMedicineId({
+    required String medicineName,
+    String? description,
+  }) async {
+    try {
+      final trimmedName = medicineName.trim();
+      if (trimmedName.isEmpty) {
+        throw Exception('Medicine name is required');
+      }
+
+      final existing = await supabase
+          .from('medicines')
+          .select('id')
+          .eq('name', trimmedName)
+          .maybeSingle();
+
+      if (existing != null) {
+        return existing['id'] as String;
+      }
+
+      final response = await supabase
+          .from('medicines')
+          .insert({
+            'name': trimmedName,
+            'description': description?.trim() ?? '',
+          })
+          .select('id')
+          .single();
+
+      return response['id'] as String;
+    } catch (e) {
+      throw Exception('Failed to ensure medicine exists: $e');
     }
   }
 
@@ -100,6 +136,7 @@ class MedicationService {
           frequencyPerDay: med.frequencyPerDay,
           intakeRule: med.intakeRule,
           specialInstruction: med.specialInstruction,
+          reminderMinutesBefore: med.reminderMinutesBefore,
         );
 
         // Convert TimeOfDay to HH:mm:ss format
@@ -117,6 +154,48 @@ class MedicationService {
       }
     } catch (e) {
       rethrow;
+    }
+  }
+
+  Future<void> saveDoctorPrescription({
+    required String medicineName,
+    required String dosage,
+    required DateTime startDate,
+    required TimeOfDay alarmTime,
+    required int reminderMinutesBefore,
+    String? prescriptionNote,
+  }) async {
+    try {
+      final user = supabase.auth.currentUser;
+      if (user == null) {
+        throw Exception('User not authenticated');
+      }
+
+      final medicineId = await ensureMedicineId(
+        medicineName: medicineName,
+        description: prescriptionNote,
+      );
+
+      final treatmentPlanId = await createTreatmentPlan(startDate);
+      final userMedicationId = await createUserMedication(
+        treatmentPlanId: treatmentPlanId,
+        medicineId: medicineId,
+        dosage: dosage,
+        frequencyPerDay: 1,
+        intakeRule: 'anytime',
+        specialInstruction: prescriptionNote,
+        reminderMinutesBefore: reminderMinutesBefore,
+      );
+
+      final alarmTimeString =
+          '${alarmTime.hour.toString().padLeft(2, '0')}:${alarmTime.minute.toString().padLeft(2, '0')}:00';
+
+      await createMedicationSchedules(
+        userMedicationId: userMedicationId,
+        times: [alarmTimeString],
+      );
+    } catch (e) {
+      throw Exception('Failed to save doctor prescription: $e');
     }
   }
 
@@ -152,7 +231,6 @@ class MedicationService {
             )
           ''')
           .eq('user_id', user.id);
-
 
       final plans = List<Map<String, dynamic>>.from(response);
       final meds = <Map<String, dynamic>>[];

@@ -219,14 +219,16 @@ class _RegisterPageState extends State<RegisterPage> {
                                           if (session != null && user != null) {
                                             Navigator.of(
                                               context,
-                                            ).pushReplacementNamed('/home');
+                                            ).pushReplacementNamed(
+                                              '/medication_plan',
+                                            );
                                           } else {
                                             ScaffoldMessenger.of(
                                               context,
                                             ).showSnackBar(
                                               const SnackBar(
                                                 content: Text(
-                                                  'Akun berhasil dibuat. Silakan lanjut isi medication plans.',
+                                                  'Akun berhasil dibuat. Silakan lanjut isi basic requirement di medication.',
                                                 ),
                                               ),
                                             );

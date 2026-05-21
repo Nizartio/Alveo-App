@@ -38,19 +38,53 @@ class _MedicationCardState extends State<MedicationCard> {
     widget.onUpdate(updated);
   }
 
+  InputDecoration _fieldDecoration({required String hint}) {
+    return InputDecoration(
+      hintText: hint,
+      filled: true,
+      fillColor: const Color(0xFFF1F3F8),
+      contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+      labelStyle: const TextStyle(
+        color: AppColors.textSecondary,
+        fontWeight: FontWeight.w600,
+      ),
+      hintStyle: const TextStyle(color: Color(0xFFB2B8C6)),
+      border: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(14),
+        borderSide: BorderSide.none,
+      ),
+      enabledBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(14),
+        borderSide: BorderSide.none,
+      ),
+      focusedBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(14),
+        borderSide: const BorderSide(color: AppColors.primary, width: 1.2),
+      ),
+      errorBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(14),
+        borderSide: const BorderSide(color: Colors.redAccent),
+      ),
+      focusedErrorBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(14),
+        borderSide: const BorderSide(color: Colors.redAccent, width: 1.2),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Container(
       margin: const EdgeInsets.only(bottom: 16),
-      padding: const EdgeInsets.all(16),
+      padding: const EdgeInsets.all(18),
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(16),
+        borderRadius: BorderRadius.circular(20),
         boxShadow: const [
           BoxShadow(
             color: AppColors.bottomSheetShadow,
-            blurRadius: 12,
-            offset: Offset(0, 8),
+            blurRadius: 10,
+            offset: Offset(0, 6),
           ),
         ],
       ),
@@ -61,14 +95,6 @@ class _MedicationCardState extends State<MedicationCard> {
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              const Text(
-                'Medicine',
-                style: TextStyle(
-                  fontSize: 16,
-                  fontWeight: FontWeight.w700,
-                  color: AppColors.textPrimary,
-                ),
-              ),
               if (widget.canRemove)
                 IconButton(
                   icon: const Icon(Icons.delete_outline, color: Colors.red),
@@ -80,72 +106,89 @@ class _MedicationCardState extends State<MedicationCard> {
           ),
           const SizedBox(height: 12),
 
-          // Medicine Dropdown
-          DropdownButtonFormField<String>(
-            value: _medication.medicineId,
-            items: widget.medicines
-                .map(
-                  (med) => DropdownMenuItem<String>(
-                    value: med['id'],
-                    child: Text(med['name'] ?? ''),
-                  ),
-                )
-                .toList(),
-            onChanged: (value) {
-              if (value != null) {
-                final medName = widget.medicines.firstWhere(
-                  (m) => m['id'] == value,
-                )['name'];
-                _updateMedication(
-                  _medication
-                    ..medicineId = value
-                    ..medicineName = medName,
-                );
-              }
-            },
-            decoration: InputDecoration(
-              filled: true,
-              fillColor: AppColors.surfaceSoft,
-              hintText: 'Select medicine',
-              border: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(12),
-                borderSide: BorderSide.none,
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const Text(
+                      'Medicine',
+                      style: TextStyle(
+                        fontSize: 14,
+                        fontWeight: FontWeight.w700,
+                        color: AppColors.textPrimary,
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+                    DropdownButtonFormField<String>(
+                      value: _medication.medicineId,
+                      isExpanded: true,
+                      items: widget.medicines
+                          .map(
+                            (med) => DropdownMenuItem<String>(
+                              value: med['id'],
+                              child: Text(med['name'] ?? ''),
+                            ),
+                          )
+                          .toList(),
+                      onChanged: (value) {
+                        if (value != null) {
+                          final medName = widget.medicines.firstWhere(
+                            (m) => m['id'] == value,
+                          )['name'];
+                          _updateMedication(
+                            _medication
+                              ..medicineId = value
+                              ..medicineName = medName,
+                          );
+                        }
+                      },
+                      decoration: _fieldDecoration(hint: 'Pilih obat'),
+                      validator: (v) =>
+                          v == null ? 'Please select a medicine' : null,
+                    ),
+                  ],
+                ),
               ),
-            ),
-            validator: (v) => v == null ? 'Please select a medicine' : null,
-          ),
-          const SizedBox(height: 16),
-
-          // Dosage
-          Text(
-            'Dosage',
-            style: Theme.of(
-              context,
-            ).textTheme.bodyMedium?.copyWith(fontWeight: FontWeight.w700),
-          ),
-          const SizedBox(height: 6),
-          TextFormField(
-            initialValue: _medication.dosage,
-            onChanged: (v) => _updateMedication(_medication..dosage = v),
-            decoration: InputDecoration(
-              filled: true,
-              fillColor: AppColors.surfaceSoft,
-              hintText: 'e.g. 600mg',
-              border: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(12),
-                borderSide: BorderSide.none,
+              const SizedBox(width: 12),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const Text(
+                      'Dosage',
+                      style: TextStyle(
+                        fontSize: 14,
+                        fontWeight: FontWeight.w700,
+                        color: AppColors.textPrimary,
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+                    TextFormField(
+                      initialValue: _medication.dosage,
+                      onChanged: (v) =>
+                          _updateMedication(_medication..dosage = v),
+                      decoration: _fieldDecoration(hint: 'Masukkan dosis'),
+                      validator: (v) =>
+                          (v ?? '').isEmpty ? 'Dosage required' : null,
+                    ),
+                  ],
+                ),
               ),
-            ),
-            validator: (v) => (v ?? '').isEmpty ? 'Dosage required' : null,
+            ],
           ),
           const SizedBox(height: 16),
 
           // Frequency Selector
-          Text(
+          const Text(
             'Frequency',
-            style: Theme.of(
-              context,
-            ).textTheme.bodyMedium?.copyWith(fontWeight: FontWeight.w700),
+            style: TextStyle(
+              fontSize: 14,
+              fontWeight: FontWeight.w700,
+              color: AppColors.textPrimary,
+            ),
           ),
           const SizedBox(height: 8),
           Row(
@@ -184,11 +227,13 @@ class _MedicationCardState extends State<MedicationCard> {
           const SizedBox(height: 16),
 
           // Intake Rule Selector
-          Text(
+          const Text(
             'Intake Rule',
-            style: Theme.of(
-              context,
-            ).textTheme.bodyMedium?.copyWith(fontWeight: FontWeight.w700),
+            style: TextStyle(
+              fontSize: 14,
+              fontWeight: FontWeight.w700,
+              color: AppColors.textPrimary,
+            ),
           ),
           const SizedBox(height: 8),
           IntakeRuleSelector(
@@ -202,11 +247,13 @@ class _MedicationCardState extends State<MedicationCard> {
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Text(
+              const Text(
                 'Schedule Times',
-                style: Theme.of(
-                  context,
-                ).textTheme.bodyMedium?.copyWith(fontWeight: FontWeight.w700),
+                style: TextStyle(
+                  fontSize: 14,
+                  fontWeight: FontWeight.w700,
+                  color: AppColors.textPrimary,
+                ),
               ),
               OutlinedButton.icon(
                 onPressed: () => _showTimePicker(),
@@ -254,28 +301,45 @@ class _MedicationCardState extends State<MedicationCard> {
             ),
           const SizedBox(height: 16),
 
-          // Special Instructions
-          Text(
-            'Special Instructions (Optional)',
-            style: Theme.of(
-              context,
-            ).textTheme.bodyMedium?.copyWith(fontWeight: FontWeight.w700),
+          // Reminder Alarm
+          const Text(
+            'Reminder Alarm',
+            style: TextStyle(
+              fontSize: 14,
+              fontWeight: FontWeight.w700,
+              color: AppColors.textPrimary,
+            ),
           ),
-          const SizedBox(height: 6),
+          const SizedBox(height: 8),
+          TextFormField(
+            initialValue: _medication.reminderMinutesBefore.toString(),
+            keyboardType: TextInputType.number,
+            onChanged: (v) {
+              final parsed = int.tryParse(v);
+              if (parsed != null && parsed >= 0) {
+                _updateMedication(_medication..reminderMinutesBefore = parsed);
+              }
+            },
+            decoration: _fieldDecoration(hint: 'Masukkan menit alarm'),
+          ),
+          const SizedBox(height: 16),
+
+          // Special Instructions
+          const Text(
+            'Special Instructions (Optional)',
+            style: TextStyle(
+              fontSize: 14,
+              fontWeight: FontWeight.w700,
+              color: AppColors.textPrimary,
+            ),
+          ),
+          const SizedBox(height: 8),
           TextFormField(
             initialValue: _medication.specialInstruction ?? '',
             onChanged: (v) =>
                 _updateMedication(_medication..specialInstruction = v),
             maxLines: 2,
-            decoration: InputDecoration(
-              filled: true,
-              fillColor: AppColors.surfaceSoft,
-              hintText: 'e.g. Drink plenty of water',
-              border: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(12),
-                borderSide: BorderSide.none,
-              ),
-            ),
+            decoration: _fieldDecoration(hint: 'Masukkan catatan khusus'),
           ),
         ],
       ),
