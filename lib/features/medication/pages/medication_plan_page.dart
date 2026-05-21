@@ -8,14 +8,7 @@ import '../widgets/med_plan_saved_sheet.dart';
 // import '../../widgets/header.dart';
 
 class MedicationPlanPage extends StatefulWidget {
-  final Map<String, dynamic>? existingMedication;
-  final bool isModal;
-
-  const MedicationPlanPage({
-    super.key,
-    this.existingMedication,
-    this.isModal = false,
-  });
+  const MedicationPlanPage({super.key});
 
   @override
   State<MedicationPlanPage> createState() => _MedicationPlanPageState();
@@ -23,7 +16,6 @@ class MedicationPlanPage extends StatefulWidget {
 
 class _MedicationPlanPageState extends State<MedicationPlanPage> {
   final _medicationService = MedicationService();
-  int _currentNavIndex = 1;
   DateTime? _treatmentStartDate;
   List<MedicationFormModel> _medications = [
     MedicationFormModel(
@@ -43,14 +35,6 @@ class _MedicationPlanPageState extends State<MedicationPlanPage> {
   void initState() {
     super.initState();
     _loadMedicines();
-    if (widget.existingMedication != null) {
-      _loadExistingMedication();
-    }
-  }
-
-  void _loadExistingMedication() {
-    // In edit mode, populate form fields from existing medication
-    // This is currently a placeholder for future edit mode implementation
   }
 
   Future<void> _loadMedicines() async {
@@ -164,49 +148,20 @@ class _MedicationPlanPageState extends State<MedicationPlanPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: widget.isModal
-          ? null
-          : AppBar(
-              backgroundColor: Colors.transparent,
-              elevation: 0,
-              leading: IconButton(
-                icon: const Icon(Icons.arrow_back, color: AppColors.primary),
-                onPressed: () => Navigator.of(context).maybePop(),
-              ),
-            ),
+      appBar: AppBar(
+        backgroundColor: Colors.transparent,
+        elevation: 0,
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back, color: AppColors.primary),
+          onPressed: () => Navigator.of(context).maybePop(),
+        ),
+      ),
       body: Container(
         decoration: const BoxDecoration(
           gradient: AppColors.appBackgroundGradient,
         ),
         child: _isLoading
             ? const Center(child: CircularProgressIndicator())
-            : widget.isModal
-            ? Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  const SizedBox(height: 12),
-                  Center(
-                    child: Container(
-                      width: 44,
-                      height: 4,
-                      decoration: BoxDecoration(
-                        color: Colors.black26,
-                        borderRadius: BorderRadius.circular(999),
-                      ),
-                    ),
-                  ),
-                  const SizedBox(height: 12),
-                  Expanded(
-                    child: SingleChildScrollView(
-                      padding: const EdgeInsets.fromLTRB(20, 0, 20, 36),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: _buildPlanContent(context),
-                      ),
-                    ),
-                  ),
-                ],
-              )
             : SingleChildScrollView(
                 padding: const EdgeInsets.fromLTRB(20, 72, 20, 36),
                 child: Column(
@@ -220,146 +175,142 @@ class _MedicationPlanPageState extends State<MedicationPlanPage> {
 
   List<Widget> _buildPlanContent(BuildContext context) {
     return [
-      if (!widget.isModal) ...[
-        Container(
-          padding: const EdgeInsets.all(20),
-          decoration: BoxDecoration(
-            gradient: AppColors.primaryGradient,
-            borderRadius: BorderRadius.circular(24),
-          ),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
+      Container(
+        padding: const EdgeInsets.all(20),
+        decoration: BoxDecoration(
+          gradient: AppColors.primaryGradient,
+          borderRadius: BorderRadius.circular(24),
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              'Prescription Medication Setup',
+              style: Theme.of(context).textTheme.headlineSmall?.copyWith(
+                color: Colors.white,
+                fontWeight: FontWeight.w800,
+                fontSize: 22,
+              ),
+            ),
+            const SizedBox(height: 8),
+            const Text(
+              'Add medicines from the doctor\'s prescription, set the dosage, schedule, and reminder alarm.',
+              style: TextStyle(color: Colors.white70, fontSize: 14),
+            ),
+          ],
+        ),
+      ),
+      const SizedBox(height: 24),
+      Text(
+        'Treatment Start Date',
+        style: Theme.of(context).textTheme.headlineSmall?.copyWith(
+          fontWeight: FontWeight.w700,
+          fontSize: 16,
+        ),
+      ),
+      const SizedBox(height: 12),
+      Container(
+        padding: const EdgeInsets.all(14),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(16),
+          boxShadow: const [
+            BoxShadow(
+              color: AppColors.bottomSheetShadow,
+              blurRadius: 12,
+              offset: Offset(0, 8),
+            ),
+          ],
+        ),
+        child: GestureDetector(
+          onTap: _pickTreatmentStartDate,
+          child: Row(
             children: [
-              Text(
-                'Prescription Medication Setup',
-                style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                  color: Colors.white,
-                  fontWeight: FontWeight.w800,
-                  fontSize: 22,
+              Container(
+                padding: const EdgeInsets.all(10),
+                decoration: BoxDecoration(
+                  color: AppColors.chipBackground,
+                  borderRadius: BorderRadius.circular(10),
+                ),
+                child: const Icon(
+                  Icons.calendar_today,
+                  color: AppColors.primary,
+                  size: 20,
                 ),
               ),
-              const SizedBox(height: 8),
-              const Text(
-                'Add medicines from the doctor\'s prescription, set the dosage, schedule, and reminder alarm.',
-                style: TextStyle(color: Colors.white70, fontSize: 14),
-              ),
-            ],
-          ),
-        ),
-        const SizedBox(height: 24),
-        Text(
-          'Treatment Start Date',
-          style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-            fontWeight: FontWeight.w700,
-            fontSize: 16,
-          ),
-        ),
-        const SizedBox(height: 12),
-        Container(
-          padding: const EdgeInsets.all(14),
-          decoration: BoxDecoration(
-            color: Colors.white,
-            borderRadius: BorderRadius.circular(16),
-            boxShadow: const [
-              BoxShadow(
-                color: AppColors.bottomSheetShadow,
-                blurRadius: 12,
-                offset: Offset(0, 8),
-              ),
-            ],
-          ),
-          child: GestureDetector(
-            onTap: _pickTreatmentStartDate,
-            child: Row(
-              children: [
-                Container(
-                  padding: const EdgeInsets.all(10),
-                  decoration: BoxDecoration(
-                    color: AppColors.chipBackground,
-                    borderRadius: BorderRadius.circular(10),
-                  ),
-                  child: const Icon(
-                    Icons.calendar_today,
-                    color: AppColors.primary,
-                    size: 20,
-                  ),
-                ),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      const Text(
-                        'Start Date',
-                        style: TextStyle(
-                          fontSize: 12,
-                          color: AppColors.textSecondary,
-                          fontWeight: FontWeight.w600,
-                        ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const Text(
+                      'Start Date',
+                      style: TextStyle(
+                        fontSize: 12,
+                        color: AppColors.textSecondary,
+                        fontWeight: FontWeight.w600,
                       ),
-                      const SizedBox(height: 4),
-                      Text(
-                        _treatmentStartDate == null
-                            ? 'When did you begin?'
-                            : MaterialLocalizations.of(
-                                context,
-                              ).formatMediumDate(_treatmentStartDate!),
-                        style: const TextStyle(
-                          fontSize: 14,
-                          color: AppColors.textPrimary,
-                          fontWeight: FontWeight.w600,
-                        ),
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      _treatmentStartDate == null
+                          ? 'When did you begin?'
+                          : MaterialLocalizations.of(
+                              context,
+                            ).formatMediumDate(_treatmentStartDate!),
+                      style: const TextStyle(
+                        fontSize: 14,
+                        color: AppColors.textPrimary,
+                        fontWeight: FontWeight.w600,
                       ),
-                    ],
-                  ),
+                    ),
+                  ],
                 ),
-              ],
-            ),
-          ),
-        ),
-        const SizedBox(height: 30),
-        Text(
-          'Reminder Alarm',
-          style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-            fontWeight: FontWeight.w700,
-            fontSize: 16,
-          ),
-        ),
-        const SizedBox(height: 12),
-        Container(
-          padding: const EdgeInsets.all(16),
-          decoration: BoxDecoration(
-            color: Colors.white,
-            borderRadius: BorderRadius.circular(16),
-            boxShadow: const [
-              BoxShadow(
-                color: AppColors.bottomSheetShadow,
-                blurRadius: 12,
-                offset: Offset(0, 8),
               ),
             ],
           ),
-          child: const Text(
-            'Each medicine can store a reminder alarm time before the schedule. Edit it inside each medicine card below.',
-            style: TextStyle(
-              fontSize: 13,
-              height: 1.5,
-              color: AppColors.textSecondary,
+        ),
+      ),
+      const SizedBox(height: 30),
+      Text(
+        'Reminder Alarm',
+        style: Theme.of(context).textTheme.headlineSmall?.copyWith(
+          fontWeight: FontWeight.w700,
+          fontSize: 16,
+        ),
+      ),
+      const SizedBox(height: 12),
+      Container(
+        padding: const EdgeInsets.all(16),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(16),
+          boxShadow: const [
+            BoxShadow(
+              color: AppColors.bottomSheetShadow,
+              blurRadius: 12,
+              offset: Offset(0, 8),
             ),
+          ],
+        ),
+        child: const Text(
+          'Each medicine can store a reminder alarm time before the schedule. Edit it inside each medicine card below.',
+          style: TextStyle(
+            fontSize: 13,
+            height: 1.5,
+            color: AppColors.textSecondary,
           ),
         ),
-        const SizedBox(height: 30),
-      ],
-      if (!widget.isModal) ...[
-        Text(
-          'Medications',
-          style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-            fontWeight: FontWeight.w700,
-            fontSize: 16,
-          ),
+      ),
+      const SizedBox(height: 30),
+      Text(
+        'Medications',
+        style: Theme.of(context).textTheme.headlineSmall?.copyWith(
+          fontWeight: FontWeight.w700,
+          fontSize: 16,
         ),
-        const SizedBox(height: 12),
-      ],
+      ),
+      const SizedBox(height: 12),
       ..._medications.asMap().entries.map((entry) {
         final index = entry.key;
         return MedicationCard(
@@ -373,43 +324,41 @@ class _MedicationPlanPageState extends State<MedicationPlanPage> {
           canRemove: _medications.length > 1,
         );
       }).toList(),
-      if (!widget.isModal) ...[
-        Container(
-          width: double.infinity,
-          padding: const EdgeInsets.symmetric(vertical: 14),
-          decoration: BoxDecoration(
-            border: Border.all(color: AppColors.primary, width: 1.5),
+      Container(
+        width: double.infinity,
+        padding: const EdgeInsets.symmetric(vertical: 14),
+        decoration: BoxDecoration(
+          border: Border.all(color: AppColors.primary, width: 1.5),
+          borderRadius: BorderRadius.circular(12),
+        ),
+        child: Material(
+          color: Colors.transparent,
+          child: InkWell(
+            onTap: _addMedication,
             borderRadius: BorderRadius.circular(12),
-          ),
-          child: Material(
-            color: Colors.transparent,
-            child: InkWell(
-              onTap: _addMedication,
-              borderRadius: BorderRadius.circular(12),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  const Icon(
-                    Icons.add_circle_outline,
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                const Icon(
+                  Icons.add_circle_outline,
+                  color: AppColors.primary,
+                  size: 20,
+                ),
+                const SizedBox(width: 8),
+                Text(
+                  'Add Another Medication',
+                  style: TextStyle(
                     color: AppColors.primary,
-                    size: 20,
+                    fontWeight: FontWeight.w700,
+                    fontSize: 14,
                   ),
-                  const SizedBox(width: 8),
-                  Text(
-                    'Add Another Medication',
-                    style: TextStyle(
-                      color: AppColors.primary,
-                      fontWeight: FontWeight.w700,
-                      fontSize: 14,
-                    ),
-                  ),
-                ],
-              ),
+                ),
+              ],
             ),
           ),
         ),
-        const SizedBox(height: 24),
-      ],
+      ),
+      const SizedBox(height: 24),
       SizedBox(
         width: double.infinity,
         height: 56,

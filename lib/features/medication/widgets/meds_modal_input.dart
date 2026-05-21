@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import '../pages/medication_plan_page.dart';
+import '../pages/meds_create_page.dart';
 
 class MedsModalInput extends StatelessWidget {
   const MedsModalInput({super.key});
@@ -17,7 +17,7 @@ class MedsModalInput extends StatelessWidget {
           borderRadius: const BorderRadius.vertical(top: Radius.circular(28)),
           child: SizedBox(
             height: screenHeight * 0.9,
-            child: const MedicationPlanPage(isModal: true),
+            child: const MedsCreatePage(),
           ),
         ),
       ),
