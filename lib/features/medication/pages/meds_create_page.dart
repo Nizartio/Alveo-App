@@ -15,7 +15,7 @@ class MedsCreatePage extends StatefulWidget {
 
 class _MedsCreatePageState extends State<MedsCreatePage> {
   final _medicationService = MedicationService();
-  DateTime? _medicationStartDate;
+  final DateTime _medicationStartDate = DateTime.now();
   List<MedicationFormModel> _medications = [
     MedicationFormModel(
       medicineName: '',
@@ -55,32 +55,6 @@ class _MedsCreatePageState extends State<MedsCreatePage> {
     }
   }
 
-  Future<void> _pickMedicationStartDate() async {
-    final now = DateTime.now();
-    final picked = await showDatePicker(
-      context: context,
-      initialDate: _medicationStartDate ?? now,
-      firstDate: DateTime(now.year - 20),
-      lastDate: now,
-    );
-    if (picked != null) setState(() => _medicationStartDate = picked);
-  }
-
-  void _addMedication() {
-    setState(() {
-      _medications.add(
-        MedicationFormModel(
-          medicineName: '',
-          dosage: '',
-          frequencyPerDay: 1,
-          intakeRule: 'anytime',
-          reminderMinutesBefore: 15,
-          schedules: [],
-        ),
-      );
-    });
-  }
-
   void _removeMedication(int index) {
     if (_medications.length > 1) {
       setState(() => _medications.removeAt(index));
@@ -92,12 +66,6 @@ class _MedsCreatePageState extends State<MedsCreatePage> {
   }
 
   bool _validateForm() {
-    if (_medicationStartDate == null) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Please select a medication start date')),
-      );
-      return false;
-    }
     for (int i = 0; i < _medications.length; i++) {
       if (!_medications[i].isValid) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -179,47 +147,7 @@ class _MedsCreatePageState extends State<MedsCreatePage> {
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
-                              Container(
-                                padding: const EdgeInsets.all(20),
-                                decoration: BoxDecoration(
-                                  gradient: AppColors.primaryGradient,
-                                  borderRadius: BorderRadius.circular(24),
-                                ),
-                                child: Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: [
-                                    Text(
-                                      'Medication Input',
-                                      style: Theme.of(context)
-                                          .textTheme
-                                          .headlineSmall
-                                          ?.copyWith(
-                                            color: Colors.white,
-                                            fontWeight: FontWeight.w800,
-                                            fontSize: 22,
-                                          ),
-                                    ),
-                                    const SizedBox(height: 8),
-                                    const Text(
-                                      'Add medicines, set the dosage, schedule, and reminder alarm.',
-                                      style: TextStyle(
-                                        color: Colors.white70,
-                                        fontSize: 14,
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                              ),
-                              const SizedBox(height: 24),
-                              Text(
-                                'Medicines',
-                                style: Theme.of(context).textTheme.headlineSmall
-                                    ?.copyWith(
-                                      fontWeight: FontWeight.w700,
-                                      fontSize: 16,
-                                    ),
-                              ),
-                              const SizedBox(height: 12),
+                              const SizedBox(height: 8),
                               ..._medications.asMap().entries.map((entry) {
                                 final index = entry.key;
                                 return MedicationCard(
@@ -235,155 +163,6 @@ class _MedsCreatePageState extends State<MedsCreatePage> {
                                   canRemove: _medications.length > 1,
                                 );
                               }).toList(),
-                              Container(
-                                width: double.infinity,
-                                padding: const EdgeInsets.symmetric(
-                                  vertical: 14,
-                                ),
-                                decoration: BoxDecoration(
-                                  border: Border.all(
-                                    color: AppColors.primary,
-                                    width: 1.5,
-                                  ),
-                                  borderRadius: BorderRadius.circular(12),
-                                ),
-                                child: Material(
-                                  color: Colors.transparent,
-                                  child: InkWell(
-                                    onTap: _addMedication,
-                                    borderRadius: BorderRadius.circular(12),
-                                    child: Row(
-                                      mainAxisAlignment:
-                                          MainAxisAlignment.center,
-                                      children: [
-                                        const Icon(
-                                          Icons.add_circle_outline,
-                                          color: AppColors.primary,
-                                          size: 20,
-                                        ),
-                                        const SizedBox(width: 8),
-                                        Text(
-                                          'Add Another Medication',
-                                          style: TextStyle(
-                                            color: AppColors.primary,
-                                            fontWeight: FontWeight.w700,
-                                            fontSize: 14,
-                                          ),
-                                        ),
-                                      ],
-                                    ),
-                                  ),
-                                ),
-                              ),
-                              const SizedBox(height: 20),
-                              Text(
-                                'Medication Start Date',
-                                style: Theme.of(context).textTheme.headlineSmall
-                                    ?.copyWith(
-                                      fontWeight: FontWeight.w700,
-                                      fontSize: 16,
-                                    ),
-                              ),
-                              const SizedBox(height: 12),
-                              Container(
-                                padding: const EdgeInsets.all(14),
-                                decoration: BoxDecoration(
-                                  color: Colors.white,
-                                  borderRadius: BorderRadius.circular(16),
-                                  boxShadow: const [
-                                    BoxShadow(
-                                      color: AppColors.bottomSheetShadow,
-                                      blurRadius: 12,
-                                      offset: Offset(0, 8),
-                                    ),
-                                  ],
-                                ),
-                                child: GestureDetector(
-                                  onTap: _pickMedicationStartDate,
-                                  child: Row(
-                                    children: [
-                                      Container(
-                                        padding: const EdgeInsets.all(10),
-                                        decoration: BoxDecoration(
-                                          color: AppColors.chipBackground,
-                                          borderRadius: BorderRadius.circular(
-                                            10,
-                                          ),
-                                        ),
-                                        child: const Icon(
-                                          Icons.calendar_today,
-                                          color: AppColors.primary,
-                                          size: 20,
-                                        ),
-                                      ),
-                                      const SizedBox(width: 12),
-                                      Expanded(
-                                        child: Column(
-                                          crossAxisAlignment:
-                                              CrossAxisAlignment.start,
-                                          children: [
-                                            const Text(
-                                              'Start Date',
-                                              style: TextStyle(
-                                                fontSize: 12,
-                                                color: AppColors.textSecondary,
-                                                fontWeight: FontWeight.w600,
-                                              ),
-                                            ),
-                                            const SizedBox(height: 4),
-                                            Text(
-                                              _medicationStartDate == null
-                                                  ? 'When did you begin?'
-                                                  : MaterialLocalizations.of(
-                                                      context,
-                                                    ).formatMediumDate(
-                                                      _medicationStartDate!,
-                                                    ),
-                                              style: const TextStyle(
-                                                fontSize: 14,
-                                                color: AppColors.textPrimary,
-                                                fontWeight: FontWeight.w600,
-                                              ),
-                                            ),
-                                          ],
-                                        ),
-                                      ),
-                                    ],
-                                  ),
-                                ),
-                              ),
-                              const SizedBox(height: 30),
-                              Text(
-                                'Reminder Alarm',
-                                style: Theme.of(context).textTheme.headlineSmall
-                                    ?.copyWith(
-                                      fontWeight: FontWeight.w700,
-                                      fontSize: 16,
-                                    ),
-                              ),
-                              const SizedBox(height: 12),
-                              Container(
-                                padding: const EdgeInsets.all(16),
-                                decoration: BoxDecoration(
-                                  color: Colors.white,
-                                  borderRadius: BorderRadius.circular(16),
-                                  boxShadow: const [
-                                    BoxShadow(
-                                      color: AppColors.bottomSheetShadow,
-                                      blurRadius: 12,
-                                      offset: Offset(0, 8),
-                                    ),
-                                  ],
-                                ),
-                                child: const Text(
-                                  'Each medicine can store a reminder alarm time before the schedule. Edit it inside each medicine card below.',
-                                  style: TextStyle(
-                                    fontSize: 13,
-                                    height: 1.5,
-                                    color: AppColors.textSecondary,
-                                  ),
-                                ),
-                              ),
                               const SizedBox(height: 24),
                               SizedBox(
                                 width: double.infinity,
