@@ -159,14 +159,6 @@ class _MedicationPlanPageState extends State<MedicationPlanPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        backgroundColor: Colors.transparent,
-        elevation: 0,
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back, color: AppColors.primary),
-          onPressed: () => Navigator.of(context).maybePop(),
-        ),
-      ),
       body: Container(
         decoration: const BoxDecoration(
           gradient: AppColors.appBackgroundGradient,
@@ -174,7 +166,7 @@ class _MedicationPlanPageState extends State<MedicationPlanPage> {
         child: _isLoading
             ? const Center(child: CircularProgressIndicator())
             : SingleChildScrollView(
-                padding: const EdgeInsets.fromLTRB(20, 20, 20, 36),
+                padding: const EdgeInsets.fromLTRB(20, 72, 20, 36),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [

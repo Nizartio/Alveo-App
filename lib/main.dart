@@ -31,7 +31,7 @@ class AlveoApp extends StatelessWidget {
         ),
         scaffoldBackgroundColor: AppColors.scaffoldBottom,
       ),
-      home: const MainNavigationPage(),
+      home: const MedicationPlanPage(),
       routes: {
         '/splash': (_) => const SplashPage(),
         '/login': (_) => const LoginPage(),
