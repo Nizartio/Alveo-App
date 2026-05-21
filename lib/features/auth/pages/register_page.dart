@@ -220,7 +220,7 @@ class _RegisterPageState extends State<RegisterPage> {
                                             Navigator.of(
                                               context,
                                             ).pushReplacementNamed(
-                                              '/medication',
+                                              '/medication_plan',
                                             );
                                           } else {
                                             ScaffoldMessenger.of(

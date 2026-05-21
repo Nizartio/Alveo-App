@@ -127,7 +127,10 @@ class _MedicationPlanPageState extends State<MedicationPlanPage> {
           context,
           xpAmount: 10,
           onContinue: () {
-            Navigator.of(context).pop();
+            Navigator.of(
+              context,
+              rootNavigator: true,
+            ).pushNamedAndRemoveUntil('/home', (route) => false);
           },
         );
       }
