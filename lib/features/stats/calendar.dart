@@ -39,7 +39,7 @@ class _WeeklyAdherenceCalendarState extends State<WeeklyAdherenceCalendar> {
       widget.dayStatuses.values.where((s) => s == DayStatus.missed).length;
 
   static const List<String> _weekLabels = [
-    'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'
+    'Sen', 'Sel', 'Rab', 'Kam', 'Jum', 'Sab', 'Min'
   ];
 
   // Previous month days to fill leading cells
@@ -180,8 +180,8 @@ class _WeeklyAdherenceCalendarState extends State<WeeklyAdherenceCalendar> {
 
   String _monthName(int month) {
     const names = [
-      '', 'January', 'February', 'March', 'April', 'May', 'June',
-      'July', 'August', 'September', 'October', 'November', 'December'
+      '', 'Januari', 'Februari', 'Maret', 'April', 'Mei', 'Juni',
+      'Juli', 'Agustus', 'September', 'Oktober', 'November', 'Desember'
     ];
     return names[month];
   }

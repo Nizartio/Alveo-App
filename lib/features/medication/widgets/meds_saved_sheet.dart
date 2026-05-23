@@ -2,12 +2,13 @@ import 'package:flutter/material.dart';
 
 import '../../../core/theme/app_colors.dart';
 
-/// Shows a reusable confirmation bottom sheet when a medication is saved
-/// from the meds create flow.
+/// Menampilkan bottom sheet konfirmasi yang dapat digunakan kembali ketika obat disimpan
+/// dari alur pembuatan obat.
 Future<void> showMedsSavedBottomSheet(
   BuildContext context, {
   required int xpAmount,
   required VoidCallback onContinue,
+  String buttonText = 'Lanjut ke Dashboard',
 }) {
   return showModalBottomSheet<void>(
     context: context,
@@ -178,7 +179,7 @@ class _MedsSavedSheetContentState extends State<_MedsSavedSheetContent>
 
   Widget _buildMascot(BuildContext context, Gradient gradient) {
     return Semantics(
-      label: 'Mascot illustration',
+      label: 'Ilustrasi Maskot',
       child: Container(
         width: 140,
         height: 140,
@@ -215,7 +216,7 @@ class _MedsSavedSheetContentState extends State<_MedsSavedSheetContent>
 
   Widget _buildXpChip(BuildContext context, int xp, Gradient gradient) {
     return Semantics(
-      label: 'Earned $xp XP',
+      label: 'Dapatkan $xp XP',
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
         decoration: BoxDecoration(

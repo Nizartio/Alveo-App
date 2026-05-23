@@ -6,8 +6,8 @@ class ProgressSectionHeader extends StatelessWidget {
 
   const ProgressSectionHeader({
     super.key,
-    this.title = 'Your Progress',
-    this.subtitle = "Keep it up! You're doing amazing this week.",
+    this.title = 'Progresmu',
+    this.subtitle = "Teruskan! Kamu luar biasa minggu ini.",
   });
 
   @override

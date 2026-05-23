@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 
-class NextActionCard extends StatelessWidget {
-  const NextActionCard({super.key});
+class ActionCard extends StatelessWidget {
+  const ActionCard({super.key});
 
   @override
   Widget build(BuildContext context) {
@@ -33,7 +33,7 @@ class NextActionCard extends StatelessWidget {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    'Take Medicine',
+                    'Minum Obat',
                     style: TextStyle(
                       fontSize: 20,
                       fontWeight: FontWeight.bold,
@@ -43,7 +43,7 @@ class NextActionCard extends StatelessWidget {
                   SizedBox(height: 4),
 
                   Text(
-                    '🕛 12:00 PM • After Lunch',
+                    '🕛 12:00 • Sesudah Makan Siang',
                     style: TextStyle(
                       color: Colors.grey,
                     ),
@@ -68,7 +68,7 @@ class NextActionCard extends StatelessWidget {
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
                 Text(
-                  'Mark as Taken',
+                  'Tandai Sudah Diminum',
                   style: TextStyle(
                     color: Colors.white,
                     fontSize: 16,

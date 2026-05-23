@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import '../../../core/theme/app_colors.dart';
 import '../models/medication_form_model.dart';
 import 'intake_rule_selector.dart';
-import 'schedule_time_chip.dart';
 
 class MedicationCard extends StatefulWidget {
   final MedicationFormModel medication;
@@ -31,11 +31,54 @@ class _MedicationCardState extends State<MedicationCard> {
   void initState() {
     super.initState();
     _medication = widget.medication;
+    // Generate jadwal awal jika belum ada tapi frekuensi sudah diisi
+    if (_medication.schedules.length != _medication.frequencyPerDay) {
+      _generateSuggestedSchedules(_medication);
+    }
   }
 
   void _updateMedication(MedicationFormModel updated) {
     setState(() => _medication = updated);
     widget.onUpdate(updated);
+  }
+
+  void _generateSuggestedSchedules(MedicationFormModel updated) {
+    final freq = updated.frequencyPerDay;
+    final currentSchedules = List<TimeOfDay>.from(updated.schedules);
+
+    if (freq > currentSchedules.length) {
+      // Tambah slot jika frekuensi bertambah
+      final slotsNeeded = freq - currentSchedules.length;
+      for (int i = 0; i < slotsNeeded; i++) {
+        // Beri jeda default waktu jadwalnya (misal: jam 8, 14, 20 dst)
+        int hour = 8 + (currentSchedules.length * (16 ~/ freq));
+        if (hour > 23) hour = 23;
+        currentSchedules.add(TimeOfDay(hour: hour, minute: 0));
+      }
+    } else if (freq < currentSchedules.length) {
+      // Hapus slot berlebih jika frekuensi dikurangi
+      currentSchedules.removeRange(freq, currentSchedules.length);
+    }
+    updated.schedules = currentSchedules;
+  }
+
+  Future<void> _editTimeForIndex(int index, TimeOfDay? currentTime) async {
+    final time = await showTimePicker(
+      context: context,
+      initialTime: currentTime ?? TimeOfDay.now(),
+    );
+
+    if (time != null) {
+      final updatedSchedules = List<TimeOfDay>.from(_medication.schedules);
+      if (index < updatedSchedules.length) {
+        updatedSchedules[index] = time;
+      } else {
+        while (updatedSchedules.length <= index) {
+          updatedSchedules.add(time);
+        }
+      }
+      _updateMedication(_medication..schedules = updatedSchedules);
+    }
   }
 
   InputDecoration _fieldDecoration({required String hint}) {
@@ -114,7 +157,7 @@ class _MedicationCardState extends State<MedicationCard> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     const Text(
-                      'Medicine',
+                      'Obat',
                       style: TextStyle(
                         fontSize: 14,
                         fontWeight: FontWeight.w700,
@@ -146,8 +189,7 @@ class _MedicationCardState extends State<MedicationCard> {
                         }
                       },
                       decoration: _fieldDecoration(hint: 'Pilih obat'),
-                      validator: (v) =>
-                          v == null ? 'Please select a medicine' : null,
+                      validator: (v) => v == null ? 'Mohon pilih obat' : null,
                     ),
                   ],
                 ),
@@ -158,7 +200,7 @@ class _MedicationCardState extends State<MedicationCard> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     const Text(
-                      'Dosage',
+                      'Dosis',
                       style: TextStyle(
                         fontSize: 14,
                         fontWeight: FontWeight.w700,
@@ -172,7 +214,7 @@ class _MedicationCardState extends State<MedicationCard> {
                           _updateMedication(_medication..dosage = v),
                       decoration: _fieldDecoration(hint: 'Masukkan dosis'),
                       validator: (v) =>
-                          (v ?? '').isEmpty ? 'Dosage required' : null,
+                          (v ?? '').isEmpty ? 'Dosis diperlukan' : null,
                     ),
                   ],
                 ),
@@ -181,9 +223,9 @@ class _MedicationCardState extends State<MedicationCard> {
           ),
           const SizedBox(height: 16),
 
-          // Frequency Selector
+          // Pemilih Frekuensi (Text Input)
           const Text(
-            'Frequency',
+            'Frekuensi (kali per hari)',
             style: TextStyle(
               fontSize: 14,
               fontWeight: FontWeight.w700,
@@ -191,44 +233,30 @@ class _MedicationCardState extends State<MedicationCard> {
             ),
           ),
           const SizedBox(height: 8),
-          Row(
-            children: [1, 2, 3]
-                .map(
-                  (freq) => Expanded(
-                    child: GestureDetector(
-                      onTap: () => _updateMedication(
-                        _medication..frequencyPerDay = freq,
-                      ),
-                      child: Container(
-                        padding: const EdgeInsets.symmetric(vertical: 10),
-                        decoration: BoxDecoration(
-                          color: _medication.frequencyPerDay == freq
-                              ? AppColors.primary
-                              : AppColors.surfaceSoft,
-                          borderRadius: BorderRadius.circular(10),
-                        ),
-                        child: Center(
-                          child: Text(
-                            '${freq}x/day',
-                            style: TextStyle(
-                              fontWeight: FontWeight.w600,
-                              color: _medication.frequencyPerDay == freq
-                                  ? Colors.white
-                                  : AppColors.textSecondary,
-                            ),
-                          ),
-                        ),
-                      ),
-                    ),
-                  ),
-                )
-                .toList(),
+          TextFormField(
+            initialValue: _medication.frequencyPerDay.toString(),
+            keyboardType: TextInputType.number,
+            inputFormatters: [FilteringTextInputFormatter.digitsOnly],
+            onChanged: (v) {
+              final parsed = int.tryParse(v);
+              if (parsed != null && parsed > 0) {
+                final updated = _medication..frequencyPerDay = parsed;
+                _generateSuggestedSchedules(updated);
+                _updateMedication(updated);
+              }
+            },
+            decoration: _fieldDecoration(hint: 'Contoh: 3'),
+            validator: (v) {
+              final parsed = int.tryParse(v ?? '');
+              if (parsed == null || parsed <= 0) return 'Frekuensi tidak valid';
+              return null;
+            },
           ),
           const SizedBox(height: 16),
 
-          // Intake Rule Selector
+          // Pemilih Aturan Minum
           const Text(
-            'Intake Rule',
+            'Aturan Minum',
             style: TextStyle(
               fontSize: 14,
               fontWeight: FontWeight.w700,
@@ -243,67 +271,9 @@ class _MedicationCardState extends State<MedicationCard> {
           ),
           const SizedBox(height: 16),
 
-          // Schedule Times
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              const Text(
-                'Schedule Times',
-                style: TextStyle(
-                  fontSize: 14,
-                  fontWeight: FontWeight.w700,
-                  color: AppColors.textPrimary,
-                ),
-              ),
-              OutlinedButton.icon(
-                onPressed: () => _showTimePicker(),
-                icon: const Icon(Icons.add, size: 18),
-                label: const Text('Add Time'),
-                style: OutlinedButton.styleFrom(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 12,
-                    vertical: 6,
-                  ),
-                  side: const BorderSide(color: AppColors.primary),
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 8),
-          if (_medication.schedules.isEmpty)
-            Padding(
-              padding: const EdgeInsets.symmetric(vertical: 12),
-              child: Text(
-                'No schedules added',
-                style: TextStyle(color: AppColors.textSecondary, fontSize: 12),
-              ),
-            )
-          else
-            Wrap(
-              spacing: 8,
-              runSpacing: 8,
-              children: _medication.schedules
-                  .asMap()
-                  .entries
-                  .map(
-                    (entry) => ScheduleTimeChip(
-                      time: entry.value,
-                      onRemove: () {
-                        final updated = List<TimeOfDay>.from(
-                          _medication.schedules,
-                        );
-                        updated.removeAt(entry.key);
-                        _updateMedication(_medication..schedules = updated);
-                      },
-                    ),
-                  )
-                  .toList(),
-            ),
-          const SizedBox(height: 16),
-
-          // Reminder Alarm
+          // Waktu Jadwal Tersinkronisasi
           const Text(
-            'Reminder Alarm',
+            'Waktu Jadwal',
             style: TextStyle(
               fontSize: 14,
               fontWeight: FontWeight.w700,
@@ -311,22 +281,109 @@ class _MedicationCardState extends State<MedicationCard> {
             ),
           ),
           const SizedBox(height: 8),
-          TextFormField(
-            initialValue: _medication.reminderMinutesBefore.toString(),
-            keyboardType: TextInputType.number,
-            onChanged: (v) {
-              final parsed = int.tryParse(v);
-              if (parsed != null && parsed >= 0) {
-                _updateMedication(_medication..reminderMinutesBefore = parsed);
+          if (_medication.frequencyPerDay <= 0)
+            const Padding(
+              padding: EdgeInsets.symmetric(vertical: 12),
+              child: Text(
+                'Masukkan frekuensi untuk mengatur jadwal',
+                style: TextStyle(color: AppColors.textSecondary, fontSize: 12),
+              ),
+            )
+          else
+            Column(
+              children: List.generate(_medication.frequencyPerDay, (index) {
+                final time = index < _medication.schedules.length
+                    ? _medication.schedules[index]
+                    : null;
+
+                return Padding(
+                  padding: const EdgeInsets.only(bottom: 8.0),
+                  child: InkWell(
+                    onTap: () => _editTimeForIndex(index, time),
+                    borderRadius: BorderRadius.circular(12),
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 16,
+                        vertical: 12,
+                      ),
+                      decoration: BoxDecoration(
+                        color: AppColors.surfaceSoft,
+                        borderRadius: BorderRadius.circular(12),
+                        border: Border.all(color: Colors.grey.withOpacity(0.2)),
+                      ),
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          Text(
+                            'Jadwal ${index + 1}',
+                            style: const TextStyle(
+                              fontWeight: FontWeight.w600,
+                              color: AppColors.textPrimary,
+                            ),
+                          ),
+                          Row(
+                            children: [
+                              Text(
+                                time?.format(context) ?? 'Pilih Waktu',
+                                style: TextStyle(
+                                  fontWeight: FontWeight.w700,
+                                  color: time != null
+                                      ? AppColors.primary
+                                      : Colors.grey,
+                                ),
+                              ),
+                              const SizedBox(width: 8),
+                              Icon(
+                                Icons.access_time,
+                                size: 18,
+                                color: time != null
+                                    ? AppColors.primary
+                                    : Colors.grey,
+                              ),
+                            ],
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                );
+              }),
+            ),
+          const SizedBox(height: 16),
+
+          // Alarm Pengingat
+          const Text(
+            'Alarm Pengingat (Menit)',
+            style: TextStyle(
+              fontSize: 14,
+              fontWeight: FontWeight.w700,
+              color: AppColors.textPrimary,
+            ),
+          ),
+          const SizedBox(height: 8),
+DropdownButtonFormField<int>(
+            value: [5, 15, 30, 60].contains(_medication.reminderMinutesBefore)
+                ? _medication.reminderMinutesBefore
+                : 15, // Default fallback jika nilainya tidak ada di list
+            isExpanded: true,
+            items: const [
+              DropdownMenuItem(value: 5, child: Text('5 menit sebelum')),
+              DropdownMenuItem(value: 15, child: Text('15 menit sebelum')),
+              DropdownMenuItem(value: 30, child: Text('30 menit sebelum')),
+              DropdownMenuItem(value: 60, child: Text('1 jam sebelum')),
+            ],
+            onChanged: (value) {
+              if (value != null) {
+                _updateMedication(_medication..reminderMinutesBefore = value);
               }
             },
-            decoration: _fieldDecoration(hint: 'Masukkan menit alarm'),
+            decoration: _fieldDecoration(hint: 'Pilih waktu pengingat'),
           ),
           const SizedBox(height: 16),
 
-          // Special Instructions
+          // Instruksi Khusus
           const Text(
-            'Special Instructions (Optional)',
+            'Instruksi Khusus (Opsional)',
             style: TextStyle(
               fontSize: 14,
               fontWeight: FontWeight.w700,
@@ -344,30 +401,5 @@ class _MedicationCardState extends State<MedicationCard> {
         ],
       ),
     );
-  }
-
-  Future<void> _showTimePicker() async {
-    final time = await showTimePicker(
-      context: context,
-      initialTime: TimeOfDay.now(),
-    );
-
-    if (time != null) {
-      // Check if time already exists
-      final exists = _medication.schedules.any(
-        (t) => t.hour == time.hour && t.minute == time.minute,
-      );
-
-      if (exists) {
-        if (mounted) {
-          ScaffoldMessenger.of(
-            context,
-          ).showSnackBar(const SnackBar(content: Text('Time already added')));
-        }
-      } else {
-        final updated = List<TimeOfDay>.from(_medication.schedules)..add(time);
-        _updateMedication(_medication..schedules = updated);
-      }
-    }
   }
 }

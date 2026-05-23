@@ -83,7 +83,7 @@ class SplashPage extends StatelessWidget {
                         ),
                         const SizedBox(height: 26),
                         Text(
-                          'Welcome to Alveo',
+                          'Selamat Datang di Alveo',
                           textAlign: TextAlign.center,
                           style: Theme.of(context).textTheme.headlineMedium
                               ?.copyWith(
@@ -93,7 +93,7 @@ class SplashPage extends StatelessWidget {
                         ),
                         const SizedBox(height: 12),
                         Text(
-                          'Your journey to better breathing starts here.',
+                          'Perjalananmu menuju pernapasan yang lebih baik dimulai di sini.',
                           textAlign: TextAlign.center,
                           style: Theme.of(context).textTheme.titleMedium
                               ?.copyWith(
@@ -119,7 +119,7 @@ class SplashPage extends StatelessWidget {
                               elevation: 0,
                             ),
                             child: const Text(
-                              'Get Started →',
+                              'Mulai Sekarang →',
                               style: TextStyle(
                                 fontSize: 18,
                                 fontWeight: FontWeight.w700,
@@ -146,7 +146,7 @@ class SplashPage extends StatelessWidget {
                               backgroundColor: const Color(0xFFE3E6EF),
                             ),
                             child: const Text(
-                              'I already have an account',
+                              'Saya sudah memiliki akun',
                               style: TextStyle(
                                 fontSize: 16,
                                 fontWeight: FontWeight.w600,
