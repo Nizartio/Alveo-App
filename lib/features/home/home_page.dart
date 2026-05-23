@@ -30,7 +30,7 @@ class HomePage extends StatelessWidget {
           ),
           const SizedBox(height: 24),
           Text(
-            'Next Action',
+            'Tindakan Selanjutnya',
             style: Theme.of(context).textTheme.titleLarge?.copyWith(
               fontSize: 22,
               fontWeight: FontWeight.w800,

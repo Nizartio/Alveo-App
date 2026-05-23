@@ -35,19 +35,19 @@ class BottomNavbar extends StatelessWidget {
         children: [
           _NavItem(
             icon: Icons.home_rounded,
-            label: 'Home',
+            label: 'Beranda',
             isActive: currentIndex == 0,
             onTap: () => onTap(0),
           ),
           _NavItem(
             icon: Icons.medication_rounded,
-            label: 'Meds',
+            label: 'Obat',
             isActive: currentIndex == 1,
             onTap: () => onTap(1),
           ),
           _NavItem(
             icon: Icons.bar_chart_rounded,
-            label: 'Stats',
+            label: 'Statistik',
             isActive: currentIndex == 2,
             onTap: () => onTap(2),
           ),

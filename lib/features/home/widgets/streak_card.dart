@@ -32,7 +32,7 @@ class StreakCard extends StatelessWidget {
           const SizedBox(height: 8),
 
           const Text(
-            '7 Day',
+            '7 Hari',
             style: TextStyle(
               color: Colors.white,
               fontSize: 28,

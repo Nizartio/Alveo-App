@@ -75,7 +75,7 @@ class MedsListAction extends StatelessWidget {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      medication['medicines']?['name'] ?? 'Medicine',
+                      medication['medicines']?['name'] ?? 'Obat',
                       style: const TextStyle(
                         fontSize: 16,
                         fontWeight: FontWeight.w700,
@@ -84,7 +84,7 @@ class MedsListAction extends StatelessWidget {
                     ),
                     const SizedBox(height: 4),
                     Text(
-                      '${medication['dosage'] ?? '0'} • ${medication['frequency_per_day'] ?? 1}x/day',
+                      '${medication['dosage'] ?? '0'} • ${medication['frequency_per_day'] ?? 1}x/hari',
                       style: const TextStyle(
                         fontSize: 13,
                         color: AppColors.textSecondary,
@@ -105,7 +105,7 @@ class MedsListAction extends StatelessWidget {
                           color: AppColors.textSecondary,
                         ),
                         SizedBox(width: 8),
-                        Text('Edit'),
+                        Text('Sunting'),
                       ],
                     ),
                   ),
@@ -119,7 +119,7 @@ class MedsListAction extends StatelessWidget {
                           color: AppColors.textSecondary,
                         ),
                         SizedBox(width: 8),
-                        Text('Pause'),
+                        Text('Jeda'),
                       ],
                     ),
                   ),
@@ -129,7 +129,7 @@ class MedsListAction extends StatelessWidget {
                       children: [
                         Icon(Icons.delete, size: 18, color: Colors.red),
                         SizedBox(width: 8),
-                        Text('Delete', style: TextStyle(color: Colors.red)),
+                        Text('Hapus', style: TextStyle(color: Colors.red)),
                       ],
                     ),
                   ),
@@ -148,7 +148,7 @@ class MedsListAction extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 const Text(
-                  'Schedule',
+                  'Jadwal',
                   style: TextStyle(
                     fontSize: 12,
                     fontWeight: FontWeight.w700,
@@ -157,7 +157,7 @@ class MedsListAction extends StatelessWidget {
                 ),
                 const SizedBox(height: 4),
                 Text(
-                  schedulesList.isNotEmpty ? schedulesList : 'No schedule set',
+                  schedulesList.isNotEmpty ? schedulesList : 'Belum ada jadwal',
                   style: const TextStyle(
                     fontSize: 13,
                     fontWeight: FontWeight.w600,
@@ -181,7 +181,7 @@ class MedsListAction extends StatelessWidget {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   const Text(
-                    'Special Instructions',
+                    'Instruksi Khusus',
                     style: TextStyle(
                       fontSize: 12,
                       fontWeight: FontWeight.w700,

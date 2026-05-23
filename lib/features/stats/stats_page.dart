@@ -57,7 +57,7 @@ class _StatsPageState extends State<StatsPage> {
             const SizedBox(height: 28),
 
             const Text(
-              'Weekly Adherence',
+              'Kepatuhan Mingguan',
               style: TextStyle(
                 fontSize: 20,
                 fontWeight: FontWeight.w700,

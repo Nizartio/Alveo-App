@@ -85,9 +85,9 @@ class _MedsPageState extends State<MedsPage>
     } catch (e) {
       if (mounted) {
         setState(() => _isLoading = false);
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Error loading medications: $e')),
-        );
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('Kesalahan memuat obat: $e')));
       }
     }
   }
@@ -105,7 +105,7 @@ class _MedsPageState extends State<MedsPage>
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
-            content: Text('✓ Medication marked as taken!'),
+            content: Text('✓ Obat ditandai telah diminum!'),
             backgroundColor: Colors.green,
           ),
         );
@@ -115,7 +115,7 @@ class _MedsPageState extends State<MedsPage>
       if (mounted) {
         ScaffoldMessenger.of(
           context,
-        ).showSnackBar(SnackBar(content: Text('Error: $e')));
+        ).showSnackBar(SnackBar(content: Text('Kesalahan: $e')));
       }
     }
   }
@@ -123,7 +123,9 @@ class _MedsPageState extends State<MedsPage>
   void _snooze() {
     ScaffoldMessenger.of(context).showSnackBar(
       const SnackBar(
-        content: Text('Snooze set. You\'ll get a reminder in 15 minutes.'),
+        content: Text(
+          'Tunda diatur. Anda akan mendapat pengingat dalam 15 menit.',
+        ),
       ),
     );
   }
@@ -137,6 +139,22 @@ class _MedsPageState extends State<MedsPage>
       return timeOfDay.format(context);
     } catch (e) {
       return timeStr;
+    }
+  }
+
+  String _getIntakeRuleLabel(String? rule) {
+    switch (rule) {
+      case 'before_meal':
+        return 'Sebelum Makan';
+      case 'after_meal':
+        return 'Setelah Makan';
+      case 'with_meal':
+        return 'Saat Makan';
+      case 'empty_stomach':
+        return 'Perut Kosong';
+      case 'anytime':
+      default:
+        return 'Kapan Saja';
     }
   }
 
@@ -169,7 +187,7 @@ class _MedsPageState extends State<MedsPage>
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Text(
-                            'Good Morning, $_greetingName',
+                            'Pagi yang baik, $_greetingName',
                             style: const TextStyle(
                               fontSize: 20,
                               fontWeight: FontWeight.w700,
@@ -186,7 +204,7 @@ class _MedsPageState extends State<MedsPage>
                               ),
                               const SizedBox(width: 4),
                               Text(
-                                '$_dayStreak Day Streak',
+                                '$_dayStreak Seri Hari',
                                 style: const TextStyle(
                                   fontSize: 12,
                                   fontWeight: FontWeight.w600,
@@ -225,9 +243,10 @@ class _MedsPageState extends State<MedsPage>
                               Column(
                                 crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
-                                  const Text(
-                                    'NEXT UP • 08:00 AM',
-                                    style: TextStyle(
+                                  // REMOVED 'const' here
+                                  Text(
+                                    'BERIKUTNYA • ${_nextMedication != null ? _formatTime(_nextMedication!['scheduled_time'].hour.toString().padLeft(2, '0') + ':' + _nextMedication!['scheduled_time'].minute.toString().padLeft(2, '0')) : ''}',
+                                    style: const TextStyle(
                                       fontSize: 12,
                                       fontWeight: FontWeight.w700,
                                       color: Colors.white70,
@@ -236,7 +255,7 @@ class _MedsPageState extends State<MedsPage>
                                   ),
                                   const SizedBox(height: 8),
                                   const Text(
-                                    'Time for your\nmeds!',
+                                    'Waktunya\nminum obat!',
                                     style: TextStyle(
                                       fontSize: 28,
                                       fontWeight: FontWeight.w800,
@@ -245,7 +264,7 @@ class _MedsPageState extends State<MedsPage>
                                   ),
                                   const SizedBox(height: 8),
                                   const Text(
-                                    "Let's keep that health\nstreak going strong. You\ngot this! 🌟",
+                                    "Mari jaga seri kesehatan\nmu tetap kuat. Kamu bisa! 🌟",
                                     style: TextStyle(
                                       fontSize: 13,
                                       fontWeight: FontWeight.w400,
@@ -298,16 +317,18 @@ class _MedsPageState extends State<MedsPage>
                                             CrossAxisAlignment.start,
                                         children: [
                                           Text(
-                                            _nextMedication!['medicine_name'] ??
-                                                'Medicine',
+                                            _nextMedication!['medicines']?['name'] ??
+                                                _nextMedication!['medicine_name'] ??
+                                                'Obat',
                                             style: const TextStyle(
                                               fontSize: 16,
                                               fontWeight: FontWeight.w700,
                                               color: Colors.white,
                                             ),
                                           ),
+                                          // REMOVED 'const' here
                                           Text(
-                                            '${_nextMedication!['dosage'] ?? '0'} • Empty Stomach',
+                                            '${_nextMedication!['dosage'] ?? '0'} • ${_getIntakeRuleLabel(_nextMedication!['intake_rule'])}',
                                             style: const TextStyle(
                                               fontSize: 12,
                                               fontWeight: FontWeight.w400,
@@ -355,7 +376,7 @@ class _MedsPageState extends State<MedsPage>
                                       onTap: _markAsTaken,
                                       child: const Center(
                                         child: Text(
-                                          'Taken',
+                                          'Diminum',
                                           style: TextStyle(
                                             fontSize: 16,
                                             fontWeight: FontWeight.w700,
@@ -387,7 +408,7 @@ class _MedsPageState extends State<MedsPage>
                                       onTap: _snooze,
                                       child: const Center(
                                         child: Text(
-                                          'Snooze',
+                                          'Tunda',
                                           style: TextStyle(
                                             fontSize: 16,
                                             fontWeight: FontWeight.w700,
@@ -420,7 +441,7 @@ class _MedsPageState extends State<MedsPage>
                       ),
                       child: const Center(
                         child: Text(
-                          'No medications scheduled for today',
+                          'Belum ada obat yang dijadwalkan untuk hari ini',
                           style: TextStyle(
                             fontSize: 14,
                             color: AppColors.textSecondary,
@@ -430,9 +451,9 @@ class _MedsPageState extends State<MedsPage>
                     ),
                   const SizedBox(height: 24),
 
-                  // Quick Actions
+                  // Aksi Cepat
                   const Text(
-                    'Quick Actions',
+                    'Aksi Cepat',
                     style: TextStyle(
                       fontSize: 16,
                       fontWeight: FontWeight.w700,
@@ -444,20 +465,24 @@ class _MedsPageState extends State<MedsPage>
                     children: [
                       Expanded(
                         child: MedsBtnAction(
-                          label: 'Manage Meds',
+                          label: 'Kelola Obat',
                           icon: Icons.calendar_today,
-                          onTap: () => Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                              builder: (_) => const MedicationManagementPage(),
-                            ),
-                          ),
+                          onTap: () async {
+                            await Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (_) =>
+                                    const MedicationManagementPage(),
+                              ),
+                            );
+                            _loadMedicationData(); // Reload setelah ditutup!
+                          },
                         ),
                       ),
                       const SizedBox(width: 12),
                       Expanded(
                         child: MedsBtnAction(
-                          label: 'History',
+                          label: 'Riwayat',
                           icon: Icons.history,
                           onTap: () => Navigator.push(
                             context,
@@ -471,13 +496,13 @@ class _MedsPageState extends State<MedsPage>
                   ),
                   const SizedBox(height: 24),
 
-                  // Your Medications Section
+                  // Bagian Obat Anda
                   if (_activeMedications.isNotEmpty) ...[
                     Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
                         const Text(
-                          'Your Medications',
+                          'Obat-obatan Anda',
                           style: TextStyle(
                             fontSize: 16,
                             fontWeight: FontWeight.w700,
@@ -485,14 +510,18 @@ class _MedsPageState extends State<MedsPage>
                           ),
                         ),
                         GestureDetector(
-                          onTap: () => Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                              builder: (_) => const MedicationManagementPage(),
-                            ),
-                          ),
+                          onTap: () async {
+                            await Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (_) =>
+                                    const MedicationManagementPage(),
+                              ),
+                            );
+                            _loadMedicationData(); // Reload setelah ditutup!
+                          },
                           child: const Text(
-                            'See All',
+                            'Lihat Semua',
                             style: TextStyle(
                               fontSize: 12,
                               fontWeight: FontWeight.w700,
@@ -508,7 +537,7 @@ class _MedsPageState extends State<MedsPage>
                           med['medication_schedules'] as List? ?? [];
                       final scheduleTime = schedules.isNotEmpty
                           ? _formatTime(schedules[0]['time'] as String)
-                          : 'N/A';
+                          : 'T/A';
 
                       return Container(
                         margin: const EdgeInsets.only(bottom: 12),
@@ -547,7 +576,7 @@ class _MedsPageState extends State<MedsPage>
                                 crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
                                   Text(
-                                    med['medicines']?['name'] ?? 'Medicine',
+                                    med['medicines']?['name'] ?? 'Obat',
                                     style: const TextStyle(
                                       fontSize: 14,
                                       fontWeight: FontWeight.w600,
@@ -555,7 +584,7 @@ class _MedsPageState extends State<MedsPage>
                                     ),
                                   ),
                                   Text(
-                                    '${med['dosage'] ?? '0'} • ${med['frequency_per_day'] ?? 1}x/day',
+                                    '${med['dosage'] ?? '0'} • ${med['frequency_per_day'] ?? 1}x/hari',
                                     style: const TextStyle(
                                       fontSize: 12,
                                       color: AppColors.textSecondary,
@@ -586,10 +615,10 @@ class _MedsPageState extends State<MedsPage>
                   ],
                   const SizedBox(height: 24),
 
-                  // Today's Schedule Section
+                  // Bagian Jadwal Hari Ini
                   if (_todaySchedule.isNotEmpty) ...[
                     const Text(
-                      "Today's Schedule",
+                      "Jadwal Hari Ini",
                       style: TextStyle(
                         fontSize: 16,
                         fontWeight: FontWeight.w700,
@@ -648,7 +677,7 @@ class _MedsPageState extends State<MedsPage>
                                 crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
                                   Text(
-                                    schedule['medicine_name'] ?? 'Medicine',
+                                    schedule['medicine_name'] ?? 'Obat',
                                     style: const TextStyle(
                                       fontSize: 14,
                                       fontWeight: FontWeight.w600,

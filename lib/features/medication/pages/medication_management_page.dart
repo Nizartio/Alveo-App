@@ -36,9 +36,9 @@ class _MedicationManagementPageState extends State<MedicationManagementPage> {
     } catch (e) {
       if (mounted) {
         setState(() => _isLoading = false);
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Error loading medications: $e')),
-        );
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('Kesalahan memuat obat: $e')));
       }
     }
   }
@@ -66,14 +66,14 @@ class _MedicationManagementPageState extends State<MedicationManagementPage> {
       if (mounted) {
         ScaffoldMessenger.of(
           context,
-        ).showSnackBar(const SnackBar(content: Text('Medication paused')));
+        ).showSnackBar(const SnackBar(content: Text('Obat dijeda')));
         _loadMedications();
       }
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(
           context,
-        ).showSnackBar(SnackBar(content: Text('Error: $e')));
+        ).showSnackBar(SnackBar(content: Text('Kesalahan: $e')));
       }
     }
   }
@@ -82,12 +82,12 @@ class _MedicationManagementPageState extends State<MedicationManagementPage> {
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
-        title: const Text('Delete Medication'),
-        content: const Text('Are you sure you want to delete this medication?'),
+        title: const Text('Hapus Obat'),
+        content: const Text('Apakah Anda yakin ingin menghapus obat ini?'),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context),
-            child: const Text('Cancel'),
+            child: const Text('Batal'),
           ),
           TextButton(
             onPressed: () async {
@@ -95,20 +95,20 @@ class _MedicationManagementPageState extends State<MedicationManagementPage> {
               try {
                 await _medicationService.deleteMedication(userMedicationId);
                 if (mounted) {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(content: Text('Medication deleted')),
-                  );
+                  ScaffoldMessenger.of(
+                    context,
+                  ).showSnackBar(const SnackBar(content: Text('Obat dihapus')));
                   _loadMedications();
                 }
               } catch (e) {
                 if (mounted) {
                   ScaffoldMessenger.of(
                     context,
-                  ).showSnackBar(SnackBar(content: Text('Error: $e')));
+                  ).showSnackBar(SnackBar(content: Text('Kesalahan: $e')));
                 }
               }
             },
-            child: const Text('Delete', style: TextStyle(color: Colors.red)),
+            child: const Text('Hapus', style: TextStyle(color: Colors.red)),
           ),
         ],
       ),
@@ -117,9 +117,7 @@ class _MedicationManagementPageState extends State<MedicationManagementPage> {
 
   void _editMedication(Map<String, dynamic> medication) {
     ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(
-        content: Text('Edit from medication input is not moved yet'),
-      ),
+      const SnackBar(content: Text('Edit dari input obat belum dipindahkan')),
     );
   }
 
