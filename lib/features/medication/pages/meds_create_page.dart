@@ -50,7 +50,7 @@ class _MedsCreatePageState extends State<MedsCreatePage> {
         setState(() => _isLoading = false);
         ScaffoldMessenger.of(
           context,
-        ).showSnackBar(SnackBar(content: Text('Error loading medicines: $e')));
+        ).showSnackBar(SnackBar(content: Text('Kesalahan memuat obat: $e')));
       }
     }
   }
@@ -60,7 +60,7 @@ class _MedsCreatePageState extends State<MedsCreatePage> {
       setState(() => _medications.removeAt(index));
     } else {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('At least one medicine is required')),
+        const SnackBar(content: Text('Setidaknya satu obat diperlukan')),
       );
     }
   }
@@ -71,7 +71,7 @@ class _MedsCreatePageState extends State<MedsCreatePage> {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text(
-              'Medication ${i + 1}: Please fill all required fields and add at least one schedule time',
+              'Obat ${i + 1}: Mohon isi semua field yang diperlukan dan tambahkan setidaknya satu waktu jadwal',
             ),
           ),
         );
@@ -91,19 +91,19 @@ class _MedsCreatePageState extends State<MedsCreatePage> {
         medications: _medications,
       );
       if (mounted) {
-        await showMedsSavedBottomSheet(
-          context,
-          xpAmount: 10,
-          onContinue: () {
-            Navigator.of(context).pop();
-          },
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('✓ Obat berhasil disimpan'),
+            backgroundColor: Colors.green,
+          ),
         );
+        Navigator.of(context).pop();
       }
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('Error saving medication: $e'),
+            content: Text('Kesalahan menyimpan obat: $e'),
             backgroundColor: Colors.red,
           ),
         );
@@ -163,6 +163,37 @@ class _MedsCreatePageState extends State<MedsCreatePage> {
                                   canRemove: _medications.length > 1,
                                 );
                               }).toList(),
+                              const SizedBox(height: 20),
+                              SizedBox(
+                                width: double.infinity,
+                                height: 48,
+                                child: OutlinedButton.icon(
+                                  onPressed: _isSaving
+                                      ? null
+                                      : () {
+                                          setState(
+                                            () => _medications.add(
+                                              MedicationFormModel(
+                                                medicineName: '',
+                                                dosage: '',
+                                                frequencyPerDay: 1,
+                                                intakeRule: 'anytime',
+                                                reminderMinutesBefore: 15,
+                                                schedules: [],
+                                              ),
+                                            ),
+                                          );
+                                        },
+                                  icon: const Icon(Icons.add),
+                                  label: const Text('Tambah Obat Lain'),
+                                  style: OutlinedButton.styleFrom(
+                                    side: const BorderSide(
+                                      color: AppColors.primary,
+                                      width: 2,
+                                    ),
+                                  ),
+                                ),
+                              ),
                               const SizedBox(height: 24),
                               SizedBox(
                                 width: double.infinity,
@@ -198,7 +229,7 @@ class _MedsCreatePageState extends State<MedsCreatePage> {
                                                 ),
                                               )
                                             : const Text(
-                                                'Save Medication',
+                                                'Simpan Obat',
                                                 style: TextStyle(
                                                   color: Colors.white,
                                                   fontSize: 16,

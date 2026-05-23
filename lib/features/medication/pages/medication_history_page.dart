@@ -43,7 +43,7 @@ class _MedicationHistoryPageState extends State<MedicationHistoryPage> {
         setState(() => _isLoading = false);
         ScaffoldMessenger.of(
           context,
-        ).showSnackBar(SnackBar(content: Text('Error loading history: $e')));
+        ).showSnackBar(SnackBar(content: Text('Kesalahan memuat riwayat: $e')));
       }
     }
   }
@@ -57,11 +57,11 @@ class _MedicationHistoryPageState extends State<MedicationHistoryPage> {
       if (date.year == today.year &&
           date.month == today.month &&
           date.day == today.day) {
-        return 'TODAY';
+        return 'HARI INI';
       } else if (date.year == yesterday.year &&
           date.month == yesterday.month &&
           date.day == yesterday.day) {
-        return 'YESTERDAY';
+        return 'KEMARIN';
       } else {
         return DateFormat('MMM d, yyyy').format(date);
       }
@@ -129,7 +129,7 @@ class _MedicationHistoryPageState extends State<MedicationHistoryPage> {
           ),
         ),
         title: const Text(
-          'Medication History',
+          'Riwayat Obat',
           style: TextStyle(
             color: AppColors.textPrimary,
             fontSize: 18,
@@ -173,7 +173,7 @@ class _MedicationHistoryPageState extends State<MedicationHistoryPage> {
                             ),
                             const SizedBox(height: 4),
                             const Text(
-                              'Adherence',
+                              'Kepatuhan',
                               style: TextStyle(
                                 fontSize: 12,
                                 fontWeight: FontWeight.w600,
@@ -209,7 +209,7 @@ class _MedicationHistoryPageState extends State<MedicationHistoryPage> {
                             ),
                             const SizedBox(height: 4),
                             const Text(
-                              'Day Streak',
+                              'Seri Hari',
                               style: TextStyle(
                                 fontSize: 12,
                                 fontWeight: FontWeight.w600,
@@ -242,7 +242,7 @@ class _MedicationHistoryPageState extends State<MedicationHistoryPage> {
                           ),
                           const SizedBox(height: 16),
                           const Text(
-                            'No History Yet',
+                            'Belum Ada Riwayat',
                             style: TextStyle(
                               fontSize: 16,
                               fontWeight: FontWeight.w700,
@@ -251,7 +251,7 @@ class _MedicationHistoryPageState extends State<MedicationHistoryPage> {
                           ),
                           const SizedBox(height: 8),
                           const Text(
-                            'Start taking medications to see your history',
+                            'Mulai minum obat untuk melihat riwayatmu',
                             style: TextStyle(
                               fontSize: 13,
                               color: AppColors.textSecondary,
@@ -368,8 +368,7 @@ class _MedicationHistoryPageState extends State<MedicationHistoryPage> {
                                             CrossAxisAlignment.start,
                                         children: [
                                           Text(
-                                            entry['medicine_name'] ??
-                                                'Medicine',
+                                            entry['medicine_name'] ?? 'Obat',
                                             style: const TextStyle(
                                               fontSize: 14,
                                               fontWeight: FontWeight.w600,
@@ -388,7 +387,7 @@ class _MedicationHistoryPageState extends State<MedicationHistoryPage> {
                                     ),
                                     if (isTaken)
                                       const Text(
-                                        'Taken',
+                                        'Diminum',
                                         style: TextStyle(
                                           fontSize: 11,
                                           fontWeight: FontWeight.w700,
@@ -397,7 +396,7 @@ class _MedicationHistoryPageState extends State<MedicationHistoryPage> {
                                       )
                                     else
                                       const Text(
-                                        'Missed',
+                                        'Terlewat',
                                         style: TextStyle(
                                           fontSize: 11,
                                           fontWeight: FontWeight.w700,
