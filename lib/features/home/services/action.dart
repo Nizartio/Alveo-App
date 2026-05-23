@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 
-class NextActionCard extends StatelessWidget {
-  const NextActionCard({super.key});
+class ActionCard extends StatelessWidget {
+  const ActionCard({super.key});
 
   @override
   Widget build(BuildContext context) {

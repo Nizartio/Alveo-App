@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 
-class GoalCard extends StatelessWidget {
-  const GoalCard({super.key});
+class DailyGoalCard extends StatelessWidget {
+  const DailyGoalCard({super.key});
 
   @override
   Widget build(BuildContext context) {

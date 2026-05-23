@@ -172,7 +172,7 @@ class _MedsPageState extends State<MedsPage>
           : SingleChildScrollView(
               padding: EdgeInsets.fromLTRB(
                 20,
-                8,
+                mq.viewPadding.top + 8,
                 20,
                 navHeight + bottomInset + 28,
               ),

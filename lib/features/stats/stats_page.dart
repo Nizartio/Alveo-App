@@ -44,7 +44,12 @@ class _StatsPageState extends State<StatsPage> {
       backgroundColor: const Color(0xFFF5F3FF),
       body: SingleChildScrollView(
         physics: const BouncingScrollPhysics(),
-        padding: EdgeInsets.fromLTRB(20, 8, 20, navHeight + bottomInset + 28),
+        padding: EdgeInsets.fromLTRB(
+          20,
+          mq.viewPadding.top + 8,
+          20,
+          navHeight + bottomInset + 28,
+        ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
