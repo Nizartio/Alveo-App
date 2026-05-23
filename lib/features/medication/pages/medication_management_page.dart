@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import '../../../core/theme/app_colors.dart';
+import '../models/medication_form_model.dart';
 import '../widgets/meds_list_action.dart';
 import '../widgets/meds_modal_input.dart';
 import '../services/medication_service.dart';
@@ -52,6 +53,63 @@ class _MedicationManagementPageState extends State<MedicationManagementPage> {
       useSafeArea: true,
       backgroundColor: Colors.transparent,
       builder: (_) => const MedsModalInput(),
+    ).then((_) {
+      if (mounted) {
+        _loadMedications();
+      }
+    });
+  }
+
+  TimeOfDay _parseScheduleTime(String timeStr) {
+    try {
+      final parts = timeStr.split(':');
+      return TimeOfDay(hour: int.parse(parts[0]), minute: int.parse(parts[1]));
+    } catch (_) {
+      return TimeOfDay.now();
+    }
+  }
+
+  MedicationFormModel _buildMedicationFormModel(
+    Map<String, dynamic> medication,
+  ) {
+    final medicine = medication['medicines'];
+    final schedules = (medication['medication_schedules'] as List? ?? []).map((
+      schedule,
+    ) {
+      final time = schedule['time']?.toString() ?? '08:00:00';
+      return _parseScheduleTime(time);
+    }).toList();
+
+    return MedicationFormModel(
+      medicineId: medication['medicine_id']?.toString(),
+      medicineName: medicine is Map<String, dynamic>
+          ? medicine['name']?.toString() ?? ''
+          : '',
+      dosage: medication['dosage']?.toString() ?? '',
+      frequencyPerDay:
+          medication['frequency_per_day'] as int? ?? schedules.length,
+      intakeRule: medication['intake_rule']?.toString() ?? 'anytime',
+      specialInstruction:
+          medication['special_instruction']?.toString() ??
+          medication['special_instructions']?.toString(),
+      reminderMinutesBefore:
+          medication['reminder_minutes_before'] as int? ?? 15,
+      schedules: schedules,
+    );
+  }
+
+  void _editMedication(Map<String, dynamic> medication) {
+    showModalBottomSheet<void>(
+      context: context,
+      isScrollControlled: true,
+      isDismissible: true,
+      enableDrag: true,
+      useSafeArea: true,
+      backgroundColor: Colors.transparent,
+      builder: (_) => MedsModalInput(
+        initialMedication: _buildMedicationFormModel(medication),
+        userMedicationId: medication['id']?.toString(),
+      ),
     ).then((_) {
       if (mounted) {
         _loadMedications();
@@ -112,12 +170,6 @@ class _MedicationManagementPageState extends State<MedicationManagementPage> {
           ),
         ],
       ),
-    );
-  }
-
-  void _editMedication(Map<String, dynamic> medication) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('Edit dari input obat belum dipindahkan')),
     );
   }
 

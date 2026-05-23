@@ -251,6 +251,26 @@ class MedicationService {
     }
   }
 
+  /// Fetch current user's streak (from user_profile.current_streak)
+  Future<int> fetchCurrentStreak() async {
+    try {
+      final user = supabase.auth.currentUser;
+      if (user == null) return 0;
+
+      final resp = await supabase
+          .from('user_profile')
+          .select('current_streak')
+          .eq('user_id', user.id)
+          .maybeSingle();
+
+      if (resp == null) return 0;
+      final streak = resp['current_streak'] as int?;
+      return streak ?? 0;
+    } catch (e) {
+      return 0;
+    }
+  }
+
   /// Fetch next upcoming medication schedule
   Future<Map<String, dynamic>?> fetchNextMedicationSchedule() async {
     try {
@@ -267,10 +287,51 @@ class MedicationService {
       Map<String, dynamic>? nextMed;
       Duration? minDuration;
 
+      // Fetch today's logs for all user's medications in one query so we can
+      // skip schedules that already have a 'taken' entry for today.
+      final today = DateTime(now.year, now.month, now.day);
+      final todayStr = today.toIso8601String().split('T')[0];
+
+      final userMedIds = medications
+          .map((m) => m['id']?.toString())
+          .whereType<String>()
+          .toList();
+      Map<String, String> takenMap = {}; // key: '$userMedId|HH:mm:ss' -> status
+      if (userMedIds.isNotEmpty) {
+        try {
+          final logs = await supabase
+              .from('medication_logs')
+              .select('user_medication_id, scheduled_time, status')
+              .inFilter('user_medication_id', userMedIds)
+              .eq('date', todayStr);
+
+          for (final l in (logs as List)) {
+            final uid = l['user_medication_id']?.toString();
+            final sched = l['scheduled_time']?.toString();
+            final status = l['status']?.toString() ?? '';
+            if (uid != null && sched != null) {
+              takenMap['$uid|$sched'] = status;
+            }
+          }
+        } catch (_) {
+          // If fetching logs fails for any reason, fall back to schedule-only
+          // behavior. We don't want this to block showing the next schedule.
+          takenMap = {};
+        }
+      }
+
       for (final med in medications) {
         final schedules = med['medication_schedules'] as List? ?? [];
         for (final schedule in schedules) {
           final timeStr = schedule['time'] as String;
+
+          // Skip if there's already a taken log for this medication+time today
+          final takenKey = '${med['id']?.toString() ?? ''}|$timeStr';
+          final statusForKey = takenMap[takenKey];
+          if (statusForKey != null && statusForKey == 'taken') {
+            continue;
+          }
+
           final parts = timeStr.split(':');
           final scheduledTime = TimeOfDay(
             hour: int.parse(parts[0]),
@@ -351,34 +412,45 @@ class MedicationService {
             .select()
             .single();
 
-        // Add XP event
-        await supabase.from('xp_events').insert({
-          'user_id': user.id,
-          'medication_log_id': logResponse['id'],
-          'xp_delta': 10,
-          'reason': 'med_taken',
-        });
+        // Add XP event and update profile. These can fail under strict RLS
+        // rules (e.g. if xp_events insert is denied). Do not let those
+        // failures prevent marking the medication as taken — swallow and
+        // surface only a warning so UI can remain responsive.
+        try {
+          await supabase.from('xp_events').insert({
+            'user_id': user.id,
+            'medication_log_id': logResponse['id'],
+            'xp_delta': 10,
+            'reason': 'med_taken',
+          });
 
-        // Fetch current user profile to safely increment values
-        final currentProfile = await supabase
-            .from('user_profile')
-            .select('total_xp, total_meds_taken')
-            .eq('user_id', user.id)
-            .single();
+          // Fetch current user profile to safely increment values
+          final currentProfile = await supabase
+              .from('user_profile')
+              .select('total_xp, total_meds_taken')
+              .eq('user_id', user.id)
+              .single();
 
-        final newTotalXp = (currentProfile['total_xp'] as int? ?? 0) + 10;
-        final newMedsTaken =
-            (currentProfile['total_meds_taken'] as int? ?? 0) + 1;
+          final newTotalXp = (currentProfile['total_xp'] as int? ?? 0) + 10;
+          final newMedsTaken =
+              (currentProfile['total_meds_taken'] as int? ?? 0) + 1;
 
-        // Update user profile with incremented values
-        await supabase
-            .from('user_profile')
-            .update({
-              'total_xp': newTotalXp,
-              'total_meds_taken': newMedsTaken,
-              'updated_at': now.toIso8601String(),
-            })
-            .eq('user_id', user.id);
+          // Update user profile with incremented values
+          await supabase
+              .from('user_profile')
+              .update({
+                'total_xp': newTotalXp,
+                'total_meds_taken': newMedsTaken,
+                'updated_at': now.toIso8601String(),
+              })
+              .eq('user_id', user.id);
+        } catch (e) {
+          // Non-fatal: log/send to monitoring in real app. Keep function
+          // successful so UI reflects the taken state even if xp insert
+          // is rejected by RLS.
+          // ignore: avoid_print
+          print('Warning: failed to create xp event or update profile: $e');
+        }
       }
     } catch (e) {
       throw Exception('Failed to mark medication as taken: $e');
@@ -447,6 +519,11 @@ class MedicationService {
     int days = 30,
   }) async {
     try {
+      final userMedicationIds = await _fetchCurrentUserMedicationIds();
+      if (userMedicationIds.isEmpty) {
+        return [];
+      }
+
       final startDate = DateTime.now().subtract(Duration(days: days));
       final startDateStr = startDate.toString().split(' ')[0];
 
@@ -459,18 +536,260 @@ class MedicationService {
             scheduled_time,
             taken_at,
             status,
+            xp_awarded,
             user_medications(
+              id,
               dosage,
               frequency_per_day,
+              special_instruction,
               medicines:medicine_id(name)
             )
           ''')
           .gte('date', startDateStr)
           .order('date', ascending: false);
 
-      return List<Map<String, dynamic>>.from(response);
+      final logs = List<Map<String, dynamic>>.from(response);
+      return logs
+          .where(
+            (log) => userMedicationIds.contains(
+              log['user_medication_id']?.toString(),
+            ),
+          )
+          .map((log) => Map<String, dynamic>.from(log))
+          .toList();
     } catch (e) {
       throw Exception('Failed to fetch medication history: $e');
+    }
+  }
+
+  Future<List<String>> _fetchCurrentUserMedicationIds() async {
+    final user = supabase.auth.currentUser;
+    if (user == null) {
+      throw Exception('User not authenticated');
+    }
+
+    final response = await supabase
+        .from('treatment_plans')
+        .select('user_medications(id)')
+        .eq('user_id', user.id);
+
+    final plans = List<Map<String, dynamic>>.from(response);
+    final medicationIds = <String>[];
+
+    for (final plan in plans) {
+      final userMedications = plan['user_medications'] as List? ?? [];
+      for (final medication in userMedications) {
+        final medicationId = medication['id']?.toString();
+        if (medicationId != null && medicationId.isNotEmpty) {
+          medicationIds.add(medicationId);
+        }
+      }
+    }
+
+    return medicationIds;
+  }
+
+  Future<Map<String, dynamic>?> _fetchMedicationLogById(String logId) async {
+    final response = await supabase
+        .from('medication_logs')
+        .select(
+          'id, user_medication_id, date, scheduled_time, taken_at, status, xp_awarded',
+        )
+        .eq('id', logId)
+        .maybeSingle();
+
+    if (response == null) {
+      return null;
+    }
+
+    return Map<String, dynamic>.from(response);
+  }
+
+  Future<void> _adjustUserProfileTotals({
+    required int xpDelta,
+    required int medsDelta,
+  }) async {
+    final user = supabase.auth.currentUser;
+    if (user == null) {
+      throw Exception('User not authenticated');
+    }
+
+    final currentProfile = await supabase
+        .from('user_profile')
+        .select('total_xp, total_meds_taken')
+        .eq('user_id', user.id)
+        .single();
+
+    final currentXp = currentProfile['total_xp'] as int? ?? 0;
+    final currentMedsTaken = currentProfile['total_meds_taken'] as int? ?? 0;
+
+    final newTotalXp = (currentXp + xpDelta).clamp(0, 1 << 31);
+    final newMedsTaken = (currentMedsTaken + medsDelta).clamp(0, 1 << 31);
+
+    await supabase
+        .from('user_profile')
+        .update({
+          'total_xp': newTotalXp,
+          'total_meds_taken': newMedsTaken,
+          'updated_at': DateTime.now().toIso8601String(),
+        })
+        .eq('user_id', user.id);
+  }
+
+  Future<void> _syncXpEventForLog({
+    required String logId,
+    required bool shouldHaveXp,
+  }) async {
+    final user = supabase.auth.currentUser;
+    if (user == null) {
+      throw Exception('User not authenticated');
+    }
+
+    final existingEvents = await supabase
+        .from('xp_events')
+        .select('id')
+        .eq('medication_log_id', logId);
+
+    if (shouldHaveXp) {
+      if ((existingEvents as List).isEmpty) {
+        await supabase.from('xp_events').insert({
+          'user_id': user.id,
+          'medication_log_id': logId,
+          'xp_delta': 10,
+          'reason': 'med_taken',
+        });
+        await _adjustUserProfileTotals(xpDelta: 10, medsDelta: 1);
+      }
+    } else if (existingEvents.isNotEmpty) {
+      await supabase.from('xp_events').delete().eq('medication_log_id', logId);
+      await _adjustUserProfileTotals(xpDelta: -10, medsDelta: -1);
+    }
+  }
+
+  Future<void> createMedicationLog({
+    required String userMedicationId,
+    required DateTime date,
+    required TimeOfDay scheduledTime,
+    required String status,
+  }) async {
+    try {
+      final userMedicationIds = await _fetchCurrentUserMedicationIds();
+      if (!userMedicationIds.contains(userMedicationId)) {
+        throw Exception('Medication does not belong to the current user');
+      }
+
+      final normalizedStatus = status.trim().isEmpty ? 'taken' : status.trim();
+      final timeStr =
+          '${scheduledTime.hour.toString().padLeft(2, '0')}:${scheduledTime.minute.toString().padLeft(2, '0')}:00';
+      final takenAt = normalizedStatus == 'taken'
+          ? DateTime.now().toIso8601String()
+          : null;
+
+      final logResponse = await supabase
+          .from('medication_logs')
+          .insert({
+            'user_medication_id': userMedicationId,
+            'date': date.toIso8601String().split('T')[0],
+            'scheduled_time': timeStr,
+            'taken_at': takenAt,
+            'status': normalizedStatus,
+            'xp_awarded': normalizedStatus == 'taken',
+          })
+          .select('id')
+          .single();
+
+      if (normalizedStatus == 'taken') {
+        await _syncXpEventForLog(
+          logId: logResponse['id'] as String,
+          shouldHaveXp: true,
+        );
+      }
+    } catch (e) {
+      throw Exception('Failed to create medication log: $e');
+    }
+  }
+
+  Future<void> updateMedicationLog({
+    required String logId,
+    required String userMedicationId,
+    required DateTime date,
+    required TimeOfDay scheduledTime,
+    required String status,
+  }) async {
+    try {
+      final userMedicationIds = await _fetchCurrentUserMedicationIds();
+      if (!userMedicationIds.contains(userMedicationId)) {
+        throw Exception('Medication does not belong to the current user');
+      }
+
+      final existingLog = await _fetchMedicationLogById(logId);
+      if (existingLog == null) {
+        throw Exception('Medication log not found');
+      }
+
+      if (!userMedicationIds.contains(
+        existingLog['user_medication_id']?.toString(),
+      )) {
+        throw Exception('Medication log does not belong to the current user');
+      }
+
+      final previousStatus = existingLog['status']?.toString() ?? 'missed';
+      final normalizedStatus = status.trim().isEmpty
+          ? previousStatus
+          : status.trim();
+      final timeStr =
+          '${scheduledTime.hour.toString().padLeft(2, '0')}:${scheduledTime.minute.toString().padLeft(2, '0')}:00';
+
+      await supabase
+          .from('medication_logs')
+          .update({
+            'user_medication_id': userMedicationId,
+            'date': date.toIso8601String().split('T')[0],
+            'scheduled_time': timeStr,
+            'taken_at': normalizedStatus == 'taken'
+                ? (existingLog['taken_at'] ?? DateTime.now().toIso8601String())
+                : null,
+            'status': normalizedStatus,
+            'xp_awarded': normalizedStatus == 'taken',
+          })
+          .eq('id', logId);
+
+      final wasTaken = previousStatus == 'taken';
+      final isTaken = normalizedStatus == 'taken';
+
+      if (wasTaken != isTaken) {
+        await _syncXpEventForLog(logId: logId, shouldHaveXp: isTaken);
+      }
+    } catch (e) {
+      throw Exception('Failed to update medication log: $e');
+    }
+  }
+
+  Future<void> deleteMedicationLog(String logId) async {
+    try {
+      final existingLog = await _fetchMedicationLogById(logId);
+      if (existingLog == null) {
+        throw Exception('Medication log not found');
+      }
+
+      final userMedicationIds = await _fetchCurrentUserMedicationIds();
+      if (!userMedicationIds.contains(
+        existingLog['user_medication_id']?.toString(),
+      )) {
+        throw Exception('Medication log does not belong to the current user');
+      }
+
+      if (existingLog['status']?.toString() == 'taken') {
+        await supabase
+            .from('xp_events')
+            .delete()
+            .eq('medication_log_id', logId);
+        await _adjustUserProfileTotals(xpDelta: -10, medsDelta: -1);
+      }
+
+      await supabase.from('medication_logs').delete().eq('id', logId);
+    } catch (e) {
+      throw Exception('Failed to delete medication log: $e');
     }
   }
 
@@ -482,6 +801,52 @@ class MedicationService {
           .eq('id', userMedicationId);
     } catch (e) {
       throw Exception('Failed to update medication status: $e');
+    }
+  }
+
+  Future<void> updateUserMedication({
+    required String userMedicationId,
+    required String medicineId,
+    required String dosage,
+    required int frequencyPerDay,
+    required String intakeRule,
+    required String? specialInstruction,
+    required int reminderMinutesBefore,
+    required List<String> times,
+  }) async {
+    try {
+      final userMedicationIds = await _fetchCurrentUserMedicationIds();
+      if (!userMedicationIds.contains(userMedicationId)) {
+        throw Exception('Medication does not belong to the current user');
+      }
+
+      await supabase
+          .from('user_medications')
+          .update({
+            'medicine_id': medicineId,
+            'dosage': dosage,
+            'frequency_per_day': frequencyPerDay,
+            'intake_rule': intakeRule,
+            'special_instruction': specialInstruction ?? '',
+            'reminder_minutes_before': reminderMinutesBefore,
+          })
+          .eq('id', userMedicationId);
+
+      await supabase
+          .from('medication_schedules')
+          .delete()
+          .eq('user_medication_id', userMedicationId);
+
+      if (times.isNotEmpty) {
+        final schedules = times
+            .map(
+              (time) => {'user_medication_id': userMedicationId, 'time': time},
+            )
+            .toList();
+        await supabase.from('medication_schedules').insert(schedules);
+      }
+    } catch (e) {
+      throw Exception('Failed to update user medication: $e');
     }
   }
 

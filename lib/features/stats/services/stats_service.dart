@@ -1,4 +1,5 @@
 import 'package:supabase_flutter/supabase_flutter.dart';
+import '../../medication/services/medication_service.dart';
 
 class StatsService {
   final supabase = Supabase.instance.client;
@@ -36,21 +37,34 @@ class StatsService {
       final monday = now.subtract(Duration(days: now.weekday - 1));
       final mondayStr = monday.toString().split(' ')[0];
 
-      // Fetch medication logs for this week
-      final logs = await supabase
-          .from('medication_logs')
-          .select('id, status')
-          .eq('user_id', user.id)
-          .gte('date', mondayStr);
+      // Determine current user's medication ids then fetch logs for them
+      final medService = MedicationService();
+      final meds = await medService.fetchActiveMedications();
+      final medIds = meds
+          .map((m) => m['id']?.toString())
+          .whereType<String>()
+          .toList();
 
-      if (logs.isEmpty) {
+      if (medIds.isEmpty) {
         return 0;
       }
 
-      final takenCount = (logs as List)
+      final medIdsQuery = '(${medIds.map((id) => '"$id"').join(',')})';
+      final logsRaw = await supabase
+          .from('medication_logs')
+          .select('id, status')
+          .gte('date', mondayStr)
+          .filter('user_medication_id', 'in', medIdsQuery);
+
+      final logsList = List.from(logsRaw as List);
+      if (logsList.isEmpty) {
+        return 0;
+      }
+
+      final takenCount = logsList
           .where((log) => log['status'] == 'taken')
           .length;
-      final adherence = (takenCount / logs.length) * 100;
+      final adherence = (takenCount / logsList.length) * 100;
 
       return adherence.clamp(0, 100).toDouble();
     } catch (e) {
@@ -70,11 +84,21 @@ class StatsService {
       final monday = now.subtract(Duration(days: now.weekday - 1));
       final mondayStr = monday.toString().split(' ')[0];
 
-      final logs = await supabase
+      // Scope logs to current user's medications
+      final medService = MedicationService();
+      final meds = await medService.fetchActiveMedications();
+      final medIds = meds
+          .map((m) => m['id']?.toString())
+          .whereType<String>()
+          .toList();
+
+      final medIdsQuery = '(${medIds.map((id) => '"$id"').join(',')})';
+      final logsRaw = await supabase
           .from('medication_logs')
           .select('date, status')
-          .eq('user_id', user.id)
-          .gte('date', mondayStr);
+          .gte('date', mondayStr)
+          .filter('user_medication_id', 'in', medIdsQuery);
+      final logs = List.from(logsRaw);
 
       // Group by date and calculate adherence for each day
       Map<String, int> takenByDate = {};

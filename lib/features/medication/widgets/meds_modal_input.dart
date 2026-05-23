@@ -1,8 +1,16 @@
 import 'package:flutter/material.dart';
+import '../models/medication_form_model.dart';
 import '../pages/meds_create_page.dart';
 
 class MedsModalInput extends StatelessWidget {
-  const MedsModalInput({super.key});
+  const MedsModalInput({
+    super.key,
+    this.initialMedication,
+    this.userMedicationId,
+  });
+
+  final MedicationFormModel? initialMedication;
+  final String? userMedicationId;
 
   @override
   Widget build(BuildContext context) {
@@ -17,7 +25,10 @@ class MedsModalInput extends StatelessWidget {
           borderRadius: const BorderRadius.vertical(top: Radius.circular(28)),
           child: SizedBox(
             height: screenHeight * 0.9,
-            child: const MedsCreatePage(),
+            child: MedsCreatePage(
+              initialMedication: initialMedication,
+              userMedicationId: userMedicationId,
+            ),
           ),
         ),
       ),
