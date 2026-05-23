@@ -1,7 +1,14 @@
 import 'package:flutter/material.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 
 class StatsHeader extends StatelessWidget {
   const StatsHeader({super.key});
+
+  Future<void> _logout(BuildContext context) async {
+    await Supabase.instance.client.auth.signOut();
+    if (!context.mounted) return;
+    Navigator.of(context).pushNamedAndRemoveUntil('/login', (route) => false);
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -23,30 +30,58 @@ class StatsHeader extends StatelessWidget {
         ),
         child: Row(
           children: [
-            Container(
-              width: 40,
-              height: 40,
-              decoration: BoxDecoration(
-                color: const Color(0xFFF5F3FF),
-                borderRadius: BorderRadius.circular(100),
+            PopupMenuButton<String>(
+              tooltip: 'Profile',
+              onSelected: (value) {
+                if (value == 'logout') {
+                  _logout(context);
+                }
+              },
+              offset: const Offset(0, 56),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(16),
               ),
-              child: Center(
-                child: Container(
-                  width: 48,
-                  height: 48,
-                  padding: const EdgeInsets.all(2),
-                  decoration: BoxDecoration(
-                    shape: BoxShape.circle,
-                    border: Border.all(color: Colors.white, width: 2),
+              itemBuilder: (context) => [
+                PopupMenuItem<String>(
+                  value: 'logout',
+                  child: Row(
+                    children: const [
+                      Icon(
+                        Icons.logout_rounded,
+                        size: 18,
+                        color: Color(0xFFE25555),
+                      ),
+                      SizedBox(width: 10),
+                      Text('Logout'),
+                    ],
                   ),
-                  child: ClipPath(
-                    child: Align(
-                      alignment: Alignment.bottomCenter,
-                      child: Image.asset(
-                        'lib/assets/profile.png',
-                        width: 40,
-                        height: 40,
-                        fit: BoxFit.contain,
+                ),
+              ],
+              child: Container(
+                width: 40,
+                height: 40,
+                decoration: BoxDecoration(
+                  color: const Color(0xFFF5F3FF),
+                  borderRadius: BorderRadius.circular(100),
+                ),
+                child: Center(
+                  child: Container(
+                    width: 48,
+                    height: 48,
+                    padding: const EdgeInsets.all(2),
+                    decoration: BoxDecoration(
+                      shape: BoxShape.circle,
+                      border: Border.all(color: Colors.white, width: 2),
+                    ),
+                    child: ClipPath(
+                      child: Align(
+                        alignment: Alignment.bottomCenter,
+                        child: Image.asset(
+                          'lib/assets/profile.png',
+                          width: 40,
+                          height: 40,
+                          fit: BoxFit.contain,
+                        ),
                       ),
                     ),
                   ),

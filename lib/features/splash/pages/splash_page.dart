@@ -1,7 +1,37 @@
 import 'package:flutter/material.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 
-class SplashPage extends StatelessWidget {
+class SplashPage extends StatefulWidget {
   const SplashPage({super.key});
+
+  @override
+  State<SplashPage> createState() => _SplashPageState();
+}
+
+class _SplashPageState extends State<SplashPage> {
+  final _supabase = Supabase.instance.client;
+  bool _hasCheckedAuth = false;
+
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _resolveAuthState();
+    });
+  }
+
+  Future<void> _resolveAuthState() async {
+    if (_hasCheckedAuth || !mounted) return;
+    _hasCheckedAuth = true;
+
+    final user = _supabase.auth.currentUser;
+    final targetRoute = user == null ? '/login' : '/home';
+
+    await Future<void>.delayed(const Duration(milliseconds: 300));
+
+    if (!mounted) return;
+    Navigator.of(context).pushReplacementNamed(targetRoute);
+  }
 
   @override
   Widget build(BuildContext context) {
