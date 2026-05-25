@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 
-import 'widgets/action.dart';
-import 'widgets/daily_goal.dart';
-import 'widgets/greeting.dart';
-import 'widgets/streak.dart';
+import 'widgets/action_card.dart';
+import 'widgets/goal_card.dart';
+import 'widgets/header.dart';
+import 'widgets/streak_card.dart';
 import '../../core/theme/app_colors.dart';
 
 class HomePage extends StatelessWidget {
@@ -20,13 +20,13 @@ class HomePage extends StatelessWidget {
       body: ListView(
         padding: EdgeInsets.fromLTRB(36, topPad + 16, 36, bottomPad + 16),
         children: [
-          const GreetingCard(),
+          const HeaderContent(),
           const SizedBox(height: 20),
           Row(
             children: const [
               Expanded(child: StreakCard()),
               SizedBox(width: 16),
-              Expanded(child: DailyGoalCard()),
+              Expanded(child: GoalCard()),
             ],
           ),
           const SizedBox(height: 24),
@@ -38,7 +38,7 @@ class HomePage extends StatelessWidget {
             ),
           ),
           const SizedBox(height: 12),
-          const ActionCard(),
+          const NextActionCard(),
         ],
       ),
     );
