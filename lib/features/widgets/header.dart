@@ -43,7 +43,7 @@ class StatsHeader extends StatelessWidget {
                     child: Align(
                       alignment: Alignment.bottomCenter,
                       child: Image.asset(
-                        'lib/assets/profile.png',
+                        'lib/assets/alveo-1.png',
                         width: 40,
                         height: 40,
                         fit: BoxFit.contain,

@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 
-import 'services/action.dart';
-import 'services/daily_goal.dart';
-import 'services/greeting.dart';
-import 'services/streak.dart';
+import 'widgets/action.dart';
+import 'widgets/daily_goal.dart';
+import 'widgets/greeting.dart';
+import 'widgets/streak.dart';
 import '../../core/theme/app_colors.dart';
 
 class HomePage extends StatelessWidget {
@@ -33,8 +33,7 @@ class HomePage extends StatelessWidget {
           Text(
             'Next Action',
             style: Theme.of(context).textTheme.titleLarge?.copyWith(
-              fontSize: 22,
-              fontWeight: FontWeight.w800,
+              fontSize: 20,
               color: const Color(0xFF1A1640),
             ),
           ),
