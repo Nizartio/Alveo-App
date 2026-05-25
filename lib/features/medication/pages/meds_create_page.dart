@@ -87,7 +87,7 @@ class _MedsCreatePageState extends State<MedsCreatePage> {
     setState(() => _isSaving = true);
     try {
       await _medicationService.saveTreatmentPlan(
-        startDate: _medicationStartDate!,
+        startDate: _medicationStartDate,
         medications: _medications,
       );
       if (mounted) {

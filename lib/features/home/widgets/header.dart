@@ -1,24 +1,71 @@
 import 'package:flutter/material.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 
-class HeaderContent extends StatelessWidget {
+class HeaderContent extends StatefulWidget {
   const HeaderContent({super.key});
+
+  @override
+  State<HeaderContent> createState() => _HeaderContentState();
+}
+
+class _HeaderContentState extends State<HeaderContent> {
+  final _supabase = Supabase.instance.client;
+  String _greetingName = 'there';
+
+  @override
+  void initState() {
+    super.initState();
+    _loadGreetingName();
+  }
+
+  Future<void> _loadGreetingName() async {
+    final user = _supabase.auth.currentUser;
+    if (user == null) return;
+
+    try {
+      final profile = await _supabase
+          .from('user_profile')
+          .select('full_name')
+          .eq('user_id', user.id)
+          .maybeSingle();
+
+      final fullName =
+          (profile?['full_name'] ??
+                  user.userMetadata?['full_name'] ??
+                  user.email)
+              ?.toString();
+
+      if (!mounted) return;
+
+      setState(() {
+        if (fullName == null || fullName.trim().isEmpty) {
+          _greetingName = 'there';
+        } else {
+          _greetingName = fullName.trim().split(RegExp(r'\s+')).first;
+        }
+      });
+    } catch (_) {
+      if (!mounted) return;
+      setState(() {
+        _greetingName = 'there';
+      });
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const Text(
-          'Hai, Leo 👋',
-          style: TextStyle(
+        Text(
+          'Hai, $_greetingName 👋',
+          style: const TextStyle(
             fontSize: 28,
             fontWeight: FontWeight.bold,
             color: Color(0xFF2D2D2D),
           ),
         ),
-
         const SizedBox(height: 20),
-
         Stack(
           clipBehavior: Clip.none,
           children: [
@@ -46,7 +93,6 @@ class HeaderContent extends StatelessWidget {
                 ),
               ),
             ),
-
             Positioned(
               top: -35,
               right: 18,
