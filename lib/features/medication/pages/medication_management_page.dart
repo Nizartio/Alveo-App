@@ -27,6 +27,10 @@ class _MedicationManagementPageState extends State<MedicationManagementPage> {
 
   Future<void> _loadMedications() async {
     try {
+      if (mounted) {
+        setState(() => _isLoading = true);
+      }
+
       final meds = await _medicationService.fetchActiveMedications();
       if (mounted) {
         setState(() {
@@ -137,40 +141,53 @@ class _MedicationManagementPageState extends State<MedicationManagementPage> {
   }
 
   Future<void> _deleteMedication(String userMedicationId) async {
-    showDialog(
+    final confirm = await showDialog<bool>(
       context: context,
-      builder: (context) => AlertDialog(
+      builder: (dialogContext) => AlertDialog(
         title: const Text('Hapus Obat'),
         content: const Text('Apakah Anda yakin ingin menghapus obat ini?'),
         actions: [
           TextButton(
-            onPressed: () => Navigator.pop(context),
+            onPressed: () => Navigator.pop(dialogContext, false),
             child: const Text('Batal'),
           ),
           TextButton(
             onPressed: () async {
-              Navigator.pop(context);
-              try {
-                await _medicationService.deleteMedication(userMedicationId);
-                if (mounted) {
-                  ScaffoldMessenger.of(
-                    context,
-                  ).showSnackBar(const SnackBar(content: Text('Obat dihapus')));
-                  _loadMedications();
-                }
-              } catch (e) {
-                if (mounted) {
-                  ScaffoldMessenger.of(
-                    context,
-                  ).showSnackBar(SnackBar(content: Text('Kesalahan: $e')));
-                }
-              }
+              Navigator.pop(dialogContext, true);
             },
             child: const Text('Hapus', style: TextStyle(color: Colors.red)),
           ),
         ],
       ),
     );
+
+    if (confirm != true || !mounted) {
+      return;
+    }
+
+    try {
+      await _medicationService.deleteMedication(userMedicationId);
+
+      if (!mounted) return;
+
+      setState(() {
+        _activeMedications.removeWhere((medication) {
+          return medication['id']?.toString() == userMedicationId;
+        });
+      });
+
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text('Obat dihapus')));
+
+      await _loadMedications();
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('Kesalahan: $e')));
+      }
+    }
   }
 
   @override
@@ -180,41 +197,37 @@ class _MedicationManagementPageState extends State<MedicationManagementPage> {
       appBar: AppBar(
         backgroundColor: Colors.transparent,
         elevation: 0,
-        centerTitle: false,
-        systemOverlayStyle: const SystemUiOverlayStyle(
-          statusBarColor: Colors.transparent,
-          statusBarIconBrightness: Brightness.dark,
-          statusBarBrightness: Brightness.light,
-        ),
         automaticallyImplyLeading: false,
-        leadingWidth: 54,
-        titleSpacing: 0,
-        leading: Padding(
-          padding: const EdgeInsets.only(left: 30),
-          child: IconButton(
-            onPressed: () => Navigator.pop(context),
-            padding: EdgeInsets.zero,
-            splashColor: Colors.transparent,
-            highlightColor: Colors.transparent,
-            icon: const Text(
-              '<',
-              style: TextStyle(
-                fontSize: 24,
-                fontWeight: FontWeight.w700,
-                color: AppColors.primary,
+        leading: Container(
+          margin: const EdgeInsets.all(8),
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(12),
+            boxShadow: const [
+              BoxShadow(
+                color: AppColors.loginShadow,
+                blurRadius: 8,
+                offset: Offset(0, 4),
+              ),
+            ],
+          ),
+          child: Material(
+            color: Colors.transparent,
+            child: InkWell(
+              borderRadius: BorderRadius.circular(12),
+              onTap: () => Navigator.pop(context),
+              child: const Center(
+                child: Icon(Icons.arrow_back, color: AppColors.primary),
               ),
             ),
           ),
         ),
-        title: const Padding(
-          padding: EdgeInsets.only(right: 30),
-          child: Text(
-            'Daftar Obat Tersimpan',
-            style: TextStyle(
-              color: AppColors.textPrimary,
-              fontSize: 18,
-              fontWeight: FontWeight.w700,
-            ),
+        title: const Text(
+          'Daftar Obat Tersimpan',
+          style: TextStyle(
+            color: AppColors.textPrimary,
+            fontSize: 18,
+            fontWeight: FontWeight.w700,
           ),
         ),
       ),
@@ -222,12 +235,13 @@ class _MedicationManagementPageState extends State<MedicationManagementPage> {
           ? const Center(child: CircularProgressIndicator())
           : Padding(
               padding: const EdgeInsets.fromLTRB(30, 8, 30, 16),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Expanded(
-                    child: _activeMedications.isEmpty
-                        ? Container(
+              child: RefreshIndicator(
+                onRefresh: _loadMedications,
+                child: _activeMedications.isEmpty
+                    ? ListView(
+                        physics: const AlwaysScrollableScrollPhysics(),
+                        children: [
+                          Container(
                             width: double.infinity,
                             padding: const EdgeInsets.all(18),
                             decoration: BoxDecoration(
@@ -248,25 +262,24 @@ class _MedicationManagementPageState extends State<MedicationManagementPage> {
                                 color: AppColors.textSecondary,
                               ),
                             ),
-                          )
-                        : ListView.builder(
-                            itemCount: _activeMedications.length,
-                            itemBuilder: (context, index) {
-                              final medication = _activeMedications[index];
-                              return MedsListAction(
-                                medication: medication,
-                                onEdit: () => _editMedication(medication),
-                                onPause: () => _pauseMedication(
-                                  medication['id'] as String,
-                                ),
-                                onDelete: () => _deleteMedication(
-                                  medication['id'] as String,
-                                ),
-                              );
-                            },
                           ),
-                  ),
-                ],
+                        ],
+                      )
+                    : ListView.builder(
+                        physics: const AlwaysScrollableScrollPhysics(),
+                        itemCount: _activeMedications.length,
+                        itemBuilder: (context, index) {
+                          final medication = _activeMedications[index];
+                          return MedsListAction(
+                            medication: medication,
+                            onEdit: () => _editMedication(medication),
+                            onPause: () =>
+                                _pauseMedication(medication['id'] as String),
+                            onDelete: () =>
+                                _deleteMedication(medication['id'] as String),
+                          );
+                        },
+                      ),
               ),
             ),
       floatingActionButton: FloatingActionButton(
