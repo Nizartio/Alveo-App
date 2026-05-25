@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 
 import 'widgets/streak.dart';
 import 'widgets/calendar.dart';
-import 'widgets/section_header.dart';
+import 'widgets/header.dart';
 
 const Map<int, DayStatus> _sampleDayStatuses = {
   10: DayStatus.completed,
