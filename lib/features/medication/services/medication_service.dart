@@ -1,9 +1,45 @@
 import 'package:flutter/material.dart';
+import 'package:intl/intl.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../models/medication_form_model.dart';
 
 class MedicationService {
   final supabase = Supabase.instance.client;
+
+  String formatHistoryDate(String dateStr) {
+    try {
+      final date = DateTime.parse(dateStr);
+      final today = DateTime.now();
+      final yesterday = today.subtract(const Duration(days: 1));
+
+      if (date.year == today.year &&
+          date.month == today.month &&
+          date.day == today.day) {
+        return 'TODAY';
+      } else if (date.year == yesterday.year &&
+          date.month == yesterday.month &&
+          date.day == yesterday.day) {
+        return 'YESTERDAY';
+      } else {
+        return DateFormat('MMM d, yyyy').format(date);
+      }
+    } catch (e) {
+      return dateStr;
+    }
+  }
+
+  String formatHistoryTime(String timeStr) {
+    try {
+      final parts = timeStr.split(':');
+      final hour = int.parse(parts[0]);
+      final minute = int.parse(parts[1]);
+      final timeOfDay = TimeOfDay(hour: hour, minute: minute);
+      final formatted = DateTime(2000, 1, 1, timeOfDay.hour, timeOfDay.minute);
+      return DateFormat.jm().format(formatted);
+    } catch (e) {
+      return timeStr;
+    }
+  }
 
   Future<List<Map<String, dynamic>>> fetchMedicines() async {
     try {

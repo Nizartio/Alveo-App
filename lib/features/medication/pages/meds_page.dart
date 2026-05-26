@@ -3,7 +3,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../../core/theme/app_colors.dart';
 import '../services/medication_service.dart';
 import '../widgets/meds_btn_action.dart';
-import 'medication_history_page.dart';
+import 'meds_history_page.dart';
 import 'medication_management_page.dart';
 
 class MedsPage extends StatefulWidget {
@@ -563,7 +563,7 @@ class _MedsPageState extends State<MedsPage>
                           onTap: () => Navigator.push(
                             context,
                             MaterialPageRoute(
-                              builder: (_) => const MedicationHistoryPage(),
+                              builder: (_) => const MedsHistoryPage(),
                             ),
                           ),
                         ),
