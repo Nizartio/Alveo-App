@@ -1,79 +1,189 @@
 import 'package:flutter/material.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 
-class StatsHeader extends StatelessWidget implements PreferredSizeWidget {
+import '../notifications/services/notification_service.dart';
+
+class StatsHeader extends StatefulWidget {
   const StatsHeader({super.key});
 
+  Future<void> _logout(BuildContext context) async {
+    await Supabase.instance.client.auth.signOut();
+    if (!context.mounted) return;
+    Navigator.of(context).pushNamedAndRemoveUntil('/login', (route) => false);
+  }
+
   @override
-  Size get preferredSize => const Size.fromHeight(kToolbarHeight);
+  State<StatsHeader> createState() => _StatsHeaderState();
+}
+
+class _StatsHeaderState extends State<StatsHeader> {
+  final _notificationService = NotificationService.instance;
+
+  @override
+  void initState() {
+    super.initState();
+    _refreshBadge();
+  }
+
+  Future<void> _refreshBadge() async {
+    await _notificationService.refreshUnreadCount();
+    if (mounted) {
+      setState(() {});
+    }
+  }
+
+  Future<void> _logout(BuildContext context) async {
+    await Supabase.instance.client.auth.signOut();
+    if (!context.mounted) return;
+    Navigator.of(context).pushNamedAndRemoveUntil('/login', (route) => false);
+  }
 
   @override
   Widget build(BuildContext context) {
-    return AppBar(
-      backgroundColor: Colors.white,
-      elevation: 0,
-      centerTitle: true,
-      leading: Padding(
-        padding: const EdgeInsets.all(10),
-        child: Container(
-          decoration: BoxDecoration(
-            color: const Color(0xFFF5F3FF),
-            borderRadius: BorderRadius.circular(12),
-          ),
-          child: const Center(
-            child: Text(
-              '🐷',
-              style: TextStyle(fontSize: 20),
+    return Padding(
+      padding: EdgeInsets.zero,
+      child: Container(
+        constraints: const BoxConstraints(minHeight: 48),
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+        decoration: BoxDecoration(
+          color: Colors.white.withOpacity(0.92),
+          borderRadius: BorderRadius.circular(10),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withOpacity(0.04),
+              blurRadius: 20,
+              offset: const Offset(0, 6),
             ),
-          ),
+          ],
         ),
-      ),
-      title: const Text(
-        'Alveo',
-        style: TextStyle(
-          color: Color(0xFF6B5CE7),
-          fontWeight: FontWeight.w700,
-          fontSize: 20,
-          letterSpacing: 0.3,
-        ),
-      ),
-      actions: [
-        Padding(
-          padding: const EdgeInsets.only(right: 16),
-          child: GestureDetector(
-            onTap: () {},
-            child: Container(
-              width: 40,
-              height: 40,
-              decoration: BoxDecoration(
-                color: const Color(0xFFF5F3FF),
-                borderRadius: BorderRadius.circular(12),
+        child: Row(
+          children: [
+            PopupMenuButton<String>(
+              tooltip: 'Profile',
+              onSelected: (value) {
+                if (value == 'logout') {
+                  _logout(context);
+                }
+              },
+              offset: const Offset(0, 56),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(16),
               ),
-              child: Stack(
-                alignment: Alignment.center,
-                children: [
-                  const Icon(
-                    Icons.notifications_none_rounded,
-                    color: Color(0xFF6B5CE7),
-                    size: 22,
+              itemBuilder: (context) => [
+                PopupMenuItem<String>(
+                  value: 'logout',
+                  child: Row(
+                    children: const [
+                      Icon(
+                        Icons.logout_rounded,
+                        size: 18,
+                        color: Color(0xFFE25555),
+                      ),
+                      SizedBox(width: 10),
+                      Text('Logout'),
+                    ],
                   ),
-                  Positioned(
-                    top: 8,
-                    right: 8,
-                    child: Container(
-                      width: 7,
-                      height: 7,
-                      decoration: const BoxDecoration(
-                        color: Color(0xFFFF6B6B),
-                        shape: BoxShape.circle,
+                ),
+              ],
+              child: Container(
+                width: 40,
+                height: 40,
+                decoration: BoxDecoration(
+                  color: const Color(0xFFF5F3FF),
+                  borderRadius: BorderRadius.circular(100),
+                ),
+                child: Center(
+                  child: Container(
+                    width: 48,
+                    height: 48,
+                    padding: const EdgeInsets.all(2),
+                    decoration: BoxDecoration(
+                      shape: BoxShape.circle,
+                      border: Border.all(color: Colors.white, width: 2),
+                    ),
+                    child: ClipPath(
+                      child: Align(
+                        alignment: Alignment.bottomCenter,
+                        child: Image.asset(
+                          'lib/assets/profile.png',
+                          width: 40,
+                          height: 40,
+                          fit: BoxFit.contain,
+                        ),
                       ),
                     ),
                   ),
-                ],
+                ),
               ),
             ),
-          ),
+
+            const Spacer(),
+
+            const Text(
+              'Alveo',
+              style: TextStyle(
+                color: Color(0xFF6B5CE7),
+                fontWeight: FontWeight.w800,
+                fontSize: 30,
+              ),
+            ),
+
+            const Spacer(),
+
+            GestureDetector(
+              onTap: () {},
+              child: Container(
+                width: 48,
+                height: 48,
+                decoration: BoxDecoration(
+                  color: Colors.transparent,
+                  borderRadius: BorderRadius.circular(100),
+                ),
+                child: Stack(
+                  alignment: Alignment.center,
+                  children: [
+                    ValueListenableBuilder<int>(
+                      valueListenable: _notificationService.unreadCount,
+                      builder: (context, unreadCount, _) {
+                        return Stack(
+                          clipBehavior: Clip.none,
+                          children: [
+                            const Icon(
+                              Icons.notifications_none_rounded,
+                              color: Color(0xFF6B5CE7),
+                              size: 30,
+                            ),
+                            if (unreadCount > 0)
+                              Positioned(
+                                top: -2,
+                                right: -2,
+                                child: Container(
+                                  padding: const EdgeInsets.all(4),
+                                  decoration: const BoxDecoration(
+                                    color: Color(0xFFFF6B6B),
+                                    shape: BoxShape.circle,
+                                  ),
+                                  child: Text(
+                                    unreadCount > 9 ? '9+' : '$unreadCount',
+                                    style: const TextStyle(
+                                      color: Colors.white,
+                                      fontSize: 9,
+                                      fontWeight: FontWeight.w700,
+                                    ),
+                                  ),
+                                ),
+                              ),
+                          ],
+                        );
+                      },
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ],
         ),
-      ],
+      ),
     );
   }
 }

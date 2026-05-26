@@ -1,6 +1,6 @@
 name: alveo_app
 description: "A new Flutter project."
-publish_to: 'none'
+publish_to: "none"
 version: 0.1.0+1
 
 environment:
@@ -10,7 +10,11 @@ dependencies:
   flutter:
     sdk: flutter
   supabase_flutter: ^2.12.4
-
+  stylish_bottom_bar: ^1.1.1
+  intl: ^0.18.0
+  flutter_local_notifications: ^18.0.1
+  flutter_timezone: ^4.0.0
+  timezone: ^0.10.0
 dev_dependencies:
   flutter_test:
     sdk: flutter
@@ -18,3 +22,15 @@ dev_dependencies:
 
 flutter:
   uses-material-design: true
+  assets:
+    - lib/assets/
+  fonts:
+    - family: Poppins
+      fonts:
+        - asset: assets/fonts/Poppins-Regular.ttf
+        - asset: assets/fonts/Poppins-Medium.ttf
+          weight: 500
+        - asset: assets/fonts/Poppins-SemiBold.ttf
+          weight: 600
+        - asset: assets/fonts/Poppins-Bold.ttf
+          weight: 700

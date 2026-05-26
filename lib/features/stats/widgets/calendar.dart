@@ -3,7 +3,6 @@ import 'package:flutter/material.dart';
 enum DayStatus { none, completed, missed }
 
 class WeeklyAdherenceCalendar extends StatefulWidget {
-  /// Map of day number → DayStatus for the current month (static for now)
   final Map<int, DayStatus> dayStatuses;
 
   const WeeklyAdherenceCalendar({
@@ -38,7 +37,7 @@ class _WeeklyAdherenceCalendarState extends State<WeeklyAdherenceCalendar> {
       widget.dayStatuses.values.where((s) => s == DayStatus.missed).length;
 
   static const List<String> _weekLabels = [
-    'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'
+    'Sen', 'Sel', 'Rab', 'Kam', 'Jum', 'Sab', 'Min'
   ];
 
   int get _prevMonthDays =>
@@ -174,8 +173,8 @@ class _WeeklyAdherenceCalendarState extends State<WeeklyAdherenceCalendar> {
 
   String _monthName(int month) {
     const names = [
-      '', 'January', 'February', 'March', 'April', 'May', 'June',
-      'July', 'August', 'September', 'October', 'November', 'December'
+      '', 'Januari', 'Februari', 'Maret', 'April', 'Mei', 'Juni',
+      'Juli', 'Agustus', 'September', 'Oktober', 'November', 'Desember'
     ];
     return names[month];
   }

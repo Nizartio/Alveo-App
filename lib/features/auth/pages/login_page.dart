@@ -1,4 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
+
+import '../../../core/theme/app_colors.dart';
+import '../../notifications/services/notification_service.dart';
 
 class LoginPage extends StatefulWidget {
   const LoginPage({super.key});
@@ -21,9 +25,30 @@ class _LoginPageState extends State<LoginPage> {
 
   void _submit() {
     if (_formKey.currentState?.validate() ?? false) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Login siap dihubungkan ke Supabase.')),
+      _signIn();
+    }
+  }
+
+  Future<void> _signIn() async {
+    final email = _emailController.text.trim();
+    final password = _passwordController.text;
+
+    try {
+      await Supabase.instance.client.auth.signInWithPassword(
+        email: email,
+        password: password,
       );
+      await NotificationService.instance.scheduleMedicationReminders();
+      if (!mounted) return;
+      Navigator.of(context).pushReplacementNamed('/home');
+    } on AuthException catch (e) {
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text('Login gagal: ${e.message}')));
+    } catch (e) {
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text('Login error: $e')));
     }
   }
 
@@ -35,11 +60,7 @@ class _LoginPageState extends State<LoginPage> {
       body: SafeArea(
         child: Container(
           decoration: const BoxDecoration(
-            gradient: LinearGradient(
-              begin: Alignment.topCenter,
-              end: Alignment.bottomCenter,
-              colors: [Color(0xFFF2EEFF), Color(0xFFF8FAFF)],
-            ),
+            gradient: AppColors.appBackgroundGradient,
           ),
           child: Stack(
             children: [
@@ -99,7 +120,7 @@ class _LoginPageState extends State<LoginPage> {
                                       fontSize: 28,
                                       height: 1.12,
                                       fontWeight: FontWeight.w800,
-                                      color: const Color(0xFF6A57E6),
+                                      color: AppColors.primary,
                                     ),
                               ),
                               const SizedBox(height: 12),
@@ -111,7 +132,7 @@ class _LoginPageState extends State<LoginPage> {
                                       fontSize: 26,
                                       height: 1.12,
                                       fontWeight: FontWeight.w800,
-                                      color: const Color(0xFF32363D),
+                                      color: AppColors.textPrimary,
                                     ),
                               ),
                               const SizedBox(height: 14),
@@ -121,7 +142,7 @@ class _LoginPageState extends State<LoginPage> {
                                 style: Theme.of(context).textTheme.titleMedium
                                     ?.copyWith(
                                       height: 1.35,
-                                      color: const Color(0xFF777777),
+                                      color: AppColors.textMuted,
                                     ),
                               ),
                               const SizedBox(height: 28),
@@ -156,7 +177,7 @@ class _LoginPageState extends State<LoginPage> {
                                       minimumSize: Size.zero,
                                       tapTargetSize:
                                           MaterialTapTargetSize.shrinkWrap,
-                                      foregroundColor: const Color(0xFF6A57E6),
+                                      foregroundColor: AppColors.primary,
                                     ),
                                     child: const Text(
                                       'Lupa kata sandi?',
@@ -189,15 +210,10 @@ class _LoginPageState extends State<LoginPage> {
                                 child: DecoratedBox(
                                   decoration: BoxDecoration(
                                     borderRadius: BorderRadius.circular(28),
-                                    gradient: const LinearGradient(
-                                      colors: [
-                                        Color(0xFF6A57E6),
-                                        Color(0xFF8A75F0),
-                                      ],
-                                    ),
+                                    gradient: AppColors.primaryGradient,
                                     boxShadow: const [
                                       BoxShadow(
-                                        color: Color(0x336A57E6),
+                                        color: AppColors.loginShadow,
                                         blurRadius: 24,
                                         offset: Offset(0, 12),
                                       ),
@@ -210,9 +226,9 @@ class _LoginPageState extends State<LoginPage> {
                                       onTap: _submit,
                                       child: const Center(
                                         child: Text(
-                                          'Start Your Journey',
+                                          'Mulai Perjalananmu',
                                           style: TextStyle(
-                                            color: Colors.white,
+                                            color: AppColors.white,
                                             fontSize: 18,
                                             fontWeight: FontWeight.w700,
                                           ),
@@ -232,7 +248,7 @@ class _LoginPageState extends State<LoginPage> {
                                         .textTheme
                                         .bodyMedium
                                         ?.copyWith(
-                                          color: const Color(0xFF6B7280),
+                                          color: AppColors.textSecondary,
                                         ),
                                   ),
                                   TextButton(
@@ -246,7 +262,7 @@ class _LoginPageState extends State<LoginPage> {
                                       minimumSize: Size.zero,
                                       tapTargetSize:
                                           MaterialTapTargetSize.shrinkWrap,
-                                      foregroundColor: const Color(0xFF6A57E6),
+                                      foregroundColor: AppColors.primary,
                                     ),
                                     child: const Text(
                                       'Daftar',
@@ -286,7 +302,7 @@ class _FieldLabel extends StatelessWidget {
       style: Theme.of(context).textTheme.titleMedium?.copyWith(
         fontSize: 16,
         fontWeight: FontWeight.w700,
-        color: const Color(0xFF666A70),
+        color: AppColors.textLabel,
       ),
     );
   }
@@ -319,18 +335,18 @@ class _InputField extends StatelessWidget {
       style: const TextStyle(
         fontSize: 16,
         fontWeight: FontWeight.w500,
-        color: Color(0xFF374151),
+        color: AppColors.textPrimary,
       ),
       decoration: InputDecoration(
         filled: true,
-        fillColor: const Color(0xFFF1F4FB),
+        fillColor: AppColors.surfaceSoft,
         hintText: hintText,
         hintStyle: const TextStyle(
-          color: Color(0xFFB7BCC8),
+          color: AppColors.iconMuted,
           fontSize: 16,
           fontWeight: FontWeight.w500,
         ),
-        prefixIcon: Icon(icon, color: const Color(0xFFADB3BE)),
+        prefixIcon: Icon(icon, color: AppColors.iconMuted),
         contentPadding: const EdgeInsets.symmetric(
           horizontal: 16,
           vertical: 18,
@@ -345,7 +361,10 @@ class _InputField extends StatelessWidget {
         ),
         focusedBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(14),
-          borderSide: const BorderSide(color: Color(0xFF8A75F0), width: 1.3),
+          borderSide: const BorderSide(
+            color: AppColors.primaryLight,
+            width: 1.3,
+          ),
         ),
         errorBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(14),
@@ -370,14 +389,14 @@ class _MascotCircle extends StatelessWidget {
       height: 146,
       decoration: BoxDecoration(
         shape: BoxShape.circle,
-        color: Colors.white,
+        color: AppColors.white,
         border: Border.all(
-          color: Colors.white.withValues(alpha: 0.9),
+          color: AppColors.white.withValues(alpha: 0.9),
           width: 8,
         ),
         boxShadow: const [
           BoxShadow(
-            color: Color(0x14000000),
+            color: AppColors.softShadow,
             blurRadius: 24,
             offset: Offset(0, 12),
           ),
@@ -387,11 +406,7 @@ class _MascotCircle extends StatelessWidget {
         margin: const EdgeInsets.all(8),
         decoration: const BoxDecoration(
           shape: BoxShape.circle,
-          gradient: LinearGradient(
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
-            colors: [Color(0xFFF7F8FA), Color(0xFFEDEFF5)],
-          ),
+          gradient: AppColors.mascotInnerGradient,
         ),
         child: const Center(
           child: Stack(
@@ -400,7 +415,7 @@ class _MascotCircle extends StatelessWidget {
               Icon(
                 Icons.favorite_border_rounded,
                 size: 54,
-                color: Color(0xFF6A57E6),
+                color: AppColors.primary,
               ),
               Positioned(
                 bottom: 18,

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 
 class RegisterPage extends StatefulWidget {
   const RegisterPage({super.key});
@@ -9,8 +10,8 @@ class RegisterPage extends StatefulWidget {
 
 class _RegisterPageState extends State<RegisterPage> {
   final _formKey = GlobalKey<FormState>();
-  final _fullNameController = TextEditingController(text: 'Alveo Leo');
-  final _emailController = TextEditingController(text: 'nama@email.com');
+  final _fullNameController = TextEditingController();
+  final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
 
   @override
@@ -126,7 +127,7 @@ class _RegisterPageState extends State<RegisterPage> {
                               const SizedBox(height: 10),
                               _InputField(
                                 controller: _emailController,
-                                hintText: 'nama@email.com',
+                                hintText: 'your@email.com',
                                 icon: Icons.mail_outline_rounded,
                                 keyboardType: TextInputType.emailAddress,
                                 validator: (value) {
@@ -182,11 +183,67 @@ class _RegisterPageState extends State<RegisterPage> {
                                     color: Colors.transparent,
                                     child: InkWell(
                                       borderRadius: BorderRadius.circular(28),
-                                      onTap: () {
-                                        if (_formKey.currentState?.validate() ??
-                                            false) {
-                                          Navigator.of(context)
-                                              .pushReplacementNamed('/medication');
+                                      onTap: () async {
+                                        if (!(_formKey.currentState
+                                                ?.validate() ??
+                                            false))
+                                          return;
+
+                                        if (!mounted) return;
+                                        setState(() {});
+                                        final name = _fullNameController.text
+                                            .trim();
+                                        final email = _emailController.text
+                                            .trim();
+                                        final password =
+                                            _passwordController.text;
+
+                                        try {
+                                          final res = await Supabase
+                                              .instance
+                                              .client
+                                              .auth
+                                              .signUp(
+                                                email: email,
+                                                password: password,
+                                                data: {'full_name': name},
+                                              );
+
+                                          if (!mounted) return;
+
+                                          // signUp can succeed even when email confirmation is required.
+                                          // In that case, session is null and the user should log in after confirming.
+                                          final session = res.session;
+                                          final user = res.user;
+
+                                          if (session != null && user != null) {
+                                            Navigator.of(
+                                              context,
+                                            ).pushReplacementNamed(
+                                              '/medication_plan',
+                                            );
+                                          } else {
+                                            ScaffoldMessenger.of(
+                                              context,
+                                            ).showSnackBar(
+                                              const SnackBar(
+                                                content: Text(
+                                                  'Akun berhasil dibuat. Silakan lanjut isi basic requirement di medication.',
+                                                ),
+                                              ),
+                                            );
+                                            Navigator.of(
+                                              context,
+                                            ).pushReplacementNamed('/login');
+                                          }
+                                        } catch (e) {
+                                          ScaffoldMessenger.of(
+                                            context,
+                                          ).showSnackBar(
+                                            SnackBar(
+                                              content: Text('Error: $e'),
+                                            ),
+                                          );
                                         }
                                       },
                                       child: const Center(
@@ -218,8 +275,9 @@ class _RegisterPageState extends State<RegisterPage> {
                                   ),
                                   TextButton(
                                     onPressed: () {
-                                      Navigator.of(context)
-                                          .pushReplacementNamed('/login');
+                                      Navigator.of(
+                                        context,
+                                      ).pushReplacementNamed('/login');
                                     },
                                     style: TextButton.styleFrom(
                                       padding: EdgeInsets.zero,
@@ -376,24 +434,13 @@ class _MascotCircle extends StatelessWidget {
             colors: [Color(0xFFF7F8FA), Color(0xFFEDEFF5)],
           ),
         ),
-        child: const Center(
-          child: Stack(
-            alignment: Alignment.center,
-            children: [
-              Icon(
-                Icons.favorite_border_rounded,
-                size: 54,
-                color: Color(0xFF6A57E6),
-              ),
-              Positioned(
-                bottom: 18,
-                child: Icon(
-                  Icons.air_rounded,
-                  size: 34,
-                  color: Color(0xFFFFA9B7),
-                ),
-              ),
-            ],
+        child: const Padding(
+          padding: EdgeInsets.all(10),
+          child: ClipOval(
+            child: Image(
+              image: AssetImage('lib/assets/maskot-rmv.png'),
+              fit: BoxFit.cover,
+            ),
           ),
         ),
       ),

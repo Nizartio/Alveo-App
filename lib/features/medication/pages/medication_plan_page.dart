@@ -1,4 +1,11 @@
 import 'package:flutter/material.dart';
+import '../../../core/theme/app_colors.dart';
+import '../models/medication_form_model.dart';
+import '../services/medication_service.dart';
+import '../widgets/medication_card.dart';
+import '../widgets/med_plan_saved_sheet.dart';
+// import '../../widgets/bottom_navbar.dart';
+// import '../../widgets/header.dart';
 
 class MedicationPlanPage extends StatefulWidget {
   const MedicationPlanPage({super.key});
@@ -8,120 +15,314 @@ class MedicationPlanPage extends StatefulWidget {
 }
 
 class _MedicationPlanPageState extends State<MedicationPlanPage> {
-  final _formKey = GlobalKey<FormState>();
-  final _q1 = TextEditingController();
-  final _q2 = TextEditingController();
-  final _q3 = TextEditingController();
+  final _medicationService = MedicationService();
+  DateTime? _treatmentStartDate;
+  List<MedicationFormModel> _medications = [
+    MedicationFormModel(
+      medicineName: '',
+      dosage: '',
+      frequencyPerDay: 1,
+      intakeRule: 'anytime',
+      reminderMinutesBefore: 15,
+      schedules: [],
+    ),
+  ];
+  List<Map<String, dynamic>> _medicines = [];
+  bool _isLoading = true;
+  bool _isSaving = false;
 
   @override
-  void dispose() {
-    _q1.dispose();
-    _q2.dispose();
-    _q3.dispose();
-    super.dispose();
+  void initState() {
+    super.initState();
+    _loadMedicines();
   }
 
-  void _submit() {
-    if (_formKey.currentState?.validate() ?? false) {
-      // For now just navigate to login after completing the medication plan
-      Navigator.of(context).pushReplacementNamed('/login');
+  Future<void> _loadMedicines() async {
+    try {
+      final medicines = await _medicationService.fetchMedicines();
+      if (mounted) {
+        setState(() {
+          _medicines = medicines;
+          _isLoading = false;
+        });
+      }
+    } catch (e) {
+      if (mounted) {
+        setState(() => _isLoading = false);
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('Kesalahan memuat obat: $e')));
+      }
+    }
+  }
+
+  Future<void> _pickTreatmentStartDate() async {
+    final now = DateTime.now();
+    final picked = await showDatePicker(
+      context: context,
+      initialDate: _treatmentStartDate ?? now,
+      firstDate: DateTime(now.year - 20),
+      lastDate: now,
+    );
+    if (picked != null) setState(() => _treatmentStartDate = picked);
+  }
+
+  void _addMedication() {
+    setState(() {
+      _medications.add(
+        MedicationFormModel(
+          medicineName: '',
+          dosage: '',
+          frequencyPerDay: 1,
+          intakeRule: 'anytime',
+          reminderMinutesBefore: 15,
+          schedules: [],
+        ),
+      );
+    });
+  }
+
+  void _removeMedication(int index) {
+    if (_medications.length > 1) {
+      setState(() => _medications.removeAt(index));
+    } else {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Setidaknya satu obat diperlukan')),
+      );
+    }
+  }
+
+  bool _validateForm() {
+    if (_treatmentStartDate == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Mohon pilih tanggal mulai perawatan')),
+      );
+      return false;
+    }
+    for (int i = 0; i < _medications.length; i++) {
+      if (!_medications[i].isValid) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              'Obat ${i + 1}: Mohon isi semua field yang diperlukan dan tambahkan setidaknya satu waktu jadwal',
+            ),
+          ),
+        );
+        return false;
+      }
+    }
+    return true;
+  }
+
+  Future<void> _saveTreatmentPlan() async {
+    if (!_validateForm()) return;
+    setState(() => _isSaving = true);
+    try {
+      await _medicationService.saveTreatmentPlan(
+        startDate: _treatmentStartDate!,
+        medications: _medications,
+      );
+      if (mounted) {
+        await showMedPlanSavedBottomSheet(
+          context,
+          xpAmount: 10,
+          onContinue: () {
+            Navigator.of(
+              context,
+              rootNavigator: true,
+            ).pushNamedAndRemoveUntil('/home', (route) => false);
+          },
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Kesalahan menyimpan rencana perawatan: $e'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    } finally {
+      if (mounted) setState(() => _isSaving = false);
     }
   }
 
   @override
   Widget build(BuildContext context) {
-    final size = MediaQuery.of(context).size;
-
     return Scaffold(
-      body: SafeArea(
-        child: Container(
-          decoration: const BoxDecoration(
-            gradient: LinearGradient(
-              begin: Alignment.topCenter,
-              end: Alignment.bottomCenter,
-              colors: [Color(0xFFF2EEFF), Color(0xFFF8FAFF)],
+      appBar: AppBar(
+        backgroundColor: Colors.transparent,
+        elevation: 0,
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back, color: AppColors.primary),
+          onPressed: () => Navigator.of(context).maybePop(),
+        ),
+      ),
+      body: Container(
+        decoration: const BoxDecoration(
+          gradient: AppColors.appBackgroundGradient,
+        ),
+        child: _isLoading
+            ? const Center(child: CircularProgressIndicator())
+            : SingleChildScrollView(
+                padding: const EdgeInsets.fromLTRB(20, 72, 20, 36),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: _buildPlanContent(context),
+                ),
+              ),
+      ),
+    );
+  }
+
+  List<Widget> _buildPlanContent(BuildContext context) {
+    return [
+      Container(
+        padding: const EdgeInsets.all(20),
+        decoration: BoxDecoration(
+          gradient: AppColors.primaryGradient,
+          borderRadius: BorderRadius.circular(24),
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              'Pengaturan Obat Resep',
+              style: Theme.of(context).textTheme.headlineSmall?.copyWith(
+                color: Colors.white,
+                fontWeight: FontWeight.w800,
+                fontSize: 22,
+              ),
             ),
+            const SizedBox(height: 8),
+            const Text(
+              'Tambahkan obat dari resep dokter, atur dosis, jadwal, dan alarm pengingat.',
+              style: TextStyle(color: Colors.white70, fontSize: 14),
+            ),
+          ],
+        ),
+      ),
+      const SizedBox(height: 24),
+      Text(
+        'Tanggal Mulai Perawatan',
+        style: Theme.of(context).textTheme.headlineSmall?.copyWith(
+          fontWeight: FontWeight.w700,
+          fontSize: 16,
+        ),
+      ),
+      const SizedBox(height: 12),
+      Container(
+        padding: const EdgeInsets.all(14),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(16),
+          boxShadow: const [
+            BoxShadow(
+              color: AppColors.bottomSheetShadow,
+              blurRadius: 12,
+              offset: Offset(0, 8),
+            ),
+          ],
+        ),
+        child: GestureDetector(
+          onTap: _pickTreatmentStartDate,
+          child: Row(
+            children: [
+              Container(
+                padding: const EdgeInsets.all(10),
+                decoration: BoxDecoration(
+                  color: AppColors.chipBackground,
+                  borderRadius: BorderRadius.circular(10),
+                ),
+                child: const Icon(
+                  Icons.calendar_today,
+                  color: AppColors.primary,
+                  size: 20,
+                ),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const Text(
+                      'Tanggal Mulai',
+                      style: TextStyle(
+                        fontSize: 12,
+                        color: AppColors.textSecondary,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      _treatmentStartDate == null
+                          ? 'Kapan Anda mulai?'
+                          : MaterialLocalizations.of(
+                              context,
+                            ).formatMediumDate(_treatmentStartDate!),
+                      style: const TextStyle(
+                        fontSize: 14,
+                        color: AppColors.textPrimary,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
           ),
-          child: SingleChildScrollView(
-            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 24),
-            child: Column(
+        ),
+      ),
+      const SizedBox(height: 30),
+      Text(
+        'Obat-obatan',
+        style: Theme.of(context).textTheme.headlineSmall?.copyWith(
+          fontWeight: FontWeight.w700,
+          fontSize: 16,
+        ),
+      ),
+      const SizedBox(height: 12),
+      ..._medications.asMap().entries.map((entry) {
+        final index = entry.key;
+        return MedicationCard(
+          key: ValueKey('med_$index'),
+          medication: entry.value,
+          medicines: _medicines,
+          onUpdate: (updated) {
+            setState(() => _medications[index] = updated);
+          },
+          onRemove: () => _removeMedication(index),
+          canRemove: _medications.length > 1,
+        );
+      }).toList(),
+      Container(
+        width: double.infinity,
+        padding: const EdgeInsets.symmetric(vertical: 14),
+        decoration: BoxDecoration(
+          border: Border.all(color: AppColors.primary, width: 1.5),
+          borderRadius: BorderRadius.circular(12),
+        ),
+        child: Material(
+          color: Colors.transparent,
+          child: InkWell(
+            onTap: _addMedication,
+            borderRadius: BorderRadius.circular(12),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                const SizedBox(height: 8),
-                Text(
-                  'Ayo kita cek!',
-                  style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                        fontWeight: FontWeight.w800,
-                        fontSize: 22,
-                      ),
+                const Icon(
+                  Icons.add_circle_outline,
+                  color: AppColors.primary,
+                  size: 20,
                 ),
-                const SizedBox(height: 8),
+                const SizedBox(width: 8),
                 Text(
-                  'Ceritakan kepada kami masalah yang Anda alami agar kami dapat membantu Anda mendapatkan bantuan yang paling tepat.',
-                  textAlign: TextAlign.center,
-                  style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                        color: const Color(0xFF6B7280),
-                      ),
-                ),
-                const SizedBox(height: 20),
-                Form(
-                  key: _formKey,
-                  child: Column(
-                    children: [
-                      _QuestionCard(
-                        icon: Icons.air_rounded,
-                        title: 'Sudah berapa lama Anda menderita penyakit ini?',
-                        controller: _q1,
-                      ),
-                      const SizedBox(height: 14),
-                      _QuestionCard(
-                        icon: Icons.medical_services_outlined,
-                        title: 'Tolong sebutkan obat-obatan yang sedang Anda konsumsi.',
-                        controller: _q2,
-                      ),
-                      const SizedBox(height: 14),
-                      _QuestionCard(
-                        icon: Icons.schedule_rounded,
-                        title: 'Seberapa sering Anda minum obat ini?',
-                        controller: _q3,
-                      ),
-                      const SizedBox(height: 22),
-                      SizedBox(
-                        height: 56,
-                        width: double.infinity,
-                        child: DecoratedBox(
-                          decoration: BoxDecoration(
-                            borderRadius: BorderRadius.circular(28),
-                            gradient: const LinearGradient(
-                              colors: [Color(0xFF6A57E6), Color(0xFF8A75F0)],
-                            ),
-                            boxShadow: const [
-                              BoxShadow(
-                                color: Color(0x336A57E6),
-                                blurRadius: 24,
-                                offset: Offset(0, 12),
-                              ),
-                            ],
-                          ),
-                          child: Material(
-                            color: Colors.transparent,
-                            child: InkWell(
-                              borderRadius: BorderRadius.circular(28),
-                              onTap: _submit,
-                              child: const Center(
-                                child: Text(
-                                  'Periksa Resiko Saya →',
-                                  style: TextStyle(
-                                    color: Colors.white,
-                                    fontSize: 16,
-                                    fontWeight: FontWeight.w700,
-                                  ),
-                                ),
-                              ),
-                            ),
-                          ),
-                        ),
-                      ),
-                    ],
+                  'Tambahkan Obat Lainnya',
+                  style: TextStyle(
+                    color: AppColors.primary,
+                    fontWeight: FontWeight.w700,
+                    fontSize: 14,
                   ),
                 ),
               ],
@@ -129,76 +330,53 @@ class _MedicationPlanPageState extends State<MedicationPlanPage> {
           ),
         ),
       ),
-    );
-  }
-}
-
-class _QuestionCard extends StatelessWidget {
-  const _QuestionCard({
-    required this.icon,
-    required this.title,
-    required this.controller,
-  });
-
-  final IconData icon;
-  final String title;
-  final TextEditingController controller;
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.all(14),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(16),
-        boxShadow: const [
-          BoxShadow(
-            color: Color(0x0A000000),
-            blurRadius: 12,
-            offset: Offset(0, 8),
-          ),
-        ],
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            children: [
-              Container(
-                padding: const EdgeInsets.all(8),
-                decoration: BoxDecoration(
-                  color: const Color(0xFFF3F4FF),
-                  borderRadius: BorderRadius.circular(10),
-                ),
-                child: Icon(icon, color: const Color(0xFF6A57E6)),
-              ),
-              const SizedBox(width: 12),
-              Expanded(
-                child: Text(
-                  title,
-                  style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                        fontWeight: FontWeight.w700,
-                      ),
-                ),
+      const SizedBox(height: 24),
+      SizedBox(
+        width: double.infinity,
+        height: 56,
+        child: DecoratedBox(
+          decoration: BoxDecoration(
+            gradient: AppColors.primaryGradient,
+            borderRadius: BorderRadius.circular(28),
+            boxShadow: const [
+              BoxShadow(
+                color: AppColors.loginShadow,
+                blurRadius: 24,
+                offset: Offset(0, 12),
               ),
             ],
           ),
-          const SizedBox(height: 12),
-          TextFormField(
-            controller: controller,
-            validator: (v) => (v ?? '').trim().isEmpty ? 'Wajib diisi' : null,
-            decoration: InputDecoration(
-              filled: true,
-              fillColor: const Color(0xFFF1F4FB),
-              hintText: 'Tulis di sini',
-              border: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(12),
-                borderSide: BorderSide.none,
+          child: Material(
+            color: Colors.transparent,
+            child: InkWell(
+              borderRadius: BorderRadius.circular(28),
+              onTap: _isSaving ? null : _saveTreatmentPlan,
+              child: Center(
+                child: _isSaving
+                    ? const SizedBox(
+                        width: 20,
+                        height: 20,
+                        child: CircularProgressIndicator(
+                          strokeWidth: 2,
+                          valueColor: AlwaysStoppedAnimation<Color>(
+                            Colors.white,
+                          ),
+                        ),
+                      )
+                    : const Text(
+                        'Simpan Rencana Perawatan',
+                        style: TextStyle(
+                          color: Colors.white,
+                          fontSize: 16,
+                          fontWeight: FontWeight.w700,
+                        ),
+                      ),
               ),
             ),
           ),
-        ],
+        ),
       ),
-    );
+      const SizedBox(height: 24),
+    ];
   }
 }
