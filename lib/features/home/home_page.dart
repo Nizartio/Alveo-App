@@ -102,7 +102,7 @@ class _HomePageState extends State<HomePage> {
                 ),
                 children: [
                   const HeaderContent(),
-                  const SizedBox(height: 20),
+                  const SizedBox(height: 24),
                   Row(
                     children: [
                       Expanded(

@@ -1,4 +1,5 @@
 import 'package:supabase_flutter/supabase_flutter.dart';
+
 import '../../medication/services/medication_service.dart';
 
 class StatsService {

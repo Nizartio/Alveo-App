@@ -28,7 +28,7 @@ class GoalCard extends StatelessWidget {
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               Text(
-                'TUJUAN HARIAN',
+                'GOAL HARIAN',
                 style: TextStyle(
                   color: Colors.grey,
                   fontSize: 16,

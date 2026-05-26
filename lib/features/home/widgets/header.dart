@@ -66,13 +66,13 @@ class _HeaderContentState extends State<HeaderContent> {
             color: AppColors.textHeading,
           ),
         ),
-        const SizedBox(height: 20),
+        const SizedBox(height: 12),
         Stack(
           clipBehavior: Clip.none,
           children: [
             Container(
               width: double.infinity,
-              padding: const EdgeInsets.fromLTRB(24, 24, 140, 24),
+              padding: const EdgeInsets.fromLTRB(24, 24, 152, 24),
               decoration: BoxDecoration(
                 color: AppColors.white,
                 borderRadius: BorderRadius.circular(36),
@@ -85,12 +85,12 @@ class _HeaderContentState extends State<HeaderContent> {
                 ],
               ),
               child: const Text(
-                'Kamu hebat hari ini! Tarik napas dalam-dalam dan teruslah berusaha.',
+                'Kamu hebat hari ini!\nTarik napas dalam-dalam dan teruslah berusaha.',
                 style: TextStyle(
                   color: AppColors.textBody,
                   fontSize: 16,
                   height: 1.5,
-                  fontWeight: FontWeight.w500,
+                  fontWeight: FontWeight.w400,
                 ),
               ),
             ),
@@ -98,11 +98,11 @@ class _HeaderContentState extends State<HeaderContent> {
               top: -35,
               right: 18,
               child: Container(
-                width: 120,
-                height: 120,
+                width: 140,
+                height: 140,
                 decoration: BoxDecoration(
                   shape: BoxShape.circle,
-                  color: AppColors.surfaceWarm,
+                  color: const Color.fromARGB(255, 241, 236, 236),
                   boxShadow: [
                     BoxShadow(
                       color: AppColors.black12,
@@ -112,7 +112,7 @@ class _HeaderContentState extends State<HeaderContent> {
                   ],
                 ),
                 child: Padding(
-                  padding: const EdgeInsets.all(10),
+                  padding: const EdgeInsets.all(16),
                   child: Image.asset(
                     'lib/assets/alveo-1.png',
                     fit: BoxFit.contain,

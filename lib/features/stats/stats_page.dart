@@ -4,6 +4,7 @@ import '../../core/theme/app_colors.dart';
 import 'widgets/streak.dart';
 import 'widgets/calendar.dart';
 import 'widgets/header.dart';
+
 import 'services/stats_service.dart';
 
 class StatsPage extends StatefulWidget {
@@ -85,7 +86,12 @@ class _StatsPageState extends State<StatsPage> {
                 child: SingleChildScrollView(
                   physics: const AlwaysScrollableScrollPhysics(),
 
-                  padding: EdgeInsets.fromLTRB(36, topSpacing, 36, bottomSpacing),
+                  padding: EdgeInsets.fromLTRB(
+                    36,
+                    topSpacing,
+                    36,
+                    bottomSpacing,
+                  ),
 
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
@@ -95,17 +101,19 @@ class _StatsPageState extends State<StatsPage> {
                             'Kepatuhan minggu ini ${_weeklyAdherence.toStringAsFixed(0)}% • Streak aktif $_streakDays hari',
                       ),
 
-                      const SizedBox(height: 20),
+                      const SizedBox(height: 24),
 
-                      StreakCard(streakDays: _streakDays, personalBest: _personalBest),
+                      StreakCard(
+                        streakDays: _streakDays,
+                        personalBest: _personalBest,
+                      ),
 
-                      const SizedBox(height: 20),
+                      const SizedBox(height: 24),
 
                       const Text(
                         'Kepatuhan Mingguan',
                         style: TextStyle(
                           fontSize: 20,
-                          fontWeight: FontWeight.w700,
                           color: Color(0xFF1A1640),
                         ),
                       ),
