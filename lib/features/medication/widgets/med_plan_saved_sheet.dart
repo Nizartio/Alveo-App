@@ -2,9 +2,9 @@ import 'package:flutter/material.dart';
 
 import '../../../core/theme/app_colors.dart';
 
-/// Shows a reusable, themed confirmation bottom sheet when a medication plan
-/// is successfully saved. The sheet handles its own entrance and calls
-/// [onContinue] after the user taps the primary CTA.
+/// Menampilkan bottom sheet konfirmasi yang dapat digunakan kembali ketika rencana obat
+/// berhasil disimpan. Sheet menangani masuknya sendiri dan memanggil
+/// [onContinue] setelah pengguna mengetuk CTA utama.
 Future<void> showMedPlanSavedBottomSheet(
   BuildContext context, {
   required int xpAmount,
@@ -21,8 +21,8 @@ Future<void> showMedPlanSavedBottomSheet(
         child: _MedPlanSavedSheetContent(
           xpAmount: xpAmount,
           onContinue: () {
-            // Close the sheet first, then invoke the caller callback which
-            // is expected to navigate (using the outer context).
+            // Tutup sheet terlebih dahulu, kemudian panggil callback pengguna yang
+            // diharapkan akan menavigasi (menggunakan konteks luar).
             Navigator.of(sheetContext).pop();
             onContinue();
           },
@@ -182,7 +182,7 @@ class _MedPlanSavedSheetContentState extends State<_MedPlanSavedSheetContent>
 
   Widget _buildMascot(BuildContext context, Gradient gradient) {
     return Semantics(
-      label: 'Mascot illustration',
+      label: 'Ilustrasi Maskot',
       child: Container(
         width: 140,
         height: 140,
@@ -219,7 +219,7 @@ class _MedPlanSavedSheetContentState extends State<_MedPlanSavedSheetContent>
 
   Widget _buildXpChip(BuildContext context, int xp, Gradient gradient) {
     return Semantics(
-      label: 'Earned $xp XP',
+      label: 'Dapatkan $xp XP',
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
         decoration: BoxDecoration(
@@ -239,7 +239,7 @@ class _MedPlanSavedSheetContentState extends State<_MedPlanSavedSheetContent>
             const Icon(Icons.celebration, color: AppColors.white),
             const SizedBox(width: 8),
             Text(
-              '+$xp XP Earned 🎉',
+              '+$xp XP Dapatkan 🎉',
               style: Theme.of(context).textTheme.bodyLarge?.copyWith(
                 color: AppColors.white,
                 fontWeight: FontWeight.w700,

@@ -51,7 +51,7 @@ class _MedicationPlanPageState extends State<MedicationPlanPage> {
         setState(() => _isLoading = false);
         ScaffoldMessenger.of(
           context,
-        ).showSnackBar(SnackBar(content: Text('Error loading medicines: $e')));
+        ).showSnackBar(SnackBar(content: Text('Kesalahan memuat obat: $e')));
       }
     }
   }
@@ -87,7 +87,7 @@ class _MedicationPlanPageState extends State<MedicationPlanPage> {
       setState(() => _medications.removeAt(index));
     } else {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('At least one medication is required')),
+        const SnackBar(content: Text('Setidaknya satu obat diperlukan')),
       );
     }
   }
@@ -95,7 +95,7 @@ class _MedicationPlanPageState extends State<MedicationPlanPage> {
   bool _validateForm() {
     if (_treatmentStartDate == null) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Please select a treatment start date')),
+        const SnackBar(content: Text('Mohon pilih tanggal mulai perawatan')),
       );
       return false;
     }
@@ -104,7 +104,7 @@ class _MedicationPlanPageState extends State<MedicationPlanPage> {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text(
-              'Medication ${i + 1}: Please fill all required fields and add at least one schedule time',
+              'Obat ${i + 1}: Mohon isi semua field yang diperlukan dan tambahkan setidaknya satu waktu jadwal',
             ),
           ),
         );
@@ -138,7 +138,7 @@ class _MedicationPlanPageState extends State<MedicationPlanPage> {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('Error saving treatment plan: $e'),
+            content: Text('Kesalahan menyimpan rencana perawatan: $e'),
             backgroundColor: Colors.red,
           ),
         );
@@ -188,7 +188,7 @@ class _MedicationPlanPageState extends State<MedicationPlanPage> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(
-              'Prescription Medication Setup',
+              'Pengaturan Obat Resep',
               style: Theme.of(context).textTheme.headlineSmall?.copyWith(
                 color: Colors.white,
                 fontWeight: FontWeight.w800,
@@ -197,7 +197,7 @@ class _MedicationPlanPageState extends State<MedicationPlanPage> {
             ),
             const SizedBox(height: 8),
             const Text(
-              'Add medicines from the doctor\'s prescription, set the dosage, schedule, and reminder alarm.',
+              'Tambahkan obat dari resep dokter, atur dosis, jadwal, dan alarm pengingat.',
               style: TextStyle(color: Colors.white70, fontSize: 14),
             ),
           ],
@@ -205,7 +205,7 @@ class _MedicationPlanPageState extends State<MedicationPlanPage> {
       ),
       const SizedBox(height: 24),
       Text(
-        'Treatment Start Date',
+        'Tanggal Mulai Perawatan',
         style: Theme.of(context).textTheme.headlineSmall?.copyWith(
           fontWeight: FontWeight.w700,
           fontSize: 16,
@@ -247,7 +247,7 @@ class _MedicationPlanPageState extends State<MedicationPlanPage> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     const Text(
-                      'Start Date',
+                      'Tanggal Mulai',
                       style: TextStyle(
                         fontSize: 12,
                         color: AppColors.textSecondary,
@@ -257,7 +257,7 @@ class _MedicationPlanPageState extends State<MedicationPlanPage> {
                     const SizedBox(height: 4),
                     Text(
                       _treatmentStartDate == null
-                          ? 'When did you begin?'
+                          ? 'Kapan Anda mulai?'
                           : MaterialLocalizations.of(
                               context,
                             ).formatMediumDate(_treatmentStartDate!),
@@ -276,38 +276,7 @@ class _MedicationPlanPageState extends State<MedicationPlanPage> {
       ),
       const SizedBox(height: 30),
       Text(
-        'Reminder Alarm',
-        style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-          fontWeight: FontWeight.w700,
-          fontSize: 16,
-        ),
-      ),
-      const SizedBox(height: 12),
-      Container(
-        padding: const EdgeInsets.all(16),
-        decoration: BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.circular(16),
-          boxShadow: const [
-            BoxShadow(
-              color: AppColors.bottomSheetShadow,
-              blurRadius: 12,
-              offset: Offset(0, 8),
-            ),
-          ],
-        ),
-        child: const Text(
-          'Each medicine can store a reminder alarm time before the schedule. Edit it inside each medicine card below.',
-          style: TextStyle(
-            fontSize: 13,
-            height: 1.5,
-            color: AppColors.textSecondary,
-          ),
-        ),
-      ),
-      const SizedBox(height: 30),
-      Text(
-        'Medications',
+        'Obat-obatan',
         style: Theme.of(context).textTheme.headlineSmall?.copyWith(
           fontWeight: FontWeight.w700,
           fontSize: 16,
@@ -349,7 +318,7 @@ class _MedicationPlanPageState extends State<MedicationPlanPage> {
                 ),
                 const SizedBox(width: 8),
                 Text(
-                  'Add Another Medication',
+                  'Tambahkan Obat Lainnya',
                   style: TextStyle(
                     color: AppColors.primary,
                     fontWeight: FontWeight.w700,
@@ -395,7 +364,7 @@ class _MedicationPlanPageState extends State<MedicationPlanPage> {
                         ),
                       )
                     : const Text(
-                        'Save Treatment Plan',
+                        'Simpan Rencana Perawatan',
                         style: TextStyle(
                           color: Colors.white,
                           fontSize: 16,
