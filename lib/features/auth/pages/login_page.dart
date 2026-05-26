@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../../../core/theme/app_colors.dart';
+import '../../notifications/services/notification_service.dart';
 
 class LoginPage extends StatefulWidget {
   const LoginPage({super.key});
@@ -37,6 +38,7 @@ class _LoginPageState extends State<LoginPage> {
         email: email,
         password: password,
       );
+      await NotificationService.instance.scheduleMedicationReminders();
       if (!mounted) return;
       Navigator.of(context).pushReplacementNamed('/home');
     } on AuthException catch (e) {

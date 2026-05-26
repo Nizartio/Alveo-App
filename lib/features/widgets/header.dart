@@ -1,8 +1,30 @@
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
-class StatsHeader extends StatelessWidget {
+import '../notifications/services/notification_service.dart';
+
+class StatsHeader extends StatefulWidget {
   const StatsHeader({super.key});
+
+  @override
+  State<StatsHeader> createState() => _StatsHeaderState();
+}
+
+class _StatsHeaderState extends State<StatsHeader> {
+  final _notificationService = NotificationService.instance;
+
+  @override
+  void initState() {
+    super.initState();
+    _refreshBadge();
+  }
+
+  Future<void> _refreshBadge() async {
+    await _notificationService.refreshUnreadCount();
+    if (mounted) {
+      setState(() {});
+    }
+  }
 
   Future<void> _logout(BuildContext context) async {
     await Supabase.instance.client.auth.signOut();
@@ -114,22 +136,40 @@ class StatsHeader extends StatelessWidget {
                 child: Stack(
                   alignment: Alignment.center,
                   children: [
-                    const Icon(
-                      Icons.notifications_none_rounded,
-                      color: Color(0xFF6B5CE7),
-                      size: 30,
-                    ),
-                    Positioned(
-                      top: 10,
-                      right: 10,
-                      child: Container(
-                        width: 8,
-                        height: 8,
-                        decoration: const BoxDecoration(
-                          color: Color(0xFFFF6B6B),
-                          shape: BoxShape.circle,
-                        ),
-                      ),
+                    ValueListenableBuilder<int>(
+                      valueListenable: _notificationService.unreadCount,
+                      builder: (context, unreadCount, _) {
+                        return Stack(
+                          clipBehavior: Clip.none,
+                          children: [
+                            const Icon(
+                              Icons.notifications_none_rounded,
+                              color: Color(0xFF6B5CE7),
+                              size: 30,
+                            ),
+                            if (unreadCount > 0)
+                              Positioned(
+                                top: -2,
+                                right: -2,
+                                child: Container(
+                                  padding: const EdgeInsets.all(4),
+                                  decoration: const BoxDecoration(
+                                    color: Color(0xFFFF6B6B),
+                                    shape: BoxShape.circle,
+                                  ),
+                                  child: Text(
+                                    unreadCount > 9 ? '9+' : '$unreadCount',
+                                    style: const TextStyle(
+                                      color: Colors.white,
+                                      fontSize: 9,
+                                      fontWeight: FontWeight.w700,
+                                    ),
+                                  ),
+                                ),
+                              ),
+                          ],
+                        );
+                      },
                     ),
                   ],
                 ),

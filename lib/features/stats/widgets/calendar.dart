@@ -3,7 +3,6 @@ import 'package:flutter/material.dart';
 enum DayStatus { none, completed, missed }
 
 class WeeklyAdherenceCalendar extends StatefulWidget {
-  /// Map of day number → DayStatus for the current month (static for now)
   final Map<int, DayStatus> dayStatuses;
 
   const WeeklyAdherenceCalendar({

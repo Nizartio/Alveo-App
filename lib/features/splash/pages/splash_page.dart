@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
+import '../../notifications/services/notification_service.dart';
+
 class SplashPage extends StatefulWidget {
   const SplashPage({super.key});
 
@@ -26,6 +28,10 @@ class _SplashPageState extends State<SplashPage> {
 
     final user = _supabase.auth.currentUser;
     final targetRoute = user == null ? '/login' : '/home';
+
+    if (user != null) {
+      await NotificationService.instance.scheduleMedicationReminders();
+    }
 
     await Future<void>.delayed(const Duration(milliseconds: 300));
 

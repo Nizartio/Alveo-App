@@ -189,6 +189,11 @@ class _MedsPageState extends State<MedsPage>
     }
   }
 
+  bool ismarkedAsTaken(Map<String, dynamic> schedule) {
+    final status = schedule['status'] as String? ?? '';
+    return status == 'taken';
+  }
+
   void _snooze() {
     ScaffoldMessenger.of(context).showSnackBar(
       const SnackBar(
@@ -235,7 +240,7 @@ class _MedsPageState extends State<MedsPage>
     final bottomInset = mq.viewPadding.bottom;
 
     return Scaffold(
-      backgroundColor: const Color(0xFFF8F9FE),
+      backgroundColor: AppColors.background,
       body: _isLoading
           ? const Center(child: CircularProgressIndicator())
           : RefreshIndicator(
@@ -315,17 +320,6 @@ class _MedsPageState extends State<MedsPage>
                                 Column(
                                   crossAxisAlignment: CrossAxisAlignment.start,
                                   children: [
-                                    // REMOVED 'const' here
-                                    Text(
-                                      'BERIKUTNYA • ${_nextMedication != null ? _formatTime(_nextMedication!['scheduled_time'].hour.toString().padLeft(2, '0') + ':' + _nextMedication!['scheduled_time'].minute.toString().padLeft(2, '0')) : ''}',
-                                      style: const TextStyle(
-                                        fontSize: 12,
-                                        fontWeight: FontWeight.w700,
-                                        color: Colors.white70,
-                                        letterSpacing: 0.5,
-                                      ),
-                                    ),
-                                    const SizedBox(height: 8),
                                     const Text(
                                       'Waktunya\nminum obat!',
                                       style: TextStyle(
@@ -335,8 +329,8 @@ class _MedsPageState extends State<MedsPage>
                                       ),
                                     ),
                                     const SizedBox(height: 8),
-                                    const Text(
-                                      "Mari jaga seri kesehatan\nmu tetap kuat. Kamu bisa! 🌟",
+                                    Text(
+                                      "BERIKUTNYA • ${_nextMedication != null ? _formatTime(_nextMedication!['scheduled_time'].hour.toString().padLeft(2, '0') + ':' + _nextMedication!['scheduled_time'].minute.toString().padLeft(2, '0')) : ''}",
                                       style: TextStyle(
                                         fontSize: 13,
                                         fontWeight: FontWeight.w400,
@@ -455,8 +449,20 @@ class _MedsPageState extends State<MedsPage>
                                             opacity: _canMarkAsTaken()
                                                 ? 1.0
                                                 : 0.55,
-                                            child: const Text(
-                                              'Diminum',
+                                            child: 
+                                            ismarkedAsTaken(_nextMedication!)
+                                                ? const Text(
+                                                    'Sudah Diminum',
+                                                    style: TextStyle(
+                                                      fontSize: 16,
+                                                      fontWeight:
+                                                          FontWeight.w700,
+                                                      color: AppColors.textSecondary,
+                                                    ),
+                                                  )
+                                                :
+                                            const Text(
+                                              'Minum',
                                               style: TextStyle(
                                                 fontSize: 16,
                                                 fontWeight: FontWeight.w700,

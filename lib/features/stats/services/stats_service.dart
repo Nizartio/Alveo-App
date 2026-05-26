@@ -104,7 +104,7 @@ class StatsService {
       Map<String, int> takenByDate = {};
       Map<String, int> totalByDate = {};
 
-      for (var log in logs as List) {
+      for (var log in logs) {
         final date = log['date'] as String;
         takenByDate[date] =
             (takenByDate[date] ?? 0) + (log['status'] == 'taken' ? 1 : 0);
@@ -157,6 +157,65 @@ class StatsService {
       };
     } catch (e) {
       throw Exception('Failed to fetch achievements: $e');
+    }
+  }
+
+  Future<Map<int, String>> fetchMonthlyDayStatuses() async {
+    try {
+      final user = supabase.auth.currentUser;
+      if (user == null) {
+        throw Exception('User not authenticated');
+      }
+
+      final now = DateTime.now();
+      final firstDay = DateTime(now.year, now.month, 1);
+      final nextMonth = DateTime(now.year, now.month + 1, 1);
+      final firstDayStr = firstDay.toIso8601String().split('T')[0];
+      final nextMonthStr = nextMonth.toIso8601String().split('T')[0];
+
+      final medService = MedicationService();
+      final meds = await medService.fetchActiveMedications();
+      final medIds = meds
+          .map((m) => m['id']?.toString())
+          .whereType<String>()
+          .toList();
+
+      if (medIds.isEmpty) {
+        return {};
+      }
+
+      final medIdsQuery = '(${medIds.map((id) => '"$id"').join(',')})';
+      final logsRaw = await supabase
+          .from('medication_logs')
+          .select('date,status')
+          .gte('date', firstDayStr)
+          .lt('date', nextMonthStr)
+          .filter('user_medication_id', 'in', medIdsQuery);
+
+      final dayStatuses = <int, String>{};
+
+      for (final log in logsRaw as List) {
+        final date = log['date']?.toString();
+        if (date == null || date.isEmpty) continue;
+
+        final parsed = DateTime.tryParse(date);
+        if (parsed == null) continue;
+
+        final day = parsed.day;
+        final status = log['status']?.toString();
+
+        if (status == 'taken') {
+          dayStatuses[day] = 'completed';
+        } else if (status == 'missed' && dayStatuses[day] != 'completed') {
+          dayStatuses[day] = 'missed';
+        } else {
+          dayStatuses.putIfAbsent(day, () => 'none');
+        }
+      }
+
+      return dayStatuses;
+    } catch (e) {
+      throw Exception('Failed to fetch monthly day statuses: $e');
     }
   }
 }
