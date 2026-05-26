@@ -4,10 +4,16 @@ import '../../../core/theme/app_colors.dart';
 import '../models/medication_form_model.dart';
 import '../services/medication_service.dart';
 import '../widgets/medication_card.dart';
-import '../widgets/meds_saved_sheet.dart';
 
 class MedsCreatePage extends StatefulWidget {
-  const MedsCreatePage({super.key});
+  const MedsCreatePage({
+    super.key,
+    this.initialMedication,
+    this.userMedicationId,
+  });
+
+  final MedicationFormModel? initialMedication;
+  final String? userMedicationId;
 
   @override
   State<MedsCreatePage> createState() => _MedsCreatePageState();
@@ -16,23 +22,27 @@ class MedsCreatePage extends StatefulWidget {
 class _MedsCreatePageState extends State<MedsCreatePage> {
   final _medicationService = MedicationService();
   final DateTime _medicationStartDate = DateTime.now();
-  List<MedicationFormModel> _medications = [
-    MedicationFormModel(
-      medicineName: '',
-      dosage: '',
-      frequencyPerDay: 1,
-      intakeRule: 'anytime',
-      reminderMinutesBefore: 15,
-      schedules: [],
-    ),
-  ];
+  late List<MedicationFormModel> _medications;
   List<Map<String, dynamic>> _medicines = [];
   bool _isLoading = true;
   bool _isSaving = false;
 
+  bool get _isEditing => widget.userMedicationId != null;
+
   @override
   void initState() {
     super.initState();
+    _medications = [
+      widget.initialMedication ??
+          MedicationFormModel(
+            medicineName: '',
+            dosage: '',
+            frequencyPerDay: 1,
+            intakeRule: 'anytime',
+            reminderMinutesBefore: 15,
+            schedules: [],
+          ),
+    ];
     _loadMedicines();
   }
 
@@ -86,14 +96,38 @@ class _MedsCreatePageState extends State<MedsCreatePage> {
 
     setState(() => _isSaving = true);
     try {
-      await _medicationService.saveTreatmentPlan(
-        startDate: _medicationStartDate,
-        medications: _medications,
-      );
+      final medication = _medications.first;
+
+      if (_isEditing) {
+        await _medicationService.updateUserMedication(
+          userMedicationId: widget.userMedicationId!,
+          medicineId: medication.medicineId!,
+          dosage: medication.dosage,
+          frequencyPerDay: medication.frequencyPerDay,
+          intakeRule: medication.intakeRule,
+          specialInstruction: medication.specialInstruction,
+          reminderMinutesBefore: medication.reminderMinutesBefore,
+          times: medication.schedules
+              .map(
+                (t) =>
+                    '${t.hour.toString().padLeft(2, '0')}:${t.minute.toString().padLeft(2, '0')}:00',
+              )
+              .toList(),
+        );
+      } else {
+        await _medicationService.saveTreatmentPlan(
+          startDate: _medicationStartDate,
+          medications: _medications,
+        );
+      }
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('✓ Obat berhasil disimpan'),
+          SnackBar(
+            content: Text(
+              _isEditing
+                  ? '✓ Obat berhasil diperbarui'
+                  : '✓ Obat berhasil disimpan',
+            ),
             backgroundColor: Colors.green,
           ),
         );
@@ -167,34 +201,36 @@ class _MedsCreatePageState extends State<MedsCreatePage> {
                               SizedBox(
                                 width: double.infinity,
                                 height: 48,
-                                child: OutlinedButton.icon(
-                                  onPressed: _isSaving
-                                      ? null
-                                      : () {
-                                          setState(
-                                            () => _medications.add(
-                                              MedicationFormModel(
-                                                medicineName: '',
-                                                dosage: '',
-                                                frequencyPerDay: 1,
-                                                intakeRule: 'anytime',
-                                                reminderMinutesBefore: 15,
-                                                schedules: [],
-                                              ),
-                                            ),
-                                          );
-                                        },
-                                  icon: const Icon(Icons.add),
-                                  label: const Text('Tambah Obat Lain'),
-                                  style: OutlinedButton.styleFrom(
-                                    side: const BorderSide(
-                                      color: AppColors.primary,
-                                      width: 2,
-                                    ),
-                                  ),
-                                ),
+                                child: _isEditing
+                                    ? const SizedBox.shrink()
+                                    : OutlinedButton.icon(
+                                        onPressed: _isSaving
+                                            ? null
+                                            : () {
+                                                setState(
+                                                  () => _medications.add(
+                                                    MedicationFormModel(
+                                                      medicineName: '',
+                                                      dosage: '',
+                                                      frequencyPerDay: 1,
+                                                      intakeRule: 'anytime',
+                                                      reminderMinutesBefore: 15,
+                                                      schedules: [],
+                                                    ),
+                                                  ),
+                                                );
+                                              },
+                                        icon: const Icon(Icons.add),
+                                        label: const Text('Tambah Obat Lain'),
+                                        style: OutlinedButton.styleFrom(
+                                          side: const BorderSide(
+                                            color: AppColors.primary,
+                                            width: 2,
+                                          ),
+                                        ),
+                                      ),
                               ),
-                              const SizedBox(height: 24),
+                              if (!_isEditing) const SizedBox(height: 24),
                               SizedBox(
                                 width: double.infinity,
                                 height: 56,
@@ -228,9 +264,11 @@ class _MedsCreatePageState extends State<MedsCreatePage> {
                                                       >(Colors.white),
                                                 ),
                                               )
-                                            : const Text(
-                                                'Simpan Obat',
-                                                style: TextStyle(
+                                            : Text(
+                                                _isEditing
+                                                    ? 'Simpan Perubahan'
+                                                    : 'Simpan Obat',
+                                                style: const TextStyle(
                                                   color: Colors.white,
                                                   fontSize: 16,
                                                   fontWeight: FontWeight.w700,

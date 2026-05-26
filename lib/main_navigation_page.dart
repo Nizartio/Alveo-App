@@ -10,7 +10,9 @@ const double _kFloatH = 16;
 const double _kFloatV = 16;
 
 class MainNavigationPage extends StatefulWidget {
-  const MainNavigationPage({super.key});
+  final int initialIndex;
+
+  const MainNavigationPage({super.key, this.initialIndex = 0});
 
   @override
   State<MainNavigationPage> createState() => _MainNavigationPageState();
@@ -23,6 +25,7 @@ class _MainNavigationPageState extends State<MainNavigationPage> {
   @override
   void initState() {
     super.initState();
+    _currentIndex = widget.initialIndex.clamp(0, 2);
     _pageController = PageController(initialPage: _currentIndex);
   }
 

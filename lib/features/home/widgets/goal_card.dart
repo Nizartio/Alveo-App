@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 
 class GoalCard extends StatelessWidget {
-  const GoalCard({super.key});
+  final double progress;
+
+  const GoalCard({super.key, required this.progress});
 
   @override
   Widget build(BuildContext context) {
@@ -41,15 +43,15 @@ class GoalCard extends StatelessWidget {
 
           const SizedBox(height: 28),
 
-          const Text(
-            '80%',
-            style: TextStyle(fontSize: 32, fontWeight: FontWeight.bold),
+          Text(
+            '${(progress * 100).clamp(0, 100).toStringAsFixed(0)}%',
+            style: const TextStyle(fontSize: 32, fontWeight: FontWeight.bold),
           ),
 
           const SizedBox(height: 8),
 
           LinearProgressIndicator(
-            value: 0.8,
+            value: progress.clamp(0, 1),
             backgroundColor: Colors.grey[200],
             color: Colors.teal,
             minHeight: 8,

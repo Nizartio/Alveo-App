@@ -216,7 +216,7 @@ class _MedsSavedSheetContentState extends State<_MedsSavedSheetContent>
 
   Widget _buildXpChip(BuildContext context, int xp, Gradient gradient) {
     return Semantics(
-      label: 'Dapatkan $xp XP',
+      label: 'Mendapatkan $xp XP',
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
         decoration: BoxDecoration(
@@ -233,7 +233,6 @@ class _MedsSavedSheetContentState extends State<_MedsSavedSheetContent>
         child: Row(
           mainAxisSize: MainAxisSize.min,
           children: [
-            const Icon(Icons.celebration, color: AppColors.white),
             const SizedBox(width: 8),
             Text(
               '+$xp XP',

@@ -21,6 +21,7 @@ class _MedsPageState extends State<MedsPage>
   List<Map<String, dynamic>> _todaySchedule = [];
   List<Map<String, dynamic>> _activeMedications = [];
   bool _isLoading = true;
+  bool _isMarking = false;
   String _greetingName = 'there';
   int _dayStreak = 7;
 
@@ -94,13 +95,54 @@ class _MedsPageState extends State<MedsPage>
 
   Future<void> _markAsTaken() async {
     if (_nextMedication == null) return;
+    if (_isMarking) return;
 
+    final scheduledTime = _nextMedication!['scheduled_time'] as TimeOfDay;
+    final now = DateTime.now();
+    final scheduledDateTime = DateTime(
+      now.year,
+      now.month,
+      now.day,
+      scheduledTime.hour,
+      scheduledTime.minute,
+    );
+
+    // Earliest allowed: 1 hour before scheduled time
+    final earliestAllowed = scheduledDateTime.subtract(
+      const Duration(hours: 1),
+    );
+
+    if (now.isBefore(earliestAllowed)) {
+      final diff = earliestAllowed.difference(now);
+      final minutes = diff.inMinutes;
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Belum waktunya. Coba lagi dalam $minutes menit.'),
+        ),
+      );
+      return;
+    }
+
+    setState(() => _isMarking = true);
     try {
-      final scheduledTime = _nextMedication!['scheduled_time'] as TimeOfDay;
       await _medicationService.markMedicationAsTaken(
         userMedicationId: _nextMedication!['id'],
         scheduledTime: scheduledTime,
       );
+
+      // Optimistically update local today schedule so UI reflects change immediately
+      try {
+        final timeStr =
+            '${scheduledTime.hour.toString().padLeft(2, '0')}:${scheduledTime.minute.toString().padLeft(2, '0')}:00';
+        for (var s in _todaySchedule) {
+          if (s['user_medication_id'] == _nextMedication!['id'] &&
+              s['scheduled_time'] == timeStr) {
+            s['status'] = 'taken';
+            s['taken_at'] = DateTime.now().toIso8601String();
+          }
+        }
+      } catch (_) {}
 
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -109,7 +151,8 @@ class _MedsPageState extends State<MedsPage>
             backgroundColor: Colors.green,
           ),
         );
-        _loadMedicationData();
+        // refresh authoritative data
+        await _loadMedicationData();
       }
     } catch (e) {
       if (mounted) {
@@ -117,6 +160,32 @@ class _MedsPageState extends State<MedsPage>
           context,
         ).showSnackBar(SnackBar(content: Text('Kesalahan: $e')));
       }
+    } finally {
+      if (mounted) setState(() => _isMarking = false);
+    }
+  }
+
+  bool _canMarkAsTaken() {
+    if (_nextMedication == null) return false;
+    if (_isMarking) return false;
+    try {
+      final scheduledTime = _nextMedication!['scheduled_time'] as TimeOfDay;
+      final now = DateTime.now();
+      final scheduledDateTime = DateTime(
+        now.year,
+        now.month,
+        now.day,
+        scheduledTime.hour,
+        scheduledTime.minute,
+      );
+      final earliestAllowed = scheduledDateTime.subtract(
+        const Duration(hours: 1),
+      );
+      final status = _nextMedication!['status'] as String? ?? '';
+      if (status == 'taken') return false;
+      return !now.isBefore(earliestAllowed);
+    } catch (_) {
+      return false;
     }
   }
 
@@ -166,7 +235,7 @@ class _MedsPageState extends State<MedsPage>
     final bottomInset = mq.viewPadding.bottom;
 
     return Scaffold(
-      backgroundColor: const Color(0xFFF8F9FE),
+      backgroundColor: AppColors.background,
       body: _isLoading
           ? const Center(child: CircularProgressIndicator())
           : SingleChildScrollView(
@@ -373,14 +442,21 @@ class _MedsPageState extends State<MedsPage>
                                     color: Colors.transparent,
                                     child: InkWell(
                                       borderRadius: BorderRadius.circular(24),
-                                      onTap: _markAsTaken,
-                                      child: const Center(
-                                        child: Text(
-                                          'Diminum',
-                                          style: TextStyle(
-                                            fontSize: 16,
-                                            fontWeight: FontWeight.w700,
-                                            color: AppColors.primary,
+                                      onTap: _canMarkAsTaken()
+                                          ? _markAsTaken
+                                          : null,
+                                      child: Center(
+                                        child: Opacity(
+                                          opacity: _canMarkAsTaken()
+                                              ? 1.0
+                                              : 0.55,
+                                          child: const Text(
+                                            'Diminum',
+                                            style: TextStyle(
+                                              fontSize: 16,
+                                              fontWeight: FontWeight.w700,
+                                              color: AppColors.primary,
+                                            ),
                                           ),
                                         ),
                                       ),
