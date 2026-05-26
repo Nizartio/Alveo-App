@@ -4,8 +4,6 @@ import '../models/medication_form_model.dart';
 import '../services/medication_service.dart';
 import '../widgets/medication_card.dart';
 import '../widgets/med_plan_saved_sheet.dart';
-import '../../widgets/bottom_navbar.dart';
-import '../../widgets/header.dart';
 
 class MedicationPlanPage extends StatefulWidget {
   final Map<String, dynamic>? existingMedication;
@@ -18,7 +16,6 @@ class MedicationPlanPage extends StatefulWidget {
 
 class _MedicationPlanPageState extends State<MedicationPlanPage> {
   final _medicationService = MedicationService();
-  int _currentNavIndex = 1;
   DateTime? _treatmentStartDate;
   List<MedicationFormModel> _medications = [
     MedicationFormModel(
