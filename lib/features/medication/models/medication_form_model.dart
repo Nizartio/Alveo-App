@@ -28,8 +28,7 @@ class MedicationFormModel {
       frequencyPerDay > 0 &&
       intakeRule.isNotEmpty &&
       schedules.isNotEmpty &&
-      schedules.length ==
-          frequencyPerDay; // Pastikan jadwal pas dengan frekuensi
+      schedules.length == frequencyPerDay; // Pastikan jadwal pas dengan frekuensi
 
   Map<String, dynamic> toMap() => {
     'medicineId': medicineId,

@@ -6,6 +6,12 @@ import '../notifications/services/notification_service.dart';
 class StatsHeader extends StatefulWidget {
   const StatsHeader({super.key});
 
+  Future<void> _logout(BuildContext context) async {
+    await Supabase.instance.client.auth.signOut();
+    if (!context.mounted) return;
+    Navigator.of(context).pushNamedAndRemoveUntil('/login', (route) => false);
+  }
+
   @override
   State<StatsHeader> createState() => _StatsHeaderState();
 }

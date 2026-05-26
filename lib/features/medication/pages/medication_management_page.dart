@@ -142,51 +142,38 @@ class _MedicationManagementPageState extends State<MedicationManagementPage> {
   Future<void> _deleteMedication(String userMedicationId) async {
     final confirm = await showDialog<bool>(
       context: context,
-      builder: (dialogContext) => AlertDialog(
+      builder: (context) => AlertDialog(
         title: const Text('Hapus Obat'),
         content: const Text('Apakah Anda yakin ingin menghapus obat ini?'),
         actions: [
           TextButton(
-            onPressed: () => Navigator.pop(dialogContext, false),
+            onPressed: () => Navigator.pop(context),
             child: const Text('Batal'),
           ),
           TextButton(
             onPressed: () async {
-              Navigator.pop(dialogContext, true);
+              Navigator.pop(context);
+              try {
+                await _medicationService.deleteMedication(userMedicationId);
+                if (mounted) {
+                  ScaffoldMessenger.of(
+                    context,
+                  ).showSnackBar(const SnackBar(content: Text('Obat dihapus')));
+                  _loadMedications();
+                }
+              } catch (e) {
+                if (mounted) {
+                  ScaffoldMessenger.of(
+                    context,
+                  ).showSnackBar(SnackBar(content: Text('Kesalahan: $e')));
+                }
+              }
             },
             child: const Text('Hapus', style: TextStyle(color: Colors.red)),
           ),
         ],
       ),
     );
-
-    if (confirm != true || !mounted) {
-      return;
-    }
-
-    try {
-      await _medicationService.deleteMedication(userMedicationId);
-
-      if (!mounted) return;
-
-      setState(() {
-        _activeMedications.removeWhere((medication) {
-          return medication['id']?.toString() == userMedicationId;
-        });
-      });
-
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(const SnackBar(content: Text('Obat dihapus')));
-
-      await _loadMedications();
-    } catch (e) {
-      if (mounted) {
-        ScaffoldMessenger.of(
-          context,
-        ).showSnackBar(SnackBar(content: Text('Kesalahan: $e')));
-      }
-    }
   }
 
   @override
