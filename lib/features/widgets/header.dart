@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
-
+import '../../../core/theme/app_colors.dart';
 import '../notifications/services/notification_service.dart';
 
 class StatsHeader extends StatefulWidget {
@@ -89,7 +89,7 @@ class _StatsHeaderState extends State<StatsHeader> {
                 width: 40,
                 height: 40,
                 decoration: BoxDecoration(
-                  color: const Color(0xFFF5F3FF),
+                  color: AppColors.surfaceTint,
                   borderRadius: BorderRadius.circular(100),
                 ),
                 child: Center(
@@ -99,7 +99,7 @@ class _StatsHeaderState extends State<StatsHeader> {
                     padding: const EdgeInsets.all(2),
                     decoration: BoxDecoration(
                       shape: BoxShape.circle,
-                      border: Border.all(color: Colors.white, width: 2),
+                      border: Border.all(color: AppColors.white, width: 2),
                     ),
                     child: ClipPath(
                       child: Align(

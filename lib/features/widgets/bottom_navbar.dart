@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../core/theme/app_colors.dart';
 
 class BottomNavbar extends StatelessWidget {
   final int currentIndex;
@@ -16,11 +17,11 @@ class BottomNavbar extends StatelessWidget {
       height: 80,
       padding: const EdgeInsets.symmetric(horizontal: 16),
       decoration: BoxDecoration(
-        color: Colors.white.withOpacity(0.88),
+        color: AppColors.white88,
         borderRadius: BorderRadius.circular(40),
-        boxShadow: [
+        boxShadow: const [
           BoxShadow(
-            color: const Color(0xFF6B5CE7).withOpacity(0.18),
+            color: AppColors.navShadow,
             blurRadius: 30,
             spreadRadius: 12,
             offset: const Offset(0, 10),
@@ -69,8 +70,8 @@ class _NavItem extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    const activeColor = Color(0xFF6B5CE7);
-    const inactiveColor = Color(0xFF94A3B8);
+    const activeColor = AppColors.brandBlue;
+    const inactiveColor = AppColors.textMutedSoft;
 
     return GestureDetector(
       onTap: onTap,

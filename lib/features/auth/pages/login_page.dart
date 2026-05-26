@@ -69,7 +69,10 @@ class _LoginPageState extends State<LoginPage> {
                 left: -25,
                 child: _SoftBlob(
                   size: size.width * 0.5,
-                  colors: const [Color(0xFFE7E0FF), Color(0xFFF7F3FF)],
+                  colors: const [
+                    AppColors.bubbleMuted,
+                    AppColors.bubbleMutedAlt,
+                  ],
                 ),
               ),
               Positioned(
@@ -77,7 +80,7 @@ class _LoginPageState extends State<LoginPage> {
                 right: -40,
                 child: _SoftBlob(
                   size: size.width * 0.42,
-                  colors: const [Color(0xFFEAF0FF), Color(0xFFF7FBFF)],
+                  colors: const [AppColors.bubbleCool, AppColors.bubbleCoolAlt],
                 ),
               ),
               SingleChildScrollView(
@@ -96,11 +99,11 @@ class _LoginPageState extends State<LoginPage> {
                         width: double.infinity,
                         padding: const EdgeInsets.fromLTRB(22, 26, 22, 22),
                         decoration: BoxDecoration(
-                          color: Colors.white,
+                          color: AppColors.white,
                           borderRadius: BorderRadius.circular(28),
                           boxShadow: const [
                             BoxShadow(
-                              color: Color(0x12000000),
+                              color: AppColors.black12,
                               blurRadius: 28,
                               offset: Offset(0, 16),
                             ),
@@ -368,11 +371,11 @@ class _InputField extends StatelessWidget {
         ),
         errorBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(14),
-          borderSide: const BorderSide(color: Color(0xFFE06565), width: 1),
+          borderSide: const BorderSide(color: AppColors.danger, width: 1),
         ),
         focusedErrorBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(14),
-          borderSide: const BorderSide(color: Color(0xFFE06565), width: 1.3),
+          borderSide: const BorderSide(color: AppColors.danger, width: 1.3),
         ),
       ),
     );
@@ -390,10 +393,7 @@ class _MascotCircle extends StatelessWidget {
       decoration: BoxDecoration(
         shape: BoxShape.circle,
         color: AppColors.white,
-        border: Border.all(
-          color: AppColors.white.withValues(alpha: 0.9),
-          width: 8,
-        ),
+        border: Border.all(color: AppColors.white90, width: 8),
         boxShadow: const [
           BoxShadow(
             color: AppColors.softShadow,
@@ -422,7 +422,7 @@ class _MascotCircle extends StatelessWidget {
                 child: Icon(
                   Icons.air_rounded,
                   size: 34,
-                  color: Color(0xFFFFA9B7),
+                  color: AppColors.dangerSoft,
                 ),
               ),
             ],

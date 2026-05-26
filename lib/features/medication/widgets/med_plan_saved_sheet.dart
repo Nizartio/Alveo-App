@@ -13,8 +13,8 @@ Future<void> showMedPlanSavedBottomSheet(
   return showModalBottomSheet<void>(
     context: context,
     isScrollControlled: true,
-    backgroundColor: Colors.transparent,
-    barrierColor: Colors.black54,
+    backgroundColor: AppColors.transparent,
+    barrierColor: AppColors.black54,
     builder: (sheetContext) {
       return FractionallySizedBox(
         heightFactor: 0.7,

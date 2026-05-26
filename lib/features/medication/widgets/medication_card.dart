@@ -121,8 +121,8 @@ class _MedicationCardState extends State<MedicationCard> {
       margin: const EdgeInsets.only(bottom: 16),
       padding: const EdgeInsets.all(18),
       decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(20),
+        color: AppColors.white,
+        borderRadius: BorderRadius.circular(16),
         boxShadow: const [
           BoxShadow(
             color: AppColors.bottomSheetShadow,
@@ -140,7 +140,10 @@ class _MedicationCardState extends State<MedicationCard> {
             children: [
               if (widget.canRemove)
                 IconButton(
-                  icon: const Icon(Icons.delete_outline, color: Colors.red),
+                  icon: const Icon(
+                    Icons.delete_outline,
+                    color: AppColors.dangerSoft,
+                  ),
                   onPressed: widget.onRemove,
                   constraints: const BoxConstraints(),
                   padding: EdgeInsets.zero,
@@ -233,24 +236,38 @@ class _MedicationCardState extends State<MedicationCard> {
             ),
           ),
           const SizedBox(height: 8),
-          TextFormField(
-            initialValue: _medication.frequencyPerDay.toString(),
-            keyboardType: TextInputType.number,
-            inputFormatters: [FilteringTextInputFormatter.digitsOnly],
-            onChanged: (v) {
-              final parsed = int.tryParse(v);
-              if (parsed != null && parsed > 0) {
-                final updated = _medication..frequencyPerDay = parsed;
-                _generateSuggestedSchedules(updated);
-                _updateMedication(updated);
-              }
-            },
-            decoration: _fieldDecoration(hint: 'Contoh: 3'),
-            validator: (v) {
-              final parsed = int.tryParse(v ?? '');
-              if (parsed == null || parsed <= 0) return 'Frekuensi tidak valid';
-              return null;
-            },
+          Row(
+            children: [1, 2, 3]
+                .map(
+                  (freq) => Expanded(
+                    child: GestureDetector(
+                      onTap: () => _updateMedication(
+                        _medication..frequencyPerDay = freq,
+                      ),
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(vertical: 10),
+                        decoration: BoxDecoration(
+                          color: _medication.frequencyPerDay == freq
+                              ? AppColors.primary
+                              : AppColors.surfaceSoft,
+                          borderRadius: BorderRadius.circular(10),
+                        ),
+                        child: Center(
+                          child: Text(
+                            '${freq}x/day',
+                            style: TextStyle(
+                              fontWeight: FontWeight.w600,
+                              color: _medication.frequencyPerDay == freq
+                                  ? AppColors.white
+                                  : AppColors.textSecondary,
+                            ),
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
+                )
+                .toList(),
           ),
           const SizedBox(height: 16),
 

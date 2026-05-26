@@ -45,7 +45,7 @@ class IntakeRuleSelector extends StatelessWidget {
                     fontSize: 12,
                     fontWeight: FontWeight.w600,
                     color: selectedRule == rule.$1
-                        ? Colors.white
+                        ? AppColors.white
                         : AppColors.textSecondary,
                   ),
                 ),

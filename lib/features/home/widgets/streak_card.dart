@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../../core/theme/app_colors.dart';
 
 class StreakCard extends StatelessWidget {
   final int streakDays;
@@ -15,15 +16,11 @@ class StreakCard extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
-        gradient: const LinearGradient(
-          colors: [Color(0xFF7B66FF), Color(0xFFA594FF)],
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-        ),
+        gradient: AppColors.streakGradient,
         borderRadius: BorderRadius.circular(28),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.04),
+            color: AppColors.black04,
             blurRadius: 20,
             offset: const Offset(0, 6),
           ),
@@ -33,15 +30,18 @@ class StreakCard extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           CircleAvatar(
-            backgroundColor: Colors.white.withOpacity(0.2),
-            child: const Icon(Icons.local_fire_department, color: Colors.white),
+            backgroundColor: AppColors.white20,
+            child: const Icon(
+              Icons.local_fire_department,
+              color: AppColors.white,
+            ),
           ),
           const SizedBox(height: 8),
 
           Text(
             '$streakDays Hari',
             style: TextStyle(
-              color: Colors.white,
+              color: AppColors.white,
               fontSize: 28,
               fontWeight: FontWeight.bold,
             ),
@@ -49,7 +49,7 @@ class StreakCard extends StatelessWidget {
 
           const Text(
             'STREAK 🔥',
-            style: TextStyle(color: Colors.white70, fontSize: 16),
+            style: TextStyle(color: AppColors.white70, fontSize: 16),
           ),
         ],
       ),

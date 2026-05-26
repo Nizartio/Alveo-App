@@ -220,7 +220,6 @@ class MedicationService {
               intake_rule,
               special_instruction,
               reminder_minutes_before,
-              is_active,
               medicines:medicine_id(
                 id,
                 name
@@ -853,9 +852,9 @@ class MedicationService {
   Future<void> deleteMedication(String userMedicationId) async {
     try {
       await supabase
-          .from('user_medications')
-          .delete()
-          .eq('id', userMedicationId);
+        .from('user_medications')
+        .update({'is_active': false})
+        .eq('id', userMedicationId);
     } catch (e) {
       throw Exception('Failed to delete medication: $e');
     }

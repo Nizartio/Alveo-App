@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../../core/theme/app_colors.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 class HeaderContent extends StatefulWidget {
@@ -62,7 +63,7 @@ class _HeaderContentState extends State<HeaderContent> {
           style: const TextStyle(
             fontSize: 28,
             fontWeight: FontWeight.bold,
-            color: Color(0xFF2D2D2D),
+            color: AppColors.textHeading,
           ),
         ),
         const SizedBox(height: 12),
@@ -73,11 +74,11 @@ class _HeaderContentState extends State<HeaderContent> {
               width: double.infinity,
               padding: const EdgeInsets.fromLTRB(24, 24, 152, 24),
               decoration: BoxDecoration(
-                color: Colors.white,
+                color: AppColors.white,
                 borderRadius: BorderRadius.circular(36),
                 boxShadow: [
                   BoxShadow(
-                    color: Colors.black.withOpacity(0.03),
+                    color: AppColors.black03,
                     blurRadius: 20,
                     offset: const Offset(0, 8),
                   ),
@@ -86,7 +87,7 @@ class _HeaderContentState extends State<HeaderContent> {
               child: const Text(
                 'Kamu hebat hari ini!\nTarik napas dalam-dalam dan teruslah berusaha.',
                 style: TextStyle(
-                  color: Color(0xFF6B6B6B),
+                  color: AppColors.textBody,
                   fontSize: 16,
                   height: 1.5,
                   fontWeight: FontWeight.w400,
@@ -104,7 +105,7 @@ class _HeaderContentState extends State<HeaderContent> {
                   color: const Color.fromARGB(255, 241, 236, 236),
                   boxShadow: [
                     BoxShadow(
-                      color: Colors.black.withOpacity(0.12),
+                      color: AppColors.black12,
                       blurRadius: 18,
                       offset: const Offset(0, 10),
                     ),

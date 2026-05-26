@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../../core/theme/app_colors.dart';
 
 class NextActionCard extends StatelessWidget {
   final String? medicineName;
@@ -19,7 +20,7 @@ class NextActionCard extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: AppColors.white,
         borderRadius: BorderRadius.circular(28),
       ),
       child: Column(
@@ -28,12 +29,12 @@ class NextActionCard extends StatelessWidget {
             children: [
               CircleAvatar(
                 radius: 24,
-                backgroundColor: const Color(0xFFD7E3FF),
+                backgroundColor: AppColors.surfaceBlueTint,
                 child: Transform.rotate(
                   angle: -0.5,
                   child: const Icon(
                     Icons.medication_outlined,
-                    color: Color(0xFF4361EE),
+                    color: AppColors.brandBlueAlt,
                   ),
                 ),
               ),
@@ -69,7 +70,7 @@ class NextActionCard extends StatelessWidget {
           ElevatedButton(
             onPressed: onTap,
             style: ElevatedButton.styleFrom(
-              backgroundColor: const Color(0xFF4834DF),
+              backgroundColor: AppColors.primaryDeep,
               minimumSize: const Size(double.infinity, 55),
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(50),
@@ -88,10 +89,7 @@ class NextActionCard extends StatelessWidget {
 
                 SizedBox(width: 8),
 
-                Icon(
-                  Icons.check_circle_outline,
-                  color: Colors.white,
-                ),
+                Icon(Icons.check_circle_outline, color: AppColors.white),
               ],
             ),
           ),

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../../core/theme/app_colors.dart';
 
 class GoalCard extends StatelessWidget {
   final double progress;
@@ -10,11 +11,11 @@ class GoalCard extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: AppColors.white,
         borderRadius: BorderRadius.circular(28),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.04),
+            color: AppColors.black04,
             blurRadius: 20,
             offset: const Offset(0, 6),
           ),
@@ -35,7 +36,7 @@ class GoalCard extends StatelessWidget {
               ),
               Icon(
                 Icons.check_circle_outline,
-                color: Color(0xFF4361EE),
+                color: AppColors.brandBlueAlt,
                 size: 20,
               ),
             ],

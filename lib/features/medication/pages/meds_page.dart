@@ -268,7 +268,7 @@ class _MedsPageState extends State<MedsPage>
                             children: [
                               const Icon(
                                 Icons.local_fire_department,
-                                color: Colors.orange,
+                                color: AppColors.danger,
                                 size: 18,
                               ),
                               const SizedBox(width: 4),

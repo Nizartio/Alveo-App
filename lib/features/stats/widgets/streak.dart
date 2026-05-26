@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../../core/theme/app_colors.dart';
 
 class StreakCard extends StatelessWidget {
   final int streakDays;
@@ -15,7 +16,11 @@ class StreakCard extends StatelessWidget {
       padding: const EdgeInsets.all(24),
       decoration: BoxDecoration(
         gradient: const LinearGradient(
-          colors: [Color(0xFF8B7FE8), Color(0xFF6B5CE7), Color(0xFF5B4FD4)],
+          colors: [
+            AppColors.brandPurple,
+            AppColors.brandBlue,
+            AppColors.primaryDeep,
+          ],
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
           stops: [0.0, 0.5, 1.0],
@@ -23,7 +28,7 @@ class StreakCard extends StatelessWidget {
         borderRadius: BorderRadius.circular(28),
         boxShadow: [
           BoxShadow(
-            color: const Color(0xFF6B5CE7).withOpacity(0.35),
+            color: AppColors.navShadow,
             blurRadius: 20,
             offset: const Offset(0, 8),
           ),
@@ -52,7 +57,7 @@ class StreakCard extends StatelessWidget {
                     Text(
                       '$streakDays',
                       style: const TextStyle(
-                        color: Colors.white,
+                        color: AppColors.white,
                         fontSize: 52,
                         fontWeight: FontWeight.w800,
                         height: 1.0,
