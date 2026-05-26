@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import '../../core/theme/app_colors.dart';
+import '../../../core/theme/app_colors.dart';
 
 class StreakCard extends StatelessWidget {
   final int streakDays;
@@ -25,7 +25,7 @@ class StreakCard extends StatelessWidget {
           end: Alignment.bottomRight,
           stops: [0.0, 0.5, 1.0],
         ),
-        borderRadius: BorderRadius.circular(20),
+        borderRadius: BorderRadius.circular(28),
         boxShadow: [
           BoxShadow(
             color: AppColors.navShadow,
@@ -42,10 +42,10 @@ class StreakCard extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  'CURRENT STREAK',
+                  'STREAK SAAT INI',
                   style: TextStyle(
-                    color: AppColors.white85,
-                    fontSize: 11,
+                    color: Colors.white.withOpacity(0.65),
+                    fontSize: 16,
                     fontWeight: FontWeight.w600,
                     letterSpacing: 1.2,
                   ),
@@ -67,10 +67,10 @@ class StreakCard extends StatelessWidget {
                     const Padding(
                       padding: EdgeInsets.only(bottom: 8),
                       child: Text(
-                        'Days',
+                        'Hari',
                         style: TextStyle(
-                          color: AppColors.white,
-                          fontSize: 20,
+                          color: Colors.white,
+                          fontSize: 28,
                           fontWeight: FontWeight.w500,
                         ),
                       ),
@@ -80,11 +80,11 @@ class StreakCard extends StatelessWidget {
                 const SizedBox(height: 6),
                 Text(
                   daysTobeat > 0
-                      ? 'Just $daysTobeat more days to beat\nyour personal best!'
-                      : 'You\'ve beaten your personal best! 🎉',
+                      ? 'Tinggal $daysTobeat hari lagi untuk\nmelebihi rekor pribadi kamu!'
+                      : 'Kamu sudah melebihi rekor pribadi! 🎉',
                   style: TextStyle(
-                    color: AppColors.white90,
-                    fontSize: 13,
+                    color: Colors.white.withOpacity(0.85),
+                    fontSize: 14,
                     height: 1.4,
                   ),
                 ),
@@ -106,11 +106,16 @@ class _FlameIcon extends StatelessWidget {
       width: 70,
       height: 70,
       decoration: BoxDecoration(
-        color: AppColors.white15,
+        color: Colors.white.withOpacity(0.2),
         shape: BoxShape.circle,
-        border: Border.all(color: AppColors.white20, width: 1.5),
       ),
-      child: const Center(child: Text('🔥', style: TextStyle(fontSize: 32))),
+      child: Center(
+        child: const Icon(
+          Icons.local_fire_department,
+          color: Colors.white,
+          size: 32,
+        ),
+      ),
     );
   }
 }

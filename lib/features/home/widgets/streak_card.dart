@@ -2,7 +2,14 @@ import 'package:flutter/material.dart';
 import '../../../core/theme/app_colors.dart';
 
 class StreakCard extends StatelessWidget {
-  const StreakCard({super.key});
+  final int streakDays;
+  final int personalBest;
+
+  const StreakCard({
+    super.key,
+    required this.streakDays,
+    required this.personalBest,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -31,8 +38,8 @@ class StreakCard extends StatelessWidget {
           ),
           const SizedBox(height: 8),
 
-          const Text(
-            '7 Day',
+          Text(
+            '$streakDays Hari',
             style: TextStyle(
               color: AppColors.white,
               fontSize: 28,

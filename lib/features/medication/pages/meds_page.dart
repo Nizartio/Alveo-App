@@ -1,9 +1,10 @@
 import 'package:flutter/material.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../../core/theme/app_colors.dart';
 import '../services/medication_service.dart';
-import 'medication_plan_page.dart';
-import 'medication_management_page.dart';
+import '../widgets/meds_btn_action.dart';
 import 'medication_history_page.dart';
+import 'medication_management_page.dart';
 
 class MedsPage extends StatefulWidget {
   const MedsPage({super.key});
@@ -15,11 +16,13 @@ class MedsPage extends StatefulWidget {
 class _MedsPageState extends State<MedsPage>
     with AutomaticKeepAliveClientMixin {
   final _medicationService = MedicationService();
+  final _supabase = Supabase.instance.client;
   Map<String, dynamic>? _nextMedication;
   List<Map<String, dynamic>> _todaySchedule = [];
   List<Map<String, dynamic>> _activeMedications = [];
   bool _isLoading = true;
-  int _adherencePercentage = 92;
+  bool _isMarking = false;
+  String _greetingName = 'there';
   int _dayStreak = 7;
 
   @override
@@ -28,7 +31,42 @@ class _MedsPageState extends State<MedsPage>
   @override
   void initState() {
     super.initState();
+    _loadGreetingName();
     _loadMedicationData();
+  }
+
+  Future<void> _loadGreetingName() async {
+    final user = _supabase.auth.currentUser;
+    if (user == null) return;
+
+    try {
+      final profile = await _supabase
+          .from('user_profile')
+          .select('full_name')
+          .eq('user_id', user.id)
+          .maybeSingle();
+
+      final fullName =
+          (profile?['full_name'] ??
+                  user.userMetadata?['full_name'] ??
+                  user.email)
+              ?.toString();
+
+      if (!mounted) return;
+
+      setState(() {
+        if (fullName == null || fullName.trim().isEmpty) {
+          _greetingName = 'there';
+        } else {
+          _greetingName = fullName.trim().split(RegExp(r'\s+')).first;
+        }
+      });
+    } catch (_) {
+      if (!mounted) return;
+      setState(() {
+        _greetingName = 'there';
+      });
+    }
   }
 
   Future<void> _loadMedicationData() async {
@@ -48,87 +86,114 @@ class _MedsPageState extends State<MedsPage>
     } catch (e) {
       if (mounted) {
         setState(() => _isLoading = false);
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Error loading medications: $e')),
-        );
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('Kesalahan memuat obat: $e')));
       }
     }
   }
 
   Future<void> _markAsTaken() async {
     if (_nextMedication == null) return;
+    if (_isMarking) return;
 
+    final scheduledTime = _nextMedication!['scheduled_time'] as TimeOfDay;
+    final now = DateTime.now();
+    final scheduledDateTime = DateTime(
+      now.year,
+      now.month,
+      now.day,
+      scheduledTime.hour,
+      scheduledTime.minute,
+    );
+
+    // Earliest allowed: 1 hour before scheduled time
+    final earliestAllowed = scheduledDateTime.subtract(
+      const Duration(hours: 1),
+    );
+
+    if (now.isBefore(earliestAllowed)) {
+      final diff = earliestAllowed.difference(now);
+      final minutes = diff.inMinutes;
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Belum waktunya. Coba lagi dalam $minutes menit.'),
+        ),
+      );
+      return;
+    }
+
+    setState(() => _isMarking = true);
     try {
-      final scheduledTime = _nextMedication!['scheduled_time'] as TimeOfDay;
       await _medicationService.markMedicationAsTaken(
         userMedicationId: _nextMedication!['id'],
         scheduledTime: scheduledTime,
       );
 
+      // Optimistically update local today schedule so UI reflects change immediately
+      try {
+        final timeStr =
+            '${scheduledTime.hour.toString().padLeft(2, '0')}:${scheduledTime.minute.toString().padLeft(2, '0')}:00';
+        for (var s in _todaySchedule) {
+          if (s['user_medication_id'] == _nextMedication!['id'] &&
+              s['scheduled_time'] == timeStr) {
+            s['status'] = 'taken';
+            s['taken_at'] = DateTime.now().toIso8601String();
+          }
+        }
+      } catch (_) {}
+
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
-            content: Text('✓ Medication marked as taken!'),
+            content: Text('✓ Obat ditandai telah diminum!'),
             backgroundColor: Colors.green,
           ),
         );
-        _loadMedicationData();
+        // refresh authoritative data
+        await _loadMedicationData();
       }
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(
           context,
-        ).showSnackBar(SnackBar(content: Text('Error: $e')));
+        ).showSnackBar(SnackBar(content: Text('Kesalahan: $e')));
       }
+    } finally {
+      if (mounted) setState(() => _isMarking = false);
+    }
+  }
+
+  bool _canMarkAsTaken() {
+    if (_nextMedication == null) return false;
+    if (_isMarking) return false;
+    try {
+      final scheduledTime = _nextMedication!['scheduled_time'] as TimeOfDay;
+      final now = DateTime.now();
+      final scheduledDateTime = DateTime(
+        now.year,
+        now.month,
+        now.day,
+        scheduledTime.hour,
+        scheduledTime.minute,
+      );
+      final earliestAllowed = scheduledDateTime.subtract(
+        const Duration(hours: 1),
+      );
+      final status = _nextMedication!['status'] as String? ?? '';
+      if (status == 'taken') return false;
+      return !now.isBefore(earliestAllowed);
+    } catch (_) {
+      return false;
     }
   }
 
   void _snooze() {
     ScaffoldMessenger.of(context).showSnackBar(
       const SnackBar(
-        content: Text('Snooze set. You\'ll get a reminder in 15 minutes.'),
-      ),
-    );
-  }
-
-  Widget _buildQuickAction(String label, IconData icon, VoidCallback onTap) {
-    return GestureDetector(
-      onTap: onTap,
-      child: Container(
-        padding: const EdgeInsets.symmetric(vertical: 16),
-        decoration: BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.circular(14),
-          boxShadow: const [
-            BoxShadow(
-              color: AppColors.bottomSheetShadow,
-              blurRadius: 8,
-              offset: Offset(0, 4),
-            ),
-          ],
-        ),
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Container(
-              padding: const EdgeInsets.all(12),
-              decoration: BoxDecoration(
-                color: AppColors.chipBackground,
-                borderRadius: BorderRadius.circular(12),
-              ),
-              child: Icon(icon, color: AppColors.primary, size: 24),
-            ),
-            const SizedBox(height: 8),
-            Text(
-              label,
-              textAlign: TextAlign.center,
-              style: const TextStyle(
-                fontSize: 12,
-                fontWeight: FontWeight.w600,
-                color: AppColors.textPrimary,
-              ),
-            ),
-          ],
+        content: Text(
+          'Tunda diatur. Anda akan mendapat pengingat dalam 15 menit.',
         ),
       ),
     );
@@ -146,6 +211,22 @@ class _MedsPageState extends State<MedsPage>
     }
   }
 
+  String _getIntakeRuleLabel(String? rule) {
+    switch (rule) {
+      case 'before_meal':
+        return 'Sebelum Makan';
+      case 'after_meal':
+        return 'Setelah Makan';
+      case 'with_meal':
+        return 'Saat Makan';
+      case 'empty_stomach':
+        return 'Perut Kosong';
+      case 'anytime':
+      default:
+        return 'Kapan Saja';
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     super.build(context);
@@ -154,13 +235,13 @@ class _MedsPageState extends State<MedsPage>
     final bottomInset = mq.viewPadding.bottom;
 
     return Scaffold(
-      backgroundColor: AppColors.scaffoldNeutral,
+      backgroundColor: AppColors.background,
       body: _isLoading
           ? const Center(child: CircularProgressIndicator())
           : SingleChildScrollView(
               padding: EdgeInsets.fromLTRB(
                 20,
-                8,
+                mq.viewPadding.top + 8,
                 20,
                 navHeight + bottomInset + 28,
               ),
@@ -174,9 +255,9 @@ class _MedsPageState extends State<MedsPage>
                       Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          const Text(
-                            'Good Morning, Sarah',
-                            style: TextStyle(
+                          Text(
+                            'Pagi yang baik, $_greetingName',
+                            style: const TextStyle(
                               fontSize: 20,
                               fontWeight: FontWeight.w700,
                               color: AppColors.textPrimary,
@@ -192,7 +273,7 @@ class _MedsPageState extends State<MedsPage>
                               ),
                               const SizedBox(width: 4),
                               Text(
-                                '$_dayStreak Day Streak',
+                                '$_dayStreak Seri Hari',
                                 style: const TextStyle(
                                   fontSize: 12,
                                   fontWeight: FontWeight.w600,
@@ -231,9 +312,10 @@ class _MedsPageState extends State<MedsPage>
                               Column(
                                 crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
-                                  const Text(
-                                    'NEXT UP • 08:00 AM',
-                                    style: TextStyle(
+                                  // REMOVED 'const' here
+                                  Text(
+                                    'BERIKUTNYA • ${_nextMedication != null ? _formatTime(_nextMedication!['scheduled_time'].hour.toString().padLeft(2, '0') + ':' + _nextMedication!['scheduled_time'].minute.toString().padLeft(2, '0')) : ''}',
+                                    style: const TextStyle(
                                       fontSize: 12,
                                       fontWeight: FontWeight.w700,
                                       color: Colors.white70,
@@ -242,7 +324,7 @@ class _MedsPageState extends State<MedsPage>
                                   ),
                                   const SizedBox(height: 8),
                                   const Text(
-                                    'Time for your\nmeds!',
+                                    'Waktunya\nminum obat!',
                                     style: TextStyle(
                                       fontSize: 28,
                                       fontWeight: FontWeight.w800,
@@ -251,7 +333,7 @@ class _MedsPageState extends State<MedsPage>
                                   ),
                                   const SizedBox(height: 8),
                                   const Text(
-                                    "Let's keep that health\nstreak going strong. You\ngot this! 🌟",
+                                    "Mari jaga seri kesehatan\nmu tetap kuat. Kamu bisa! 🌟",
                                     style: TextStyle(
                                       fontSize: 13,
                                       fontWeight: FontWeight.w400,
@@ -304,16 +386,18 @@ class _MedsPageState extends State<MedsPage>
                                             CrossAxisAlignment.start,
                                         children: [
                                           Text(
-                                            _nextMedication!['medicine_name'] ??
-                                                'Medicine',
+                                            _nextMedication!['medicines']?['name'] ??
+                                                _nextMedication!['medicine_name'] ??
+                                                'Obat',
                                             style: const TextStyle(
                                               fontSize: 16,
                                               fontWeight: FontWeight.w700,
                                               color: Colors.white,
                                             ),
                                           ),
+                                          // REMOVED 'const' here
                                           Text(
-                                            '${_nextMedication!['dosage'] ?? '0'} • Empty Stomach',
+                                            '${_nextMedication!['dosage'] ?? '0'} • ${_getIntakeRuleLabel(_nextMedication!['intake_rule'])}',
                                             style: const TextStyle(
                                               fontSize: 12,
                                               fontWeight: FontWeight.w400,
@@ -358,14 +442,21 @@ class _MedsPageState extends State<MedsPage>
                                     color: Colors.transparent,
                                     child: InkWell(
                                       borderRadius: BorderRadius.circular(24),
-                                      onTap: _markAsTaken,
-                                      child: const Center(
-                                        child: Text(
-                                          'Taken',
-                                          style: TextStyle(
-                                            fontSize: 16,
-                                            fontWeight: FontWeight.w700,
-                                            color: AppColors.primary,
+                                      onTap: _canMarkAsTaken()
+                                          ? _markAsTaken
+                                          : null,
+                                      child: Center(
+                                        child: Opacity(
+                                          opacity: _canMarkAsTaken()
+                                              ? 1.0
+                                              : 0.55,
+                                          child: const Text(
+                                            'Diminum',
+                                            style: TextStyle(
+                                              fontSize: 16,
+                                              fontWeight: FontWeight.w700,
+                                              color: AppColors.primary,
+                                            ),
                                           ),
                                         ),
                                       ),
@@ -393,7 +484,7 @@ class _MedsPageState extends State<MedsPage>
                                       onTap: _snooze,
                                       child: const Center(
                                         child: Text(
-                                          'Snooze',
+                                          'Tunda',
                                           style: TextStyle(
                                             fontSize: 16,
                                             fontWeight: FontWeight.w700,
@@ -426,7 +517,7 @@ class _MedsPageState extends State<MedsPage>
                       ),
                       child: const Center(
                         child: Text(
-                          'No medications scheduled for today',
+                          'Belum ada obat yang dijadwalkan untuk hari ini',
                           style: TextStyle(
                             fontSize: 14,
                             color: AppColors.textSecondary,
@@ -436,9 +527,9 @@ class _MedsPageState extends State<MedsPage>
                     ),
                   const SizedBox(height: 24),
 
-                  // Quick Actions
+                  // Aksi Cepat
                   const Text(
-                    'Quick Actions',
+                    'Aksi Cepat',
                     style: TextStyle(
                       fontSize: 16,
                       fontWeight: FontWeight.w700,
@@ -446,40 +537,34 @@ class _MedsPageState extends State<MedsPage>
                     ),
                   ),
                   const SizedBox(height: 12),
-                  GridView.count(
-                    crossAxisCount: 3,
-                    shrinkWrap: true,
-                    physics: const NeverScrollableScrollPhysics(),
-                    mainAxisSpacing: 12,
-                    crossAxisSpacing: 12,
+                  Row(
                     children: [
-                      _buildQuickAction(
-                        'Add Med',
-                        Icons.add_circle_outline,
-                        () => Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                            builder: (_) => const MedicationPlanPage(),
-                          ),
+                      Expanded(
+                        child: MedsBtnAction(
+                          label: 'Kelola Obat',
+                          icon: Icons.calendar_today,
+                          onTap: () async {
+                            await Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (_) =>
+                                    const MedicationManagementPage(),
+                              ),
+                            );
+                            _loadMedicationData(); // Reload setelah ditutup!
+                          },
                         ),
                       ),
-                      _buildQuickAction(
-                        'Manage Meds',
-                        Icons.calendar_today,
-                        () => Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                            builder: (_) => const MedicationManagementPage(),
-                          ),
-                        ),
-                      ),
-                      _buildQuickAction(
-                        'History',
-                        Icons.history,
-                        () => Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                            builder: (_) => const MedicationHistoryPage(),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: MedsBtnAction(
+                          label: 'Riwayat',
+                          icon: Icons.history,
+                          onTap: () => Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (_) => const MedicationHistoryPage(),
+                            ),
                           ),
                         ),
                       ),
@@ -487,64 +572,13 @@ class _MedsPageState extends State<MedsPage>
                   ),
                   const SizedBox(height: 24),
 
-                  // Adherence Summary
-                  Container(
-                    padding: const EdgeInsets.all(16),
-                    decoration: BoxDecoration(
-                      color: Colors.white,
-                      borderRadius: BorderRadius.circular(16),
-                      boxShadow: const [
-                        BoxShadow(
-                          color: AppColors.bottomSheetShadow,
-                          blurRadius: 8,
-                          offset: Offset(0, 4),
-                        ),
-                      ],
-                    ),
-                    child: Row(
-                      children: [
-                        const Icon(
-                          Icons.trending_up,
-                          color: AppColors.primary,
-                          size: 24,
-                        ),
-                        const SizedBox(width: 12),
-                        Expanded(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(
-                                '${_adherencePercentage.toString()}% adherence this week 🎉',
-                                style: const TextStyle(
-                                  fontSize: 14,
-                                  fontWeight: FontWeight.w700,
-                                  color: AppColors.textPrimary,
-                                ),
-                              ),
-                              const SizedBox(height: 4),
-                              Text(
-                                "You've taken ${(_todaySchedule.where((s) => s['status'] == 'taken').length)} medications on time.\nKeep it up!",
-                                style: const TextStyle(
-                                  fontSize: 12,
-                                  color: AppColors.textSecondary,
-                                  height: 1.4,
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                  const SizedBox(height: 24),
-
-                  // Your Medications Section
+                  // Bagian Obat Anda
                   if (_activeMedications.isNotEmpty) ...[
                     Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
                         const Text(
-                          'Your Medications',
+                          'Obat-obatan Anda',
                           style: TextStyle(
                             fontSize: 16,
                             fontWeight: FontWeight.w700,
@@ -552,14 +586,18 @@ class _MedsPageState extends State<MedsPage>
                           ),
                         ),
                         GestureDetector(
-                          onTap: () => Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                              builder: (_) => const MedicationManagementPage(),
-                            ),
-                          ),
+                          onTap: () async {
+                            await Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (_) =>
+                                    const MedicationManagementPage(),
+                              ),
+                            );
+                            _loadMedicationData(); // Reload setelah ditutup!
+                          },
                           child: const Text(
-                            'See All',
+                            'Lihat Semua',
                             style: TextStyle(
                               fontSize: 12,
                               fontWeight: FontWeight.w700,
@@ -575,7 +613,7 @@ class _MedsPageState extends State<MedsPage>
                           med['medication_schedules'] as List? ?? [];
                       final scheduleTime = schedules.isNotEmpty
                           ? _formatTime(schedules[0]['time'] as String)
-                          : 'N/A';
+                          : 'T/A';
 
                       return Container(
                         margin: const EdgeInsets.only(bottom: 12),
@@ -614,7 +652,7 @@ class _MedsPageState extends State<MedsPage>
                                 crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
                                   Text(
-                                    med['medicines']?['name'] ?? 'Medicine',
+                                    med['medicines']?['name'] ?? 'Obat',
                                     style: const TextStyle(
                                       fontSize: 14,
                                       fontWeight: FontWeight.w600,
@@ -622,7 +660,7 @@ class _MedsPageState extends State<MedsPage>
                                     ),
                                   ),
                                   Text(
-                                    '${med['dosage'] ?? '0'} • ${med['frequency_per_day'] ?? 1}x/day',
+                                    '${med['dosage'] ?? '0'} • ${med['frequency_per_day'] ?? 1}x/hari',
                                     style: const TextStyle(
                                       fontSize: 12,
                                       color: AppColors.textSecondary,
@@ -653,10 +691,10 @@ class _MedsPageState extends State<MedsPage>
                   ],
                   const SizedBox(height: 24),
 
-                  // Today's Schedule Section
+                  // Bagian Jadwal Hari Ini
                   if (_todaySchedule.isNotEmpty) ...[
                     const Text(
-                      "Today's Schedule",
+                      "Jadwal Hari Ini",
                       style: TextStyle(
                         fontSize: 16,
                         fontWeight: FontWeight.w700,
@@ -715,7 +753,7 @@ class _MedsPageState extends State<MedsPage>
                                 crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
                                   Text(
-                                    schedule['medicine_name'] ?? 'Medicine',
+                                    schedule['medicine_name'] ?? 'Obat',
                                     style: const TextStyle(
                                       fontSize: 14,
                                       fontWeight: FontWeight.w600,
@@ -754,31 +792,7 @@ class _MedsPageState extends State<MedsPage>
                         ),
                       );
                     }).toList(),
-                  ] else
-                    Container(
-                      padding: const EdgeInsets.all(20),
-                      decoration: BoxDecoration(
-                        color: Colors.white,
-                        borderRadius: BorderRadius.circular(16),
-                        boxShadow: const [
-                          BoxShadow(
-                            color: AppColors.bottomSheetShadow,
-                            blurRadius: 8,
-                            offset: Offset(0, 4),
-                          ),
-                        ],
-                      ),
-                      child: const Center(
-                        child: Text(
-                          'No medications scheduled for today',
-                          style: TextStyle(
-                            fontSize: 14,
-                            color: AppColors.textSecondary,
-                          ),
-                        ),
-                      ),
-                    ),
-                  const SizedBox(height: 24),
+                  ],
                 ],
               ),
             ),

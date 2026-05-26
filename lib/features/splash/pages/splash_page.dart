@@ -1,8 +1,44 @@
 import 'package:flutter/material.dart';
 import '../../../core/theme/app_colors.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 
-class SplashPage extends StatelessWidget {
+import '../../notifications/services/notification_service.dart';
+
+class SplashPage extends StatefulWidget {
   const SplashPage({super.key});
+
+  @override
+  State<SplashPage> createState() => _SplashPageState();
+}
+
+class _SplashPageState extends State<SplashPage> {
+  final _supabase = Supabase.instance.client;
+  bool _hasCheckedAuth = false;
+
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _resolveAuthState();
+    });
+  }
+
+  Future<void> _resolveAuthState() async {
+    if (_hasCheckedAuth || !mounted) return;
+    _hasCheckedAuth = true;
+
+    final user = _supabase.auth.currentUser;
+    final targetRoute = user == null ? '/login' : '/home';
+
+    if (user != null) {
+      await NotificationService.instance.scheduleMedicationReminders();
+    }
+
+    await Future<void>.delayed(const Duration(milliseconds: 300));
+
+    if (!mounted) return;
+    Navigator.of(context).pushReplacementNamed(targetRoute);
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -77,7 +113,7 @@ class SplashPage extends StatelessWidget {
                         ),
                         const SizedBox(height: 26),
                         Text(
-                          'Welcome to Alveo',
+                          'Selamat Datang di Alveo',
                           textAlign: TextAlign.center,
                           style: Theme.of(context).textTheme.headlineMedium
                               ?.copyWith(
@@ -87,7 +123,7 @@ class SplashPage extends StatelessWidget {
                         ),
                         const SizedBox(height: 12),
                         Text(
-                          'Your journey to better breathing starts here.',
+                          'Perjalananmu menuju pernapasan yang lebih baik dimulai di sini.',
                           textAlign: TextAlign.center,
                           style: Theme.of(context).textTheme.titleMedium
                               ?.copyWith(
@@ -113,7 +149,7 @@ class SplashPage extends StatelessWidget {
                               elevation: 0,
                             ),
                             child: const Text(
-                              'Get Started →',
+                              'Mulai Sekarang →',
                               style: TextStyle(
                                 fontSize: 18,
                                 fontWeight: FontWeight.w700,
@@ -140,7 +176,7 @@ class SplashPage extends StatelessWidget {
                               backgroundColor: AppColors.surfaceMutedAlt,
                             ),
                             child: const Text(
-                              'I already have an account',
+                              'Saya sudah memiliki akun',
                               style: TextStyle(
                                 fontSize: 16,
                                 fontWeight: FontWeight.w600,

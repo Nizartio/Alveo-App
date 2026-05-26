@@ -2,7 +2,18 @@ import 'package:flutter/material.dart';
 import '../../../core/theme/app_colors.dart';
 
 class NextActionCard extends StatelessWidget {
-  const NextActionCard({super.key});
+  final String? medicineName;
+  final String? scheduleTime;
+  final String? intakeRuleLabel;
+  final VoidCallback? onTap;
+
+  const NextActionCard({
+    super.key,
+    this.medicineName,
+    this.scheduleTime,
+    this.intakeRuleLabel,
+    this.onTap,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -30,19 +41,24 @@ class NextActionCard extends StatelessWidget {
 
               const SizedBox(width: 12),
 
-              const Column(
+              Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    'Take Medicine',
-                    style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+                    medicineName ?? 'Belum ada jadwal obat',
+                    style: TextStyle(
+                      fontSize: 20,
+                      fontWeight: FontWeight.bold,
+                    ),
                   ),
 
                   SizedBox(height: 4),
 
                   Text(
-                    '🕛 12:00 PM • After Lunch',
-                    style: TextStyle(color: AppColors.textMutedSoft),
+                    scheduleTime == null
+                        ? 'Tidak ada obat yang dijadwalkan hari ini'
+                        : '🕛 $scheduleTime • ${intakeRuleLabel ?? 'Kapan Saja'}',
+                    style: const TextStyle(color: Colors.grey),
                   ),
                 ],
               ),
@@ -52,7 +68,7 @@ class NextActionCard extends StatelessWidget {
           const SizedBox(height: 16),
 
           ElevatedButton(
-            onPressed: () {},
+            onPressed: onTap,
             style: ElevatedButton.styleFrom(
               backgroundColor: AppColors.primaryDeep,
               minimumSize: const Size(double.infinity, 55),
@@ -60,12 +76,15 @@ class NextActionCard extends StatelessWidget {
                 borderRadius: BorderRadius.circular(50),
               ),
             ),
-            child: const Row(
+            child: Row(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
                 Text(
-                  'Mark as Taken',
-                  style: TextStyle(color: AppColors.white, fontSize: 16),
+                  scheduleTime == null ? 'Lihat Jadwal' : 'Tandai Sudah Diminum',
+                  style: TextStyle(
+                    color: Colors.white,
+                    fontSize: 16,
+                  ),
                 ),
 
                 SizedBox(width: 8),

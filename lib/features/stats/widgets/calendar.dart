@@ -3,7 +3,6 @@ import 'package:flutter/material.dart';
 enum DayStatus { none, completed, missed }
 
 class WeeklyAdherenceCalendar extends StatefulWidget {
-  /// Map of day number → DayStatus for the current month (static for now)
   final Map<int, DayStatus> dayStatuses;
 
   const WeeklyAdherenceCalendar({
@@ -29,7 +28,6 @@ class _WeeklyAdherenceCalendarState extends State<WeeklyAdherenceCalendar> {
     _daysInMonth = DateTime(_today.year, _today.month + 1, 0).day;
   }
 
-  // Monday=0 ... Sunday=6
   int get _startWeekday => (_firstDayOfMonth.weekday - 1) % 7;
 
   int get _completedCount =>
@@ -39,10 +37,9 @@ class _WeeklyAdherenceCalendarState extends State<WeeklyAdherenceCalendar> {
       widget.dayStatuses.values.where((s) => s == DayStatus.missed).length;
 
   static const List<String> _weekLabels = [
-    'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'
+    'Sen', 'Sel', 'Rab', 'Kam', 'Jum', 'Sab', 'Min'
   ];
 
-  // Previous month days to fill leading cells
   int get _prevMonthDays =>
       DateTime(_today.year, _today.month, 0).day;
 
@@ -52,7 +49,7 @@ class _WeeklyAdherenceCalendarState extends State<WeeklyAdherenceCalendar> {
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(20),
+        borderRadius: BorderRadius.circular(28),
         boxShadow: [
           BoxShadow(
             color: Colors.black.withOpacity(0.05),
@@ -81,7 +78,7 @@ class _WeeklyAdherenceCalendarState extends State<WeeklyAdherenceCalendar> {
     return Text(
       '$monthName ${_today.year}',
       style: const TextStyle(
-        fontSize: 13,
+        fontSize: 16,
         fontWeight: FontWeight.w600,
         color: Color(0xFF9E9AB8),
         letterSpacing: 0.5,
@@ -99,7 +96,7 @@ class _WeeklyAdherenceCalendarState extends State<WeeklyAdherenceCalendar> {
             child: Text(
               label,
               style: TextStyle(
-                fontSize: 11,
+                fontSize: 12,
                 fontWeight: FontWeight.w600,
                 color: isFriday
                     ? const Color(0xFF6B5CE7)
@@ -113,7 +110,6 @@ class _WeeklyAdherenceCalendarState extends State<WeeklyAdherenceCalendar> {
   }
 
   Widget _buildCalendarGrid() {
-    // Total cells needed
     final int totalCells =
         ((_startWeekday + _daysInMonth) / 7).ceil() * 7;
 
@@ -123,11 +119,9 @@ class _WeeklyAdherenceCalendarState extends State<WeeklyAdherenceCalendar> {
       final int dayOffset = i - _startWeekday;
 
       if (dayOffset < 0) {
-        // Previous month
         final int prevDay = _prevMonthDays + dayOffset + 1;
         cells.add(_DayCell(day: prevDay, isCurrentMonth: false));
       } else if (dayOffset >= _daysInMonth) {
-        // Next month
         final int nextDay = dayOffset - _daysInMonth + 1;
         cells.add(_DayCell(day: nextDay, isCurrentMonth: false));
       } else {
@@ -144,8 +138,7 @@ class _WeeklyAdherenceCalendarState extends State<WeeklyAdherenceCalendar> {
       }
     }
 
-    // Build rows of 7
-    final List<Widget> rows = [];
+  final List<Widget> rows = [];
     for (int r = 0; r < cells.length / 7; r++) {
       rows.add(
         Padding(
@@ -180,8 +173,8 @@ class _WeeklyAdherenceCalendarState extends State<WeeklyAdherenceCalendar> {
 
   String _monthName(int month) {
     const names = [
-      '', 'January', 'February', 'March', 'April', 'May', 'June',
-      'July', 'August', 'September', 'October', 'November', 'December'
+      '', 'Januari', 'Februari', 'Maret', 'April', 'Mei', 'Juni',
+      'Juli', 'Agustus', 'September', 'Oktober', 'November', 'Desember'
     ];
     return names[month];
   }

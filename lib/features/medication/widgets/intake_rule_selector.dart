@@ -14,11 +14,11 @@ class IntakeRuleSelector extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final rules = [
-      ('before_meal', 'Before Meal'),
-      ('after_meal', 'After Meal'),
-      ('with_meal', 'With Meal'),
-      ('empty_stomach', 'Empty Stomach'),
-      ('anytime', 'Anytime'),
+      ('before_meal', 'Sebelum Makan'),
+      ('after_meal', 'Setelah Makan'),
+      ('with_meal', 'Saat Makan'),
+      ('empty_stomach', 'Perut Kosong'),
+      ('anytime', 'Kapan Saja'),
     ];
 
     return Wrap(

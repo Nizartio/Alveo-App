@@ -1,31 +1,10 @@
 import 'package:flutter/material.dart';
 import '../../core/theme/app_colors.dart';
 
-import 'streak_card.dart';
-import 'calendar.dart';
-import 'progress_section_header.dart';
-
-const Map<int, DayStatus> _sampleDayStatuses = {
-  10: DayStatus.completed,
-  11: DayStatus.completed,
-  12: DayStatus.completed,
-  13: DayStatus.completed,
-  14: DayStatus.completed,
-  15: DayStatus.completed,
-  16: DayStatus.completed,
-  17: DayStatus.missed,
-  18: DayStatus.completed,
-  19: DayStatus.completed,
-  20: DayStatus.completed,
-  21: DayStatus.missed,
-  22: DayStatus.completed,
-  23: DayStatus.completed,
-  24: DayStatus.completed,
-  25: DayStatus.completed,
-  26: DayStatus.completed,
-  27: DayStatus.completed,
-  28: DayStatus.completed,
-};
+import 'widgets/streak.dart';
+import 'widgets/calendar.dart';
+import 'widgets/header.dart';
+import 'services/stats_service.dart';
 
 class StatsPage extends StatefulWidget {
   const StatsPage({super.key});
@@ -35,47 +14,110 @@ class StatsPage extends StatefulWidget {
 }
 
 class _StatsPageState extends State<StatsPage> {
+  final _statsService = StatsService();
+  Map<int, DayStatus> _dayStatuses = const {};
+  int _streakDays = 0;
+  int _personalBest = 0;
+  double _weeklyAdherence = 0;
+  bool _isLoading = true;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadStats();
+  }
+
+  Future<void> _loadStats() async {
+    try {
+      final results = await Future.wait<dynamic>([
+        _statsService.fetchUserStats(),
+        _statsService.calculateWeeklyAdherence(),
+        _statsService.fetchMonthlyDayStatuses(),
+      ]);
+
+      if (!mounted) return;
+
+      final stats = results[0] as Map<String, dynamic>;
+      final rawDayStatuses = results[2] as Map<int, String>;
+
+      setState(() {
+        _streakDays = (stats['current_streak'] as int?) ?? 0;
+        _personalBest = (stats['longest_streak'] as int?) ?? _streakDays;
+        _weeklyAdherence = (results[1] as num).toDouble();
+        _dayStatuses = rawDayStatuses.map((day, status) {
+          switch (status) {
+            case 'completed':
+              return MapEntry(day, DayStatus.completed);
+            case 'missed':
+              return MapEntry(day, DayStatus.missed);
+            default:
+              return MapEntry(day, DayStatus.none);
+          }
+        });
+        _isLoading = false;
+      });
+    } catch (_) {
+      if (!mounted) return;
+      setState(() => _isLoading = false);
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final mq = MediaQuery.of(context);
-    final navHeight = (mq.size.height * 0.09).clamp(60.0, 80.0);
-    final bottomInset = mq.viewPadding.bottom;
+
+    final double topSpacing = mq.viewPadding.top + 16;
+
+    final double bottomSpacing = mq.viewPadding.bottom + 16;
 
     return Scaffold(
-      backgroundColor: AppColors.background,
-      body: SingleChildScrollView(
-        physics: const BouncingScrollPhysics(),
-        padding: EdgeInsets.fromLTRB(20, 8, 20, navHeight + bottomInset + 28),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            const ProgressSectionHeader(),
+      backgroundColor: const Color(0xFFF5F3FF),
 
-            const SizedBox(height: 20),
+      resizeToAvoidBottomInset: false,
 
-            const StreakCard(streakDays: 7, personalBest: 9),
+      body: _isLoading
+          ? const Center(child: CircularProgressIndicator())
+          : SafeArea(
+              top: false,
+              bottom: false,
+              child: RefreshIndicator(
+                onRefresh: _loadStats,
+                child: SingleChildScrollView(
+                  physics: const AlwaysScrollableScrollPhysics(),
 
-            const SizedBox(height: 28),
+                  padding: EdgeInsets.fromLTRB(36, topSpacing, 36, bottomSpacing),
 
-            const Text(
-              'Weekly Adherence',
-              style: TextStyle(
-                fontSize: 20,
-                fontWeight: FontWeight.w700,
-                color: AppColors.textTitleDark,
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      SectionHeader(
+                        subtitle:
+                            'Kepatuhan minggu ini ${_weeklyAdherence.toStringAsFixed(0)}% • Streak aktif $_streakDays hari',
+                      ),
+
+                      const SizedBox(height: 20),
+
+                      StreakCard(streakDays: _streakDays, personalBest: _personalBest),
+
+                      const SizedBox(height: 20),
+
+                      const Text(
+                        'Kepatuhan Mingguan',
+                        style: TextStyle(
+                          fontSize: 20,
+                          fontWeight: FontWeight.w700,
+                          color: Color(0xFF1A1640),
+                        ),
+                      ),
+
+                      const SizedBox(height: 12),
+
+                      WeeklyAdherenceCalendar(dayStatuses: _dayStatuses),
+                    ],
+                  ),
+                ),
               ),
             ),
-
-            const SizedBox(height: 14),
-
-            const WeeklyAdherenceCalendar(dayStatuses: _sampleDayStatuses),
-
-            const SizedBox(height: 28),
-
-            const SizedBox(height: 20),
-          ],
-        ),
-      ),
     );
   }
 }

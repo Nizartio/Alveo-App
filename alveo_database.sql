@@ -60,8 +60,8 @@ CREATE TABLE public.user_medications (
   special_instruction text,
   is_active boolean NOT NULL DEFAULT true,
   CONSTRAINT user_medications_pkey PRIMARY KEY (id),
-  CONSTRAINT user_medications_treatment_plan_id_fkey FOREIGN KEY (treatment_plan_id) REFERENCES public.treatment_plans(id),
-  CONSTRAINT user_medications_medicine_id_fkey FOREIGN KEY (medicine_id) REFERENCES public.medicines(id)
+  CONSTRAINT user_medications_medicine_id_fkey FOREIGN KEY (medicine_id) REFERENCES public.medicines(id),
+  CONSTRAINT user_medications_treatment_plan_id_fkey FOREIGN KEY (treatment_plan_id) REFERENCES public.treatment_plans(id)
 );
 CREATE TABLE public.user_profile (
   user_id uuid NOT NULL,

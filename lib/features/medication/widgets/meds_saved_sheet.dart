@@ -2,27 +2,25 @@ import 'package:flutter/material.dart';
 
 import '../../../core/theme/app_colors.dart';
 
-/// Menampilkan bottom sheet konfirmasi yang dapat digunakan kembali ketika rencana obat
-/// berhasil disimpan. Sheet menangani masuknya sendiri dan memanggil
-/// [onContinue] setelah pengguna mengetuk CTA utama.
-Future<void> showMedPlanSavedBottomSheet(
+/// Menampilkan bottom sheet konfirmasi yang dapat digunakan kembali ketika obat disimpan
+/// dari alur pembuatan obat.
+Future<void> showMedsSavedBottomSheet(
   BuildContext context, {
   required int xpAmount,
   required VoidCallback onContinue,
+  String buttonText = 'Lanjut ke Dashboard',
 }) {
   return showModalBottomSheet<void>(
     context: context,
     isScrollControlled: true,
-    backgroundColor: AppColors.transparent,
-    barrierColor: AppColors.black54,
+    backgroundColor: Colors.transparent,
+    barrierColor: Colors.black54,
     builder: (sheetContext) {
       return FractionallySizedBox(
         heightFactor: 0.7,
-        child: _MedPlanSavedSheetContent(
+        child: _MedsSavedSheetContent(
           xpAmount: xpAmount,
           onContinue: () {
-            // Tutup sheet terlebih dahulu, kemudian panggil callback pengguna yang
-            // diharapkan akan menavigasi (menggunakan konteks luar).
             Navigator.of(sheetContext).pop();
             onContinue();
           },
@@ -35,8 +33,8 @@ Future<void> showMedPlanSavedBottomSheet(
   );
 }
 
-class _MedPlanSavedSheetContent extends StatefulWidget {
-  const _MedPlanSavedSheetContent({
+class _MedsSavedSheetContent extends StatefulWidget {
+  const _MedsSavedSheetContent({
     required this.xpAmount,
     required this.onContinue,
   });
@@ -45,11 +43,10 @@ class _MedPlanSavedSheetContent extends StatefulWidget {
   final VoidCallback onContinue;
 
   @override
-  State<_MedPlanSavedSheetContent> createState() =>
-      _MedPlanSavedSheetContentState();
+  State<_MedsSavedSheetContent> createState() => _MedsSavedSheetContentState();
 }
 
-class _MedPlanSavedSheetContentState extends State<_MedPlanSavedSheetContent>
+class _MedsSavedSheetContentState extends State<_MedsSavedSheetContent>
     with SingleTickerProviderStateMixin {
   late final AnimationController _animController;
   late final Animation<double> _scaleAnim;
@@ -119,7 +116,7 @@ class _MedPlanSavedSheetContentState extends State<_MedPlanSavedSheetContent>
                 ),
                 const SizedBox(height: 18),
                 Text(
-                  'Progress kamu telah disimpan!',
+                  'Obat berhasil disimpan!',
                   textAlign: TextAlign.center,
                   style: Theme.of(context).textTheme.headlineSmall?.copyWith(
                     fontWeight: FontWeight.w800,
@@ -127,7 +124,7 @@ class _MedPlanSavedSheetContentState extends State<_MedPlanSavedSheetContent>
                 ),
                 const SizedBox(height: 12),
                 Text(
-                  'Perjalanan penyembuhanmu akan dimulai. Tetap konsisten dan jaga terus streak-mu!',
+                  'Data obat baru sudah masuk. Lanjutkan untuk melihat daftar obatmu.',
                   textAlign: TextAlign.center,
                   style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                     color: AppColors.textSecondary,
@@ -219,7 +216,7 @@ class _MedPlanSavedSheetContentState extends State<_MedPlanSavedSheetContent>
 
   Widget _buildXpChip(BuildContext context, int xp, Gradient gradient) {
     return Semantics(
-      label: 'Dapatkan $xp XP',
+      label: 'Mendapatkan $xp XP',
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
         decoration: BoxDecoration(
@@ -236,11 +233,10 @@ class _MedPlanSavedSheetContentState extends State<_MedPlanSavedSheetContent>
         child: Row(
           mainAxisSize: MainAxisSize.min,
           children: [
-            const Icon(Icons.celebration, color: AppColors.white),
             const SizedBox(width: 8),
             Text(
-              '+$xp XP Dapatkan 🎉',
-              style: Theme.of(context).textTheme.bodyLarge?.copyWith(
+              '+$xp XP',
+              style: const TextStyle(
                 color: AppColors.white,
                 fontWeight: FontWeight.w700,
               ),

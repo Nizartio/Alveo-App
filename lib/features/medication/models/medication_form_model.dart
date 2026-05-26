@@ -7,6 +7,7 @@ class MedicationFormModel {
   int frequencyPerDay;
   String intakeRule;
   String? specialInstruction;
+  int reminderMinutesBefore;
   List<TimeOfDay> schedules;
 
   MedicationFormModel({
@@ -16,6 +17,7 @@ class MedicationFormModel {
     required this.frequencyPerDay,
     required this.intakeRule,
     this.specialInstruction,
+    this.reminderMinutesBefore = 15,
     required this.schedules,
   });
 
@@ -25,14 +27,17 @@ class MedicationFormModel {
       dosage.isNotEmpty &&
       frequencyPerDay > 0 &&
       intakeRule.isNotEmpty &&
-      schedules.isNotEmpty;
+      schedules.isNotEmpty &&
+      schedules.length == frequencyPerDay; // Pastikan jadwal pas dengan frekuensi
 
   Map<String, dynamic> toMap() => {
+    'medicineId': medicineId,
     'medicineName': medicineName,
     'dosage': dosage,
     'frequencyPerDay': frequencyPerDay,
     'intakeRule': intakeRule,
     'specialInstruction': specialInstruction,
+    'reminderMinutesBefore': reminderMinutesBefore,
     'schedules': schedules
         .map(
           (t) =>

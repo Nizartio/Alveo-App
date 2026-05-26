@@ -1,14 +1,14 @@
 import 'package:flutter/material.dart';
-import '../../core/theme/app_colors.dart';
+import '../../../core/theme/app_colors.dart';
 
-class ProgressSectionHeader extends StatelessWidget {
+class SectionHeader extends StatelessWidget {
   final String title;
   final String subtitle;
 
-  const ProgressSectionHeader({
+  const SectionHeader({
     super.key,
-    this.title = 'Your Progress',
-    this.subtitle = "Keep it up! You're doing amazing this week.",
+    this.title = 'Progresmu',
+    this.subtitle = "Teruskan! Kamu luar biasa minggu ini.",
   });
 
   @override
@@ -19,9 +19,9 @@ class ProgressSectionHeader extends StatelessWidget {
         Text(
           title,
           style: const TextStyle(
-            fontSize: 26,
-            fontWeight: FontWeight.w800,
-            color: AppColors.textTitleDark,
+            fontSize: 28,
+            fontWeight: FontWeight.bold,
+            color: Color(0xFF1A1640),
             letterSpacing: -0.5,
           ),
         ),
@@ -29,8 +29,8 @@ class ProgressSectionHeader extends StatelessWidget {
         Text(
           subtitle,
           style: const TextStyle(
-            fontSize: 14,
-            color: AppColors.textSubtle,
+            fontSize: 16,
+            color: Color(0xFF9E9AB8),
             fontWeight: FontWeight.w400,
           ),
         ),
