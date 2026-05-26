@@ -1,12 +1,9 @@
 import 'package:flutter/material.dart';
 
-import '../widgets/header.dart';
-import '../widgets/buttom_navbar.dart';
-import 'streak_card.dart';
-import 'calendar.dart';
-import 'progress_section_header.dart';
+import 'widgets/streak.dart';
+import 'widgets/calendar.dart';
+import 'widgets/header.dart';
 
-/// Static sample data – replace with real data from your backend.
 const Map<int, DayStatus> _sampleDayStatuses = {
   10: DayStatus.completed,
   11: DayStatus.completed,
@@ -37,56 +34,52 @@ class StatsPage extends StatefulWidget {
 }
 
 class _StatsPageState extends State<StatsPage> {
-  int _currentNavIndex = 2; // Stats tab active
-
   @override
   Widget build(BuildContext context) {
+    final mq = MediaQuery.of(context);
+
+    final double topSpacing = mq.viewPadding.top + 16;
+
+    final double bottomSpacing = mq.viewPadding.bottom + 16;
+
     return Scaffold(
       backgroundColor: const Color(0xFFF5F3FF),
-      appBar: const StatsHeader(),
-      body: SingleChildScrollView(
-        physics: const BouncingScrollPhysics(),
-        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            // ── Progress title ──────────────────────────────────────
-            const ProgressSectionHeader(),
 
-            const SizedBox(height: 20),
+      resizeToAvoidBottomInset: false,
 
-            // ── Streak card ─────────────────────────────────────────
-            const StreakCard(streakDays: 7, personalBest: 9),
+      body: SafeArea(
+        top: false,
+        bottom: false,
+        child: SingleChildScrollView(
+          physics: const BouncingScrollPhysics(),
 
-            const SizedBox(height: 28),
+          padding: EdgeInsets.fromLTRB(36, topSpacing, 36, bottomSpacing),
 
-            // ── Weekly adherence title ───────────────────────────────
-            const Text(
-              'Weekly Adherence',
-              style: TextStyle(
-                fontSize: 20,
-                fontWeight: FontWeight.w700,
-                color: Color(0xFF1A1640),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const SectionHeader(),
+
+              const SizedBox(height: 20),
+
+              const StreakCard(streakDays: 7, personalBest: 9),
+
+              const SizedBox(height: 20),
+
+              const Text(
+                'Weekly Adherence',
+                style: TextStyle(
+                  fontSize: 20,
+                  color: Color(0xFF1A1640),
+                ),
               ),
-            ),
 
-            const SizedBox(height: 14),
+              const SizedBox(height: 12),
 
-            // ── Calendar ─────────────────────────────────────────────
-            const WeeklyAdherenceCalendar(dayStatuses: _sampleDayStatuses),
-
-            const SizedBox(height: 28),
-
-            // ── Achievements ─────────────────────────────────────────
-            // const AchievementsSection(),
-
-            const SizedBox(height: 20),
-          ],
+              const WeeklyAdherenceCalendar(dayStatuses: _sampleDayStatuses),
+            ],
+          ),
         ),
-      ),
-      bottomNavigationBar: BottomNavbar(
-        currentIndex: _currentNavIndex,
-        onTap: (index) => setState(() => _currentNavIndex = index),
       ),
     );
   }
