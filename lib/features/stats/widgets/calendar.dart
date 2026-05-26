@@ -46,7 +46,7 @@ class _WeeklyAdherenceCalendarState extends State<WeeklyAdherenceCalendar> {
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.all(20),
+      padding: const EdgeInsets.all(24),
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(28),
@@ -142,7 +142,7 @@ class _WeeklyAdherenceCalendarState extends State<WeeklyAdherenceCalendar> {
     for (int r = 0; r < cells.length / 7; r++) {
       rows.add(
         Padding(
-          padding: const EdgeInsets.only(bottom: 6),
+          padding: const EdgeInsets.only(bottom: 0),
           child: Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: cells.sublist(r * 7, r * 7 + 7),

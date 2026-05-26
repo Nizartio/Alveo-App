@@ -100,20 +100,19 @@ class _StatsPageState extends State<StatsPage> {
                             'Kepatuhan minggu ini ${_weeklyAdherence.toStringAsFixed(0)}% • Streak aktif $_streakDays hari',
                       ),
 
-                      const SizedBox(height: 20),
+                      const SizedBox(height: 24),
 
                       StreakCard(
                         streakDays: _streakDays,
                         personalBest: _personalBest,
                       ),
 
-                      const SizedBox(height: 20),
+                      const SizedBox(height: 24),
 
                       const Text(
                         'Kepatuhan Mingguan',
                         style: TextStyle(
                           fontSize: 20,
-                          fontWeight: FontWeight.w700,
                           color: Color(0xFF1A1640),
                         ),
                       ),
