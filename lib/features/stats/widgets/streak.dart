@@ -4,11 +4,7 @@ class StreakCard extends StatelessWidget {
   final int streakDays;
   final int personalBest;
 
-  const StreakCard({
-    super.key,
-    this.streakDays = 7,
-    this.personalBest = 9,
-  });
+  const StreakCard({super.key, this.streakDays = 7, this.personalBest = 9});
 
   @override
   Widget build(BuildContext context) {
@@ -109,7 +105,11 @@ class _FlameIcon extends StatelessWidget {
         shape: BoxShape.circle,
       ),
       child: Center(
-        child: const Icon(Icons.local_fire_department, color: Colors.white, size: 32),        
+        child: const Icon(
+          Icons.local_fire_department,
+          color: Colors.white,
+          size: 32,
+        ),
       ),
     );
   }
