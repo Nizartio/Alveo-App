@@ -16,6 +16,7 @@ class MedicationPlanPage extends StatefulWidget {
 
 class _MedicationPlanPageState extends State<MedicationPlanPage> {
   final _medicationService = MedicationService();
+
   DateTime? _treatmentStartDate;
   List<MedicationFormModel> _medications = [
     MedicationFormModel(
