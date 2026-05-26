@@ -4,11 +4,7 @@ class StreakCard extends StatelessWidget {
   final int streakDays;
   final int personalBest;
 
-  const StreakCard({
-    super.key,
-    this.streakDays = 7,
-    this.personalBest = 9,
-  });
+  const StreakCard({super.key, this.streakDays = 7, this.personalBest = 9});
 
   @override
   Widget build(BuildContext context) {
@@ -41,7 +37,7 @@ class StreakCard extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  'CURRENT STREAK',
+                  'STREAK SAAT INI',
                   style: TextStyle(
                     color: Colors.white.withOpacity(0.65),
                     fontSize: 16,
@@ -66,7 +62,7 @@ class StreakCard extends StatelessWidget {
                     const Padding(
                       padding: EdgeInsets.only(bottom: 8),
                       child: Text(
-                        'Days',
+                        'Hari',
                         style: TextStyle(
                           color: Colors.white,
                           fontSize: 28,
@@ -79,8 +75,8 @@ class StreakCard extends StatelessWidget {
                 const SizedBox(height: 6),
                 Text(
                   daysTobeat > 0
-                      ? 'Tinggal $daysTobeat hari lagi untuk memecahkan rekor!'
-                      : 'You\'ve beaten your personal best! 🎉',
+                      ? 'Tinggal $daysTobeat hari lagi untuk\nmelebihi rekor pribadi kamu!'
+                      : 'Kamu sudah melebihi rekor pribadi! 🎉',
                   style: TextStyle(
                     color: Colors.white.withOpacity(0.85),
                     fontSize: 14,
@@ -109,7 +105,11 @@ class _FlameIcon extends StatelessWidget {
         shape: BoxShape.circle,
       ),
       child: Center(
-        child: const Icon(Icons.local_fire_department, color: Colors.white, size: 32),        
+        child: const Icon(
+          Icons.local_fire_department,
+          color: Colors.white,
+          size: 32,
+        ),
       ),
     );
   }

@@ -66,13 +66,14 @@ class _StatsPageState extends State<StatsPage> {
 
               const SizedBox(height: 20),
 
-              const Text(
-                'Weekly Adherence',
-                style: TextStyle(
-                  fontSize: 20,
-                  color: Color(0xFF1A1640),
-                ),
+            const Text(
+              'Kepatuhan Mingguan',
+              style: TextStyle(
+                fontSize: 20,
+                fontWeight: FontWeight.w700,
+                color: Color(0xFF1A1640),
               ),
+            ),
 
               const SizedBox(height: 12),
 
