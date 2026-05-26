@@ -6,6 +6,7 @@ import 'widgets/header.dart';
 import 'widgets/streak_card.dart';
 import '../medication/services/medication_service.dart';
 import '../stats/services/stats_service.dart';
+import '../../main_navigation_page.dart';
 import '../../core/theme/app_colors.dart';
 
 class HomePage extends StatefulWidget {
@@ -131,7 +132,15 @@ class _HomePageState extends State<HomePage> {
                     intakeRuleLabel: _formatIntakeRule(
                       _nextMedication?['intake_rule']?.toString(),
                     ),
-                    onTap: () => Navigator.of(context).pushNamed('/medication'),
+                    onTap: () {
+                      Navigator.of(context).pushReplacement(
+                        MaterialPageRoute(
+                          builder: (_) => const MainNavigationPage(
+                            initialIndex: 1,
+                          ),
+                        ),
+                      );
+                    },
                   ),
                 ],
               ),
