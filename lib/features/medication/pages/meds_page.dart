@@ -3,8 +3,8 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../../core/theme/app_colors.dart';
 import '../services/medication_service.dart';
 import '../widgets/meds_btn_action.dart';
-import 'medication_history_page.dart';
-import 'medication_management_page.dart';
+import 'meds_history_page.dart';
+import 'meds_management_page.dart';
 
 class MedsPage extends StatefulWidget {
   const MedsPage({super.key});
@@ -23,7 +23,7 @@ class _MedsPageState extends State<MedsPage>
   bool _isLoading = true;
   bool _isMarking = false;
   String _greetingName = 'there';
-  int _dayStreak = 7;
+  final int _dayStreak = 7;
 
   @override
   bool get wantKeepAlive => true;
@@ -314,7 +314,7 @@ class _MedsPageState extends State<MedsPage>
                                 children: [
                                   // REMOVED 'const' here
                                   Text(
-                                    'BERIKUTNYA • ${_nextMedication != null ? _formatTime(_nextMedication!['scheduled_time'].hour.toString().padLeft(2, '0') + ':' + _nextMedication!['scheduled_time'].minute.toString().padLeft(2, '0')) : ''}',
+                                    'BERIKUTNYA • ${_nextMedication != null ? _formatTime('${_nextMedication!['scheduled_time'].hour.toString().padLeft(2, '0')}:${_nextMedication!['scheduled_time'].minute.toString().padLeft(2, '0')}') : ''}',
                                     style: const TextStyle(
                                       fontSize: 12,
                                       fontWeight: FontWeight.w700,
@@ -547,8 +547,7 @@ class _MedsPageState extends State<MedsPage>
                             await Navigator.push(
                               context,
                               MaterialPageRoute(
-                                builder: (_) =>
-                                    const MedicationManagementPage(),
+                                builder: (_) => const MedsManagementPage(),
                               ),
                             );
                             _loadMedicationData(); // Reload setelah ditutup!
@@ -563,7 +562,7 @@ class _MedsPageState extends State<MedsPage>
                           onTap: () => Navigator.push(
                             context,
                             MaterialPageRoute(
-                              builder: (_) => const MedicationHistoryPage(),
+                              builder: (_) => const MedsHistoryPage(),
                             ),
                           ),
                         ),
@@ -590,8 +589,7 @@ class _MedsPageState extends State<MedsPage>
                             await Navigator.push(
                               context,
                               MaterialPageRoute(
-                                builder: (_) =>
-                                    const MedicationManagementPage(),
+                                builder: (_) => const MedsManagementPage(),
                               ),
                             );
                             _loadMedicationData(); // Reload setelah ditutup!
@@ -687,7 +685,7 @@ class _MedsPageState extends State<MedsPage>
                           ],
                         ),
                       );
-                    }).toList(),
+                    }),
                   ],
                   const SizedBox(height: 24),
 
@@ -791,7 +789,7 @@ class _MedsPageState extends State<MedsPage>
                           ],
                         ),
                       );
-                    }).toList(),
+                    }),
                   ],
                 ],
               ),

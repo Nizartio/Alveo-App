@@ -181,8 +181,9 @@ class _RegisterPageState extends State<RegisterPage> {
                                       onTap: () async {
                                         if (!(_formKey.currentState
                                                 ?.validate() ??
-                                            false))
+                                            false)) {
                                           return;
+                                        }
 
                                         if (!mounted) return;
                                         setState(() {});

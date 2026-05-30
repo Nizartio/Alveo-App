@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:intl/intl.dart';
 import '../models/medication_form_model.dart';
 
 class MedicationService {
@@ -852,11 +853,35 @@ class MedicationService {
   Future<void> deleteMedication(String userMedicationId) async {
     try {
       await supabase
-        .from('user_medications')
-        .update({'is_active': false})
-        .eq('id', userMedicationId);
+          .from('user_medications')
+          .update({'is_active': false})
+          .eq('id', userMedicationId);
     } catch (e) {
       throw Exception('Failed to delete medication: $e');
+    }
+  }
+
+  /// Format a history date from `YYYY-MM-DD` into a human readable string.
+  /// Example: `2026-05-30` -> `May 30, 2026` (localized)
+  String formatHistoryDate(String date) {
+    try {
+      final parsed = DateTime.parse(date);
+      return DateFormat.yMMMMd().format(parsed);
+    } catch (_) {
+      return date;
+    }
+  }
+
+  /// Format a scheduled time string `HH:mm:ss` into a short time like `8:30 AM`.
+  String formatHistoryTime(String timeStr) {
+    try {
+      final parts = timeStr.split(':');
+      final hour = int.tryParse(parts[0]) ?? 0;
+      final minute = parts.length > 1 ? int.tryParse(parts[1]) ?? 0 : 0;
+      final dt = DateTime(0, 1, 1, hour, minute);
+      return DateFormat.jm().format(dt);
+    } catch (_) {
+      return timeStr;
     }
   }
 }

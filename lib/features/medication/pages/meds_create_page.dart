@@ -1,8 +1,9 @@
 import 'package:flutter/material.dart';
 
-import '../../../core/theme/app_colors.dart';
 import '../models/medication_form_model.dart';
 import '../services/medication_service.dart';
+import '../widgets/create/btn_add.dart';
+import '../widgets/create/btn_save.dart';
 import '../widgets/medication_card.dart';
 
 class MedsCreatePage extends StatefulWidget {
@@ -196,88 +197,31 @@ class _MedsCreatePageState extends State<MedsCreatePage> {
                                   onRemove: () => _removeMedication(index),
                                   canRemove: _medications.length > 1,
                                 );
-                              }).toList(),
+                              }),
                               const SizedBox(height: 20),
-                              SizedBox(
-                                width: double.infinity,
-                                height: 48,
-                                child: _isEditing
-                                    ? const SizedBox.shrink()
-                                    : OutlinedButton.icon(
-                                        onPressed: _isSaving
-                                            ? null
-                                            : () {
-                                                setState(
-                                                  () => _medications.add(
-                                                    MedicationFormModel(
-                                                      medicineName: '',
-                                                      dosage: '',
-                                                      frequencyPerDay: 1,
-                                                      intakeRule: 'anytime',
-                                                      reminderMinutesBefore: 15,
-                                                      schedules: [],
-                                                    ),
-                                                  ),
-                                                );
-                                              },
-                                        icon: const Icon(Icons.add),
-                                        label: const Text('Tambah Obat Lain'),
-                                        style: OutlinedButton.styleFrom(
-                                          side: const BorderSide(
-                                            color: AppColors.primary,
-                                            width: 2,
-                                          ),
+                              if (!_isEditing)
+                                BtnAdd(
+                                  enabled: !_isSaving,
+                                  onPressed: () {
+                                    setState(
+                                      () => _medications.add(
+                                        MedicationFormModel(
+                                          medicineName: '',
+                                          dosage: '',
+                                          frequencyPerDay: 1,
+                                          intakeRule: 'anytime',
+                                          reminderMinutesBefore: 15,
+                                          schedules: [],
                                         ),
                                       ),
-                              ),
-                              if (!_isEditing) const SizedBox(height: 24),
-                              SizedBox(
-                                width: double.infinity,
-                                height: 56,
-                                child: DecoratedBox(
-                                  decoration: BoxDecoration(
-                                    gradient: AppColors.primaryGradient,
-                                    borderRadius: BorderRadius.circular(28),
-                                    boxShadow: const [
-                                      BoxShadow(
-                                        color: AppColors.loginShadow,
-                                        blurRadius: 24,
-                                        offset: Offset(0, 12),
-                                      ),
-                                    ],
-                                  ),
-                                  child: Material(
-                                    color: Colors.transparent,
-                                    child: InkWell(
-                                      borderRadius: BorderRadius.circular(28),
-                                      onTap: _isSaving ? null : _saveMedication,
-                                      child: Center(
-                                        child: _isSaving
-                                            ? const SizedBox(
-                                                width: 20,
-                                                height: 20,
-                                                child: CircularProgressIndicator(
-                                                  strokeWidth: 2,
-                                                  valueColor:
-                                                      AlwaysStoppedAnimation<
-                                                        Color
-                                                      >(Colors.white),
-                                                ),
-                                              )
-                                            : Text(
-                                                _isEditing
-                                                    ? 'Simpan Perubahan'
-                                                    : 'Simpan Obat',
-                                                style: const TextStyle(
-                                                  color: Colors.white,
-                                                  fontSize: 16,
-                                                  fontWeight: FontWeight.w700,
-                                                ),
-                                              ),
-                                      ),
-                                    ),
-                                  ),
+                                    );
+                                  },
                                 ),
+                              if (!_isEditing) const SizedBox(height: 24),
+                              BtnSave(
+                                isSaving: _isSaving,
+                                isEditing: _isEditing,
+                                onPressed: _saveMedication,
                               ),
                             ],
                           ),

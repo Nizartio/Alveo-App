@@ -2,18 +2,17 @@ import 'package:flutter/material.dart';
 import '../../../core/theme/app_colors.dart';
 import '../models/medication_form_model.dart';
 import '../widgets/meds_list_action.dart';
-import '../widgets/meds_modal_input.dart';
+import '../widgets/create/meds_modal_input.dart';
 import '../services/medication_service.dart';
 
-class MedicationManagementPage extends StatefulWidget {
-  const MedicationManagementPage({super.key});
+class MedsManagementPage extends StatefulWidget {
+  const MedsManagementPage({super.key});
 
   @override
-  State<MedicationManagementPage> createState() =>
-      _MedicationManagementPageState();
+  State<MedsManagementPage> createState() => _MedsManagementPageState();
 }
 
-class _MedicationManagementPageState extends State<MedicationManagementPage> {
+class _MedsManagementPageState extends State<MedsManagementPage> {
   final _medicationService = MedicationService();
   List<Map<String, dynamic>> _activeMedications = [];
   bool _isLoading = true;
@@ -140,7 +139,7 @@ class _MedicationManagementPageState extends State<MedicationManagementPage> {
   }
 
   Future<void> _deleteMedication(String userMedicationId) async {
-    final confirm = await showDialog<bool>(
+    await showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
         title: const Text('Hapus Obat'),

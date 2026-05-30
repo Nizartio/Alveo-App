@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import '../../../core/theme/app_colors.dart';
 import '../models/medication_form_model.dart';
 import 'intake_rule_selector.dart';
@@ -378,7 +377,7 @@ class _MedicationCardState extends State<MedicationCard> {
             ),
           ),
           const SizedBox(height: 8),
-DropdownButtonFormField<int>(
+          DropdownButtonFormField<int>(
             value: [5, 15, 30, 60].contains(_medication.reminderMinutesBefore)
                 ? _medication.reminderMinutesBefore
                 : 15, // Default fallback jika nilainya tidak ada di list

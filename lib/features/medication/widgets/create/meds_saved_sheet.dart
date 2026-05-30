@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 
-import '../../../core/theme/app_colors.dart';
+import '../../../../core/theme/app_colors.dart';
 
 /// Menampilkan bottom sheet konfirmasi yang dapat digunakan kembali ketika obat disimpan
 /// dari alur pembuatan obat.

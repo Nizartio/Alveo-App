@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
-import '../models/medication_form_model.dart';
-import '../pages/meds_create_page.dart';
+
+import '../../models/medication_form_model.dart';
+import '../../pages/meds_create_page.dart';
 
 class MedsModalInput extends StatelessWidget {
   const MedsModalInput({

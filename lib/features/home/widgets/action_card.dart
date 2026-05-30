@@ -41,26 +41,32 @@ class NextActionCard extends StatelessWidget {
 
               const SizedBox(width: 12),
 
-              Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    medicineName ?? 'Belum ada jadwal obat',
-                    style: TextStyle(
-                      fontSize: 20,
-                      fontWeight: FontWeight.bold,
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      medicineName ?? 'Belum ada jadwal obat',
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                      style: const TextStyle(
+                        fontSize: 20,
+                        fontWeight: FontWeight.bold,
+                      ),
                     ),
-                  ),
 
-                  SizedBox(height: 4),
+                    const SizedBox(height: 4),
 
-                  Text(
-                    scheduleTime == null
-                        ? 'Tidak ada obat yang dijadwalkan hari ini'
-                        : '🕛 $scheduleTime • ${intakeRuleLabel ?? 'Kapan Saja'}',
-                    style: const TextStyle(color: Colors.grey),
-                  ),
-                ],
+                    Text(
+                      scheduleTime == null
+                          ? 'Tidak ada obat yang dijadwalkan hari ini'
+                          : '🕛 $scheduleTime • ${intakeRuleLabel ?? 'Kapan Saja'}',
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                      style: const TextStyle(color: Colors.grey),
+                    ),
+                  ],
+                ),
               ),
             ],
           ),
@@ -80,11 +86,10 @@ class NextActionCard extends StatelessWidget {
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
                 Text(
-                  scheduleTime == null ? 'Lihat Jadwal' : 'Tandai Sudah Diminum',
-                  style: TextStyle(
-                    color: Colors.white,
-                    fontSize: 16,
-                  ),
+                  scheduleTime == null
+                      ? 'Lihat Jadwal'
+                      : 'Tandai Sudah Diminum',
+                  style: TextStyle(color: Colors.white, fontSize: 16),
                 ),
 
                 SizedBox(width: 8),

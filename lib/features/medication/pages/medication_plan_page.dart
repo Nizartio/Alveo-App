@@ -16,7 +16,7 @@ class _MedicationPlanPageState extends State<MedicationPlanPage> {
   final _medicationService = MedicationService();
 
   DateTime? _treatmentStartDate;
-  List<MedicationFormModel> _medications = [
+  final List<MedicationFormModel> _medications = [
     MedicationFormModel(
       medicineName: '',
       dosage: '',
@@ -294,7 +294,7 @@ class _MedicationPlanPageState extends State<MedicationPlanPage> {
           onRemove: () => _removeMedication(index),
           canRemove: _medications.length > 1,
         );
-      }).toList(),
+      }),
       Container(
         width: double.infinity,
         padding: const EdgeInsets.symmetric(vertical: 14),
