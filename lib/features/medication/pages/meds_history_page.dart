@@ -525,6 +525,7 @@ class _MedsHistoryPageState extends State<MedsHistoryPage> {
                       adherencePercentage: _adherencePercentage,
                       dayStreak: _dayStreak,
                     ),
+                    const SizedBox(height: 16),
                     if (_historyEntries.isEmpty)
                       const HistoryEmptyState()
                     else

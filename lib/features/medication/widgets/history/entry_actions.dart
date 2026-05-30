@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import '../../../../core/theme/app_colors.dart';
 
-class HistoryEntryTile extends StatelessWidget {
+class HistoryEntryActions extends StatelessWidget {
   final Map<String, dynamic> entry;
   final String Function(Map<String, dynamic>) getMedicationName;
   final String Function(Map<String, dynamic>) getMedicationSubtitle;
@@ -12,7 +12,7 @@ class HistoryEntryTile extends StatelessWidget {
   final void Function(Map<String, dynamic>) onEdit;
   final void Function(Map<String, dynamic>) onDelete;
 
-  const HistoryEntryTile({
+  const HistoryEntryActions({
     super.key,
     required this.entry,
     required this.getMedicationName,

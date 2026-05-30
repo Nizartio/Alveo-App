@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'history_entry_tile.dart';
+import 'entry_actions.dart';
 
 class HistoryDateSection extends StatelessWidget {
   final String dateFormatted;
@@ -72,7 +72,7 @@ class HistoryDateSection extends StatelessWidget {
           ),
         ),
         ...entries.map(
-          (entry) => HistoryEntryTile(
+          (entry) => HistoryEntryActions(
             entry: entry,
             getMedicationName: getMedicationName,
             getMedicationSubtitle: getMedicationSubtitle,
