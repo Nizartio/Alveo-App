@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import '../../../../core/theme/app_colors.dart';
 
-class HistoryEntryActions extends StatelessWidget {
+class HistoryEntryActions extends StatefulWidget {
   final Map<String, dynamic> entry;
   final String Function(Map<String, dynamic>) getMedicationName;
   final String Function(Map<String, dynamic>) getMedicationSubtitle;
@@ -11,6 +11,7 @@ class HistoryEntryActions extends StatelessWidget {
   final IconData Function(String?) statusIcon;
   final void Function(Map<String, dynamic>) onEdit;
   final void Function(Map<String, dynamic>) onDelete;
+  final void Function(Map<String, dynamic>)? onStatusToggle;
 
   const HistoryEntryActions({
     super.key,
@@ -23,11 +24,52 @@ class HistoryEntryActions extends StatelessWidget {
     required this.statusIcon,
     required this.onEdit,
     required this.onDelete,
+    this.onStatusToggle,
   });
 
   @override
+  State<HistoryEntryActions> createState() => _HistoryEntryActionsState();
+}
+
+class _HistoryEntryActionsState extends State<HistoryEntryActions>
+    with SingleTickerProviderStateMixin {
+  late AnimationController _animController;
+  late Animation<double> _scaleAnim;
+
+  @override
+  void initState() {
+    super.initState();
+    _animController = AnimationController(
+      duration: const Duration(milliseconds: 300),
+      vsync: this,
+    );
+    _scaleAnim = TweenSequence<double>([
+      TweenSequenceItem(tween: Tween(begin: 1.0, end: 0.8), weight: 1),
+      TweenSequenceItem(tween: Tween(begin: 0.8, end: 1.15), weight: 2),
+      TweenSequenceItem(tween: Tween(begin: 1.15, end: 1.0), weight: 2),
+    ]).animate(CurvedAnimation(
+      parent: _animController,
+      curve: Curves.easeInOut,
+    ));
+  }
+
+  @override
+  void dispose() {
+    _animController.dispose();
+    super.dispose();
+  }
+
+  void _handleStatusTap() {
+    if (widget.onStatusToggle == null) return;
+    _animController.forward().then((_) {
+      _animController.reset();
+      widget.onStatusToggle!(widget.entry);
+    });
+  }
+
+  @override
   Widget build(BuildContext context) {
-    final status = entry['status']?.toString();
+    final status = widget.entry['status']?.toString();
 
     return Container(
       margin: const EdgeInsets.only(bottom: 12),
@@ -35,7 +77,7 @@ class HistoryEntryActions extends StatelessWidget {
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: statusColor(status).withAlpha(77)),
+        border: Border.all(color: widget.statusColor(status).withAlpha(77)),
         boxShadow: const [
           BoxShadow(
             color: AppColors.bottomSheetShadow,
@@ -46,18 +88,32 @@ class HistoryEntryActions extends StatelessWidget {
       ),
       child: Row(
         children: [
-          Container(
-            width: 40,
-            height: 40,
-            decoration: BoxDecoration(
-              color: statusColor(status).withAlpha(25),
-              borderRadius: BorderRadius.circular(10),
+          AnimatedBuilder(
+            animation: _scaleAnim,
+            builder: (context, child) => Transform.scale(
+              scale: _scaleAnim.value,
+              child: child,
             ),
-            child: Center(
-              child: Icon(
-                statusIcon(status),
-                color: statusColor(status),
-                size: 20,
+            child: Material(
+              color: Colors.transparent,
+              child: InkWell(
+                borderRadius: BorderRadius.circular(10),
+                onTap: _handleStatusTap,
+                child: Container(
+                  width: 40,
+                  height: 40,
+                  decoration: BoxDecoration(
+                    color: widget.statusColor(status).withAlpha(25),
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                  child: Center(
+                    child: Icon(
+                      widget.statusIcon(status),
+                      color: widget.statusColor(status),
+                      size: 20,
+                    ),
+                  ),
+                ),
               ),
             ),
           ),
@@ -67,7 +123,7 @@ class HistoryEntryActions extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  getMedicationName(entry),
+                  widget.getMedicationName(widget.entry),
                   style: const TextStyle(
                     fontSize: 14,
                     fontWeight: FontWeight.w600,
@@ -75,7 +131,7 @@ class HistoryEntryActions extends StatelessWidget {
                   ),
                 ),
                 Text(
-                  '${getMedicationSubtitle(entry)} • ${formatTime(entry['scheduled_time']?.toString() ?? '')}',
+                  '${widget.getMedicationSubtitle(widget.entry)} • ${widget.formatTime(widget.entry['scheduled_time']?.toString() ?? '')}',
                   style: const TextStyle(
                     fontSize: 12,
                     color: AppColors.textSecondary,
@@ -83,11 +139,11 @@ class HistoryEntryActions extends StatelessWidget {
                 ),
                 const SizedBox(height: 4),
                 Text(
-                  statusLabel(status),
+                  widget.statusLabel(status),
                   style: TextStyle(
                     fontSize: 11,
                     fontWeight: FontWeight.w700,
-                    color: statusColor(status),
+                    color: widget.statusColor(status),
                   ),
                 ),
               ],
@@ -96,9 +152,9 @@ class HistoryEntryActions extends StatelessWidget {
           PopupMenuButton<String>(
             onSelected: (value) {
               if (value == 'edit') {
-                onEdit(entry);
+                widget.onEdit(widget.entry);
               } else if (value == 'delete') {
-                onDelete(entry);
+                widget.onDelete(widget.entry);
               }
             },
             itemBuilder: (context) => const [

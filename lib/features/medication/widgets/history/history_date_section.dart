@@ -13,6 +13,7 @@ class HistoryDateSection extends StatelessWidget {
   final IconData Function(String?) statusIcon;
   final void Function(Map<String, dynamic>) onEdit;
   final void Function(Map<String, dynamic>) onDelete;
+  final void Function(Map<String, dynamic>)? onStatusToggle;
 
   const HistoryDateSection({
     super.key,
@@ -27,6 +28,7 @@ class HistoryDateSection extends StatelessWidget {
     required this.statusIcon,
     required this.onEdit,
     required this.onDelete,
+    this.onStatusToggle,
   });
 
   @override
@@ -73,6 +75,7 @@ class HistoryDateSection extends StatelessWidget {
         ),
         ...entries.map(
           (entry) => HistoryEntryActions(
+            key: ValueKey(entry['id']?.toString() ?? entry.hashCode.toString()),
             entry: entry,
             getMedicationName: getMedicationName,
             getMedicationSubtitle: getMedicationSubtitle,
@@ -82,6 +85,7 @@ class HistoryDateSection extends StatelessWidget {
             statusIcon: statusIcon,
             onEdit: onEdit,
             onDelete: onDelete,
+            onStatusToggle: onStatusToggle,
           ),
         ),
         const SizedBox(height: 12),

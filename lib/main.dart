@@ -30,9 +30,6 @@ class AlveoApp extends StatelessWidget {
       theme: ThemeData(
         useMaterial3: true,
         fontFamily: 'Poppins',
-        colorScheme: ColorScheme.fromSeed(
-          seedColor: const Color.fromARGB(255, 72, 68, 102),
-        ),
         scaffoldBackgroundColor: AppColors.scaffoldBottom,
       ),
       home: const StartupGate(),

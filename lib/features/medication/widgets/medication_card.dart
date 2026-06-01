@@ -1,4 +1,6 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import '../../../core/theme/app_colors.dart';
 import '../models/medication_form_model.dart';
 import 'intake_rule_selector.dart';
@@ -24,21 +26,56 @@ class MedicationCard extends StatefulWidget {
 }
 
 class _MedicationCardState extends State<MedicationCard> {
+  static const int _maxFrequencyPerDay = 10;
   late MedicationFormModel _medication;
+  late final TextEditingController _frequencyController;
+  Timer? _frequencyDebounce;
 
   @override
   void initState() {
     super.initState();
     _medication = widget.medication;
+    _frequencyController = TextEditingController(
+      text: _medication.frequencyPerDay.toString(),
+    );
     // Generate jadwal awal jika belum ada tapi frekuensi sudah diisi
     if (_medication.schedules.length != _medication.frequencyPerDay) {
       _generateSuggestedSchedules(_medication);
     }
   }
 
+  @override
+  void dispose() {
+    _frequencyDebounce?.cancel();
+    _frequencyController.dispose();
+    super.dispose();
+  }
+
   void _updateMedication(MedicationFormModel updated) {
     setState(() => _medication = updated);
     widget.onUpdate(updated);
+  }
+
+  void _setFrequency(int frequency) {
+    final updatedSchedules = List<TimeOfDay>.from(_medication.schedules);
+
+    if (frequency > updatedSchedules.length) {
+      final slotsNeeded = frequency - updatedSchedules.length;
+      for (int i = 0; i < slotsNeeded; i++) {
+        int hour = 8 + (updatedSchedules.length * (16 ~/ frequency));
+        if (hour > 23) hour = 23;
+        updatedSchedules.add(TimeOfDay(hour: hour, minute: 0));
+      }
+    } else if (frequency < updatedSchedules.length) {
+      updatedSchedules.removeRange(frequency, updatedSchedules.length);
+    }
+
+    _updateMedication(
+      _medication
+        ..frequencyPerDay = frequency
+        ..schedules = updatedSchedules,
+    );
+    _frequencyController.text = frequency.toString();
   }
 
   void _generateSuggestedSchedules(MedicationFormModel updated) {
@@ -225,7 +262,7 @@ class _MedicationCardState extends State<MedicationCard> {
           ),
           const SizedBox(height: 16),
 
-          // Pemilih Frekuensi (Text Input)
+          // Pemilih Frekuensi
           const Text(
             'Frekuensi (kali per hari)',
             style: TextStyle(
@@ -235,38 +272,34 @@ class _MedicationCardState extends State<MedicationCard> {
             ),
           ),
           const SizedBox(height: 8),
-          Row(
-            children: [1, 2, 3]
-                .map(
-                  (freq) => Expanded(
-                    child: GestureDetector(
-                      onTap: () => _updateMedication(
-                        _medication..frequencyPerDay = freq,
-                      ),
-                      child: Container(
-                        padding: const EdgeInsets.symmetric(vertical: 10),
-                        decoration: BoxDecoration(
-                          color: _medication.frequencyPerDay == freq
-                              ? AppColors.primary
-                              : AppColors.surfaceSoft,
-                          borderRadius: BorderRadius.circular(10),
-                        ),
-                        child: Center(
-                          child: Text(
-                            '${freq}x/day',
-                            style: TextStyle(
-                              fontWeight: FontWeight.w600,
-                              color: _medication.frequencyPerDay == freq
-                                  ? AppColors.white
-                                  : AppColors.textSecondary,
-                            ),
-                          ),
-                        ),
-                      ),
-                    ),
-                  ),
-                )
-                .toList(),
+          TextFormField(
+            controller: _frequencyController,
+            keyboardType: TextInputType.number,
+            inputFormatters: [FilteringTextInputFormatter.digitsOnly],
+            decoration: _fieldDecoration(hint: 'Masukkan frekuensi'),
+            onChanged: (value) {
+              final parsed = int.tryParse(value);
+              if (parsed == null) return;
+
+              _frequencyDebounce?.cancel();
+              _frequencyDebounce = Timer(const Duration(milliseconds: 300), () {
+                if (!mounted) return;
+                final frequency = parsed.clamp(1, _maxFrequencyPerDay);
+                if (frequency != _medication.frequencyPerDay) {
+                  _setFrequency(frequency);
+                }
+              });
+            },
+            validator: (value) {
+              final parsed = int.tryParse(value ?? '');
+              if (parsed == null || parsed <= 0) {
+                return 'Frekuensi diperlukan';
+              }
+              if (parsed > _maxFrequencyPerDay) {
+                return 'Frekuensi maksimal $_maxFrequencyPerDay kali per hari';
+              }
+              return null;
+            },
           ),
           const SizedBox(height: 16),
 

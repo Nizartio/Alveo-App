@@ -120,8 +120,12 @@ class _MedsHistoryPageState extends State<MedsHistoryPage> {
     switch (status) {
       case 'taken':
         return 'Diminum';
+      case 'late_taken':
+        return 'Terlambat diminum';
       case 'missed':
         return 'Terlewat';
+      case 'overdue':
+        return 'Belum diminum';
       default:
         return 'Jadwal';
     }
@@ -131,8 +135,12 @@ class _MedsHistoryPageState extends State<MedsHistoryPage> {
     switch (status) {
       case 'taken':
         return Colors.green;
+      case 'late_taken':
+        return Colors.orange;
       case 'missed':
         return Colors.red;
+      case 'overdue':
+        return AppColors.danger;
       default:
         return AppColors.primary;
     }
@@ -142,7 +150,11 @@ class _MedsHistoryPageState extends State<MedsHistoryPage> {
     switch (status) {
       case 'taken':
         return Icons.check_circle;
+      case 'late_taken':
+        return Icons.warning_amber_rounded;
       case 'missed':
+        return Icons.close_rounded;
+      case 'overdue':
         return Icons.close_rounded;
       default:
         return Icons.schedule;
@@ -180,7 +192,9 @@ class _MedsHistoryPageState extends State<MedsHistoryPage> {
         String selectedMedicationId = initialMedicationId ?? '';
         DateTime selectedDate = initialDate;
         TimeOfDay selectedTime = initialTime;
-        String selectedStatus = initialStatus == 'missed' ? 'missed' : 'taken';
+        String selectedStatus = (initialStatus == 'missed' || initialStatus == 'late_taken')
+            ? initialStatus
+            : 'taken';
 
         return StatefulBuilder(
           builder: (context, setDialogState) {
@@ -272,6 +286,10 @@ class _MedsHistoryPageState extends State<MedsHistoryPage> {
                           child: Text('Diminum'),
                         ),
                         DropdownMenuItem(
+                          value: 'late_taken',
+                          child: Text('Terlambat diminum'),
+                        ),
+                        DropdownMenuItem(
                           value: 'missed',
                           child: Text('Terlewat'),
                         ),
@@ -361,6 +379,51 @@ class _MedsHistoryPageState extends State<MedsHistoryPage> {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text('Kesalahan menyimpan riwayat: $e')),
+        );
+      }
+    } finally {
+      if (mounted) {
+        setState(() {});
+      }
+    }
+  }
+
+  Future<void> _toggleHistoryStatus(Map<String, dynamic> entry) async {
+    final currentStatus = entry['status']?.toString() ?? 'missed';
+    final nextStatus = switch (currentStatus) {
+      'missed' => 'late_taken',
+      'late_taken' => 'taken',
+      'taken' => 'missed',
+      _ => 'taken',
+    };
+
+    setState(() {});
+    try {
+      final date = _parseDateValue(entry['date']?.toString()) ?? DateTime.now();
+      final time = _parseTimeValue(entry['scheduled_time']?.toString());
+
+      await _medicationService.updateMedicationLog(
+        logId: entry['id']?.toString() ?? '',
+        userMedicationId: entry['user_medication_id']?.toString() ?? '',
+        date: date,
+        scheduledTime: time,
+        status: nextStatus,
+      );
+
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Status diubah menjadi ${_statusLabel(nextStatus).toLowerCase()}'),
+            backgroundColor: _statusColor(nextStatus),
+            duration: const Duration(seconds: 1),
+          ),
+        );
+        _loadHistory();
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Kesalahan mengubah status: $e')),
         );
       }
     } finally {
@@ -550,6 +613,7 @@ class _MedsHistoryPageState extends State<MedsHistoryPage> {
                             statusIcon: _statusIcon,
                             onEdit: (entry) => _saveHistoryEntry(entry: entry),
                             onDelete: _deleteHistoryEntry,
+                            onStatusToggle: _toggleHistoryStatus,
                           );
                         }).toList(),
                       ),

@@ -165,7 +165,7 @@ class _MedicationPlanPageState extends State<MedicationPlanPage> {
         child: _isLoading
             ? const Center(child: CircularProgressIndicator())
             : SingleChildScrollView(
-                padding: const EdgeInsets.fromLTRB(20, 72, 20, 36),
+                padding: const EdgeInsets.fromLTRB(20, 36, 20, 36),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: _buildPlanContent(context),
@@ -294,38 +294,17 @@ class _MedicationPlanPageState extends State<MedicationPlanPage> {
           onRemove: () => _removeMedication(index),
           canRemove: _medications.length > 1,
         );
-      }),
-      Container(
+      }).toList(),
+      const SizedBox(height: 20),
+      SizedBox(
         width: double.infinity,
-        padding: const EdgeInsets.symmetric(vertical: 14),
-        decoration: BoxDecoration(
-          border: Border.all(color: AppColors.primary, width: 1.5),
-          borderRadius: BorderRadius.circular(12),
-        ),
-        child: Material(
-          color: Colors.transparent,
-          child: InkWell(
-            onTap: _addMedication,
-            borderRadius: BorderRadius.circular(12),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                const Icon(
-                  Icons.add_circle_outline,
-                  color: AppColors.primary,
-                  size: 20,
-                ),
-                const SizedBox(width: 8),
-                Text(
-                  'Tambahkan Obat Lainnya',
-                  style: TextStyle(
-                    color: AppColors.primary,
-                    fontWeight: FontWeight.w700,
-                    fontSize: 14,
-                  ),
-                ),
-              ],
-            ),
+        height: 48,
+        child: OutlinedButton.icon(
+          onPressed: _isSaving ? null : _addMedication,
+          icon: const Icon(Icons.add),
+          label: const Text('Tambah Obat Lain'),
+          style: OutlinedButton.styleFrom(
+            side: const BorderSide(color: AppColors.primary, width: 2),
           ),
         ),
       ),
