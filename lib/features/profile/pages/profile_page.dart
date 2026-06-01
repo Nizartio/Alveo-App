@@ -16,7 +16,7 @@ class _ProfilePageState extends State<ProfilePage> {
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
 
-  String _displayName = 'Profil';
+  String _displayName = 'Profile';
   String _email = '-';
   String? _avatarUrl;
   bool _isLoading = true;
@@ -68,7 +68,7 @@ class _ProfilePageState extends State<ProfilePage> {
       if (!mounted) return;
       setState(() {
         _displayName = (fullName == null || fullName.trim().isEmpty)
-            ? 'Profil'
+            ? 'Profile'
             : fullName.trim();
         _email = (email == null || email.trim().isEmpty) ? '-' : email.trim();
         _avatarUrl = avatarUrl != null && avatarUrl.trim().isNotEmpty
@@ -117,7 +117,7 @@ class _ProfilePageState extends State<ProfilePage> {
     return Scaffold(
       backgroundColor: AppColors.scaffoldBottom,
       appBar: AppBar(
-        title: const Text('Profil'),
+        title: const Text('Profile'),
         centerTitle: true,
         backgroundColor: Colors.white,
         surfaceTintColor: Colors.white,
