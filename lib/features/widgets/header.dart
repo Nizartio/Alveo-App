@@ -93,15 +93,15 @@ class _StatsHeaderState extends State<StatsHeader> {
                     padding: const EdgeInsets.all(2),
                     decoration: BoxDecoration(
                       shape: BoxShape.circle,
-                      border: Border.all(color: AppColors.white, width: 2),
+                      border: Border.all(color: AppColors.textPrimary.withOpacity(0.2), width: 1),
                     ),
                     child: ClipPath(
                       child: Align(
                         alignment: Alignment.bottomCenter,
                         child: Image.asset(
-                          'lib/assets/profile.png',
-                          width: 40,
-                          height: 40,
+                          'lib/assets/app_icon.png',
+                          width: 48,
+                          height: 48,
                           fit: BoxFit.contain,
                         ),
                       ),

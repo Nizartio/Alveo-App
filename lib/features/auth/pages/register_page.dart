@@ -37,9 +37,9 @@ class _RegisterPageState extends State<RegisterPage> {
             children: [
               Positioned(
                 top: -40,
-                left: -25,
+                left: -24,
                 child: _SoftBlob(
-                  size: size.width * 0.5,
+                  size: size.width * 0.4,
                   colors: const [
                     AppColors.bubbleMuted,
                     AppColors.bubbleMutedAlt,
@@ -47,20 +47,20 @@ class _RegisterPageState extends State<RegisterPage> {
                 ),
               ),
               Positioned(
-                bottom: -30,
+                bottom: -40,
                 right: -40,
                 child: _SoftBlob(
-                  size: size.width * 0.42,
+                  size: size.width * 0.40,
                   colors: const [AppColors.bubbleCool, AppColors.bubbleCoolAlt],
                 ),
               ),
               SingleChildScrollView(
                 padding: const EdgeInsets.symmetric(
-                  horizontal: 24,
-                  vertical: 20,
+                  horizontal: 36,
+                  vertical: 24,
                 ),
                 child: ConstrainedBox(
-                  constraints: BoxConstraints(minHeight: size.height - 40),
+                  constraints: BoxConstraints(minHeight: size.height - 100),
                   child: Column(
                     children: [
                       const SizedBox(height: 8),
@@ -68,7 +68,10 @@ class _RegisterPageState extends State<RegisterPage> {
                       const SizedBox(height: 20),
                       Container(
                         width: double.infinity,
-                        padding: const EdgeInsets.fromLTRB(22, 26, 22, 22),
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 24,
+                          vertical: 36,
+                        ),
                         decoration: BoxDecoration(
                           color: AppColors.white,
                           borderRadius: BorderRadius.circular(28),
@@ -85,31 +88,30 @@ class _RegisterPageState extends State<RegisterPage> {
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.stretch,
                             children: [
-                              const SizedBox(height: 8),
                               Text(
-                                'Mari kita jaga\nkesehatan paru-paru\nkita bersama-sama',
+                                'Mari kita jaga kesehatan paru-paru kita bersama-sama',
                                 textAlign: TextAlign.center,
                                 style: Theme.of(context).textTheme.headlineSmall
                                     ?.copyWith(
-                                      fontSize: 28,
-                                      height: 1.12,
+                                      fontSize: 24,
+                                      height: 1.25,
                                       fontWeight: FontWeight.w800,
                                       color: AppColors.seed,
                                     ),
                               ),
-                              const SizedBox(height: 18),
+                              const SizedBox(height: 20),
                               Text(
-                                'Buat akun Alveo Anda\nuntuk memulai.',
+                                'Buat akun Alveo Anda untuk memulai.',
                                 textAlign: TextAlign.center,
                                 style: Theme.of(context).textTheme.titleMedium
                                     ?.copyWith(
-                                      height: 1.35,
+                                      height: 1.25,
                                       color: AppColors.textBody,
                                     ),
                               ),
-                              const SizedBox(height: 28),
+                              const SizedBox(height: 20),
                               const _FieldLabel(text: 'Nama Lengkap'),
-                              const SizedBox(height: 10),
+                              const SizedBox(height: 8),
                               _InputField(
                                 controller: _fullNameController,
                                 hintText: 'Alveo Leo',
@@ -122,9 +124,9 @@ class _RegisterPageState extends State<RegisterPage> {
                                   return null;
                                 },
                               ),
-                              const SizedBox(height: 18),
+                              const SizedBox(height: 16),
                               const _FieldLabel(text: 'Email'),
-                              const SizedBox(height: 10),
+                              const SizedBox(height: 8),
                               _InputField(
                                 controller: _emailController,
                                 hintText: 'your@email.com',
@@ -141,9 +143,9 @@ class _RegisterPageState extends State<RegisterPage> {
                                   return null;
                                 },
                               ),
-                              const SizedBox(height: 18),
+                              const SizedBox(height: 16),
                               const _FieldLabel(text: 'Kata Sandi'),
-                              const SizedBox(height: 10),
+                              const SizedBox(height: 8),
                               _InputField(
                                 controller: _passwordController,
                                 hintText: '••••••••',
@@ -159,7 +161,7 @@ class _RegisterPageState extends State<RegisterPage> {
                                   return null;
                                 },
                               ),
-                              const SizedBox(height: 24),
+                              const SizedBox(height: 20),
                               SizedBox(
                                 height: 56,
                                 child: DecoratedBox(
@@ -243,20 +245,31 @@ class _RegisterPageState extends State<RegisterPage> {
                                         }
                                       },
                                       child: const Center(
-                                        child: Text(
-                                          'Buat Akun →',
-                                          style: TextStyle(
-                                            color: AppColors.white,
-                                            fontSize: 18,
-                                            fontWeight: FontWeight.w700,
-                                          ),
+                                        child: Row(
+                                          mainAxisSize: MainAxisSize.min,
+                                          children: [
+                                            Text(
+                                              'Buat Akun',
+                                              style: TextStyle(
+                                                color: AppColors.white,
+                                                fontSize: 16,
+                                                fontWeight: FontWeight.w600,
+                                              ),
+                                            ),
+                                            SizedBox(width: 4),
+                                            Icon(
+                                              Icons.arrow_circle_right_outlined,
+                                              color: AppColors.white,
+                                              size: 22,
+                                            ),
+                                          ],
                                         ),
                                       ),
                                     ),
                                   ),
                                 ),
                               ),
-                              const SizedBox(height: 16),
+                              const SizedBox(height: 20),
                               Row(
                                 mainAxisAlignment: MainAxisAlignment.center,
                                 children: [
@@ -285,7 +298,7 @@ class _RegisterPageState extends State<RegisterPage> {
                                     child: const Text(
                                       'Masuk',
                                       style: TextStyle(
-                                        fontWeight: FontWeight.w700,
+                                        fontWeight: FontWeight.w600,
                                       ),
                                     ),
                                   ),
@@ -295,7 +308,7 @@ class _RegisterPageState extends State<RegisterPage> {
                           ),
                         ),
                       ),
-                      const SizedBox(height: 24),
+                      const SizedBox(height: 8),
                     ],
                   ),
                 ),
@@ -319,7 +332,7 @@ class _FieldLabel extends StatelessWidget {
       text,
       style: Theme.of(context).textTheme.titleMedium?.copyWith(
         fontSize: 16,
-        fontWeight: FontWeight.w700,
+        fontWeight: FontWeight.w800,
         color: AppColors.textLabel,
       ),
     );
@@ -355,7 +368,7 @@ class _InputField extends StatelessWidget {
       validator: validator,
       style: const TextStyle(
         fontSize: 16,
-        fontWeight: FontWeight.w500,
+        fontWeight: FontWeight.w600,
         color: AppColors.textNavy,
       ),
       decoration: InputDecoration(
@@ -365,7 +378,7 @@ class _InputField extends StatelessWidget {
         hintStyle: const TextStyle(
           color: AppColors.textMutedSoft,
           fontSize: 16,
-          fontWeight: FontWeight.w500,
+          fontWeight: FontWeight.w400,
         ),
         prefixIcon: Icon(icon, color: AppColors.iconMuted),
         contentPadding: const EdgeInsets.symmetric(
@@ -373,27 +386,27 @@ class _InputField extends StatelessWidget {
           vertical: 18,
         ),
         border: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(14),
+          borderRadius: BorderRadius.circular(16),
           borderSide: BorderSide.none,
         ),
         enabledBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(14),
+          borderRadius: BorderRadius.circular(16),
           borderSide: BorderSide.none,
         ),
         focusedBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(14),
+          borderRadius: BorderRadius.circular(16),
           borderSide: const BorderSide(
             color: AppColors.primaryLight,
-            width: 1.3,
+            width: 1.25,
           ),
         ),
         errorBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(14),
+          borderRadius: BorderRadius.circular(16),
           borderSide: const BorderSide(color: AppColors.danger, width: 1),
         ),
         focusedErrorBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(14),
-          borderSide: const BorderSide(color: AppColors.danger, width: 1.3),
+          borderRadius: BorderRadius.circular(16),
+          borderSide: const BorderSide(color: AppColors.danger, width: 1.25),
         ),
       ),
     );
@@ -406,32 +419,31 @@ class _MascotCircle extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      width: 146,
-      height: 146,
+      width: 140,
+      height: 140,
       decoration: BoxDecoration(
         shape: BoxShape.circle,
         color: AppColors.white,
-        border: Border.all(color: AppColors.white90, width: 8),
         boxShadow: const [
           BoxShadow(
-            color: AppColors.black14,
+            color: AppColors.softShadow,
             blurRadius: 24,
             offset: Offset(0, 12),
           ),
         ],
       ),
       child: Container(
-        margin: const EdgeInsets.all(8),
         decoration: const BoxDecoration(
           shape: BoxShape.circle,
-          gradient: AppColors.mascotInnerGradient,
+          // gradient: AppColors.mascotInnerGradient,
         ),
-        child: const Padding(
-          padding: EdgeInsets.all(10),
+        child: Center(
           child: ClipOval(
-            child: Image(
-              image: AssetImage('lib/assets/maskot-rmv.png'),
+            child: Image.asset(
+              'lib/assets/app_icon.png',
               fit: BoxFit.cover,
+              width: 120,
+              height: 120,
             ),
           ),
         ),

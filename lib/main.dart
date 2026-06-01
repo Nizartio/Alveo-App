@@ -37,7 +37,7 @@ class AlveoApp extends StatelessWidget {
         ),
         scaffoldBackgroundColor: AppColors.scaffoldBottom,
       ),
-      home: const SplashPage(),
+      home: const AuthGate(),
       routes: {
         '/splash': (_) => const SplashPage(),
         '/login': (_) => const LoginPage(),
