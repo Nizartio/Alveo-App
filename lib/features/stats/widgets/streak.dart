@@ -5,7 +5,7 @@ class StreakCard extends StatelessWidget {
   final int streakDays;
   final int personalBest;
 
-  const StreakCard({super.key, this.streakDays = 7, this.personalBest = 9});
+  const StreakCard({super.key, required this.streakDays, required this.personalBest});
 
   @override
   Widget build(BuildContext context) {
@@ -16,11 +16,7 @@ class StreakCard extends StatelessWidget {
       padding: const EdgeInsets.all(24),
       decoration: BoxDecoration(
         gradient: const LinearGradient(
-          colors: [
-            AppColors.brandPurple,
-            AppColors.brandBlue,
-            AppColors.primaryDeep,
-          ],
+          colors: [AppColors.brandPurple, AppColors.brandBlue, AppColors.primaryDeep],
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
           stops: [0.0, 0.5, 1.0],
@@ -68,11 +64,7 @@ class StreakCard extends StatelessWidget {
                       padding: EdgeInsets.only(bottom: 8),
                       child: Text(
                         'Hari',
-                        style: TextStyle(
-                          color: Colors.white,
-                          fontSize: 28,
-                          fontWeight: FontWeight.w600,
-                        ),
+                        style: TextStyle(color: Colors.white, fontSize: 28, fontWeight: FontWeight.w600),
                       ),
                     ),
                   ],
@@ -82,11 +74,7 @@ class StreakCard extends StatelessWidget {
                   daysTobeat > 0
                       ? 'Tinggal $daysTobeat hari lagi untuk\nmelebihi rekor pribadi kamu!'
                       : 'Kamu sudah melebihi rekor pribadi! 🎉',
-                  style: TextStyle(
-                    color: Colors.white.withOpacity(0.85),
-                    fontSize: 14,
-                    height: 1.4,
-                  ),
+                  style: TextStyle(color: Colors.white.withOpacity(0.85), fontSize: 14, height: 1.4),
                 ),
               ],
             ),
@@ -109,12 +97,8 @@ class _FlameIcon extends StatelessWidget {
         color: Colors.white.withOpacity(0.2),
         shape: BoxShape.circle,
       ),
-      child: Center(
-        child: const Icon(
-          Icons.local_fire_department,
-          color: Colors.white,
-          size: 32,
-        ),
+      child: const Center(
+        child: Icon(Icons.local_fire_department, color: Colors.white, size: 32),
       ),
     );
   }

@@ -6,7 +6,6 @@ import 'widgets/header.dart';
 import 'widgets/streak_card.dart';
 import '../medication/services/medication_service.dart';
 import '../stats/services/stats_service.dart';
-import '../../main_navigation_page.dart';
 import '../../core/theme/app_colors.dart';
 
 class HomePage extends StatefulWidget {
@@ -25,6 +24,7 @@ class _HomePageState extends State<HomePage> {
   int _personalBest = 0;
   Map<String, dynamic>? _nextMedication;
   bool _isLoading = true;
+  bool _isMarking = false;
 
   @override
   void initState() {
@@ -53,6 +53,39 @@ class _HomePageState extends State<HomePage> {
     } catch (_) {
       if (!mounted) return;
       setState(() => _isLoading = false);
+    }
+  }
+
+  Future<void> _markHomeMedication() async {
+    if (_nextMedication == null || _isMarking) return;
+    final scheduledTime = _nextMedication!['scheduled_time'] as TimeOfDay;
+    final isLate = _nextMedication!['is_late'] == true;
+
+    setState(() => _isMarking = true);
+    final status = isLate ? 'late_taken' : 'taken';
+    try {
+      await _medicationService.markMedicationAsTaken(
+        userMedicationId: _nextMedication!['id'],
+        scheduledTime: scheduledTime,
+        status: status,
+      );
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(isLate
+              ? '⚠ Obat terlambat diminum dan telah dicatat.'
+              : '✓ Obat ditandai telah diminum!'),
+          backgroundColor: isLate ? Colors.orange : Colors.green,
+        ),
+      );
+      await _loadHomeData();
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Kesalahan: $e')),
+      );
+    } finally {
+      if (mounted) setState(() => _isMarking = false);
     }
   }
 
@@ -94,14 +127,9 @@ class _HomePageState extends State<HomePage> {
               onRefresh: _loadHomeData,
               child: ListView(
                 physics: const AlwaysScrollableScrollPhysics(),
-                padding: EdgeInsets.fromLTRB(
-                  36,
-                  topPad + 16,
-                  36,
-                  bottomPad + 16,
-                ),
+                padding: EdgeInsets.fromLTRB(36, topPad + 16, 36, bottomPad + 16),
                 children: [
-                  const HeaderContent(),
+                  HeaderContent(streakDays: _streakDays),
                   const SizedBox(height: 24),
                   Row(
                     children: [
@@ -119,7 +147,7 @@ class _HomePageState extends State<HomePage> {
                   ),
                   const SizedBox(height: 24),
                   Text(
-                    'Tindakan Selanjutnya',
+                    'Obat Berikutnya',
                     style: Theme.of(context).textTheme.titleLarge?.copyWith(
                       fontSize: 20,
                       color: const Color(0xFF1A1640),
@@ -129,22 +157,14 @@ class _HomePageState extends State<HomePage> {
                   NextActionCard(
                     medicineName: _nextMedication?['medicines']?['name']?.toString(),
                     scheduleTime: _formatNextMedicationTime(_nextMedication),
-                    intakeRuleLabel: _formatIntakeRule(
-                      _nextMedication?['intake_rule']?.toString(),
-                    ),
-                    onTap: () {
-                      Navigator.of(context).pushReplacement(
-                        MaterialPageRoute(
-                          builder: (_) => const MainNavigationPage(
-                            initialIndex: 1,
-                          ),
-                        ),
-                      );
-                    },
+                    intakeRuleLabel: _formatIntakeRule(_nextMedication?['intake_rule']?.toString()),
+                    isLate: _nextMedication?['is_late'] == true,
+                    isMarking: _isMarking,
+                    onMark: _nextMedication != null ? _markHomeMedication : null,
                   ),
                 ],
               ),
-      ),
+            ),
     );
   }
 }

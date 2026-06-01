@@ -20,6 +20,7 @@ class _ProfilePageState extends State<ProfilePage> {
   String _email = '-';
   String? _avatarUrl;
   bool _isLoading = true;
+  bool _isSaving = false;
 
   @override
   void dispose() {
@@ -88,6 +89,72 @@ class _ProfilePageState extends State<ProfilePage> {
       setState(() {
         _isLoading = false;
       });
+    }
+  }
+
+  Future<void> _saveProfile() async {
+    final user = _supabase.auth.currentUser;
+    if (user == null) return;
+
+    setState(() => _isSaving = true);
+    try {
+      final newName = _usernameController.text.trim();
+      final newEmail = _emailController.text.trim();
+      final newPassword = _passwordController.text;
+
+      // Update full_name in user_profile
+      if (newName.isNotEmpty && newName != _displayName) {
+        await _supabase
+            .from('user_profile')
+            .upsert({
+              'user_id': user.id,
+              'full_name': newName,
+              'updated_at': DateTime.now().toIso8601String(),
+            });
+      }
+
+      // Update email if changed (Supabase sends confirmation to new email)
+      if (newEmail.isNotEmpty && newEmail != _email) {
+        await _supabase.auth.updateUser(UserAttributes(email: newEmail));
+      }
+
+      // Update password if provided
+      if (newPassword.isNotEmpty) {
+        if (newPassword.length < 6) {
+          if (!mounted) return;
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Kata sandi minimal 6 karakter'),
+              backgroundColor: Colors.red,
+            ),
+          );
+          setState(() => _isSaving = false);
+          return;
+        }
+        await _supabase.auth.updateUser(UserAttributes(password: newPassword));
+        _passwordController.clear();
+      }
+
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Profil berhasil disimpan'),
+          backgroundColor: Colors.green,
+        ),
+      );
+      await _loadProfile();
+    } on AuthException catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Gagal: ${e.message}'), backgroundColor: Colors.red),
+      );
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Kesalahan: $e'), backgroundColor: Colors.red),
+      );
+    } finally {
+      if (mounted) setState(() => _isSaving = false);
     }
   }
 
@@ -245,19 +312,46 @@ class _ProfilePageState extends State<ProfilePage> {
                     ),
                   ),
                   const SizedBox(height: 20),
-                  Container(
-                    padding: const EdgeInsets.all(20),
-                    decoration: BoxDecoration(
-                      color: Colors.white,
-                      borderRadius: BorderRadius.circular(24),
-                      border: Border.all(color: AppColors.mutedDivider),
-                    ),
-                    child: const Text(
-                      'Menu profil akan dikembangkan lebih lanjut di sini, seperti simpan perubahan nama, foto, dan preferensi akun.',
-                      style: TextStyle(
-                        height: 1.5,
-                        color: AppColors.textBody,
-                        fontSize: 14,
+                  SizedBox(
+                    width: double.infinity,
+                    height: 56,
+                    child: DecoratedBox(
+                      decoration: BoxDecoration(
+                        gradient: AppColors.primaryGradient,
+                        borderRadius: BorderRadius.circular(28),
+                        boxShadow: const [
+                          BoxShadow(
+                            color: AppColors.loginShadow,
+                            blurRadius: 24,
+                            offset: Offset(0, 12),
+                          ),
+                        ],
+                      ),
+                      child: Material(
+                        color: Colors.transparent,
+                        child: InkWell(
+                          borderRadius: BorderRadius.circular(28),
+                          onTap: _isSaving ? null : _saveProfile,
+                          child: Center(
+                            child: _isSaving
+                                ? const SizedBox(
+                                    width: 22,
+                                    height: 22,
+                                    child: CircularProgressIndicator(
+                                      strokeWidth: 2,
+                                      color: Colors.white,
+                                    ),
+                                  )
+                                : const Text(
+                                    'Simpan Perubahan',
+                                    style: TextStyle(
+                                      color: Colors.white,
+                                      fontSize: 16,
+                                      fontWeight: FontWeight.w700,
+                                    ),
+                                  ),
+                          ),
+                        ),
                       ),
                     ),
                   ),

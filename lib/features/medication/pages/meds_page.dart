@@ -24,6 +24,7 @@ class _MedsPageState extends State<MedsPage>
   List<Map<String, dynamic>> _activeMedications = [];
   bool _isLoading = true;
   bool _isMarking = false;
+  bool _isRefreshing = false;
   String? _markingTarget;
   String _greetingName = 'there';
   int _dayStreak = 0;
@@ -85,6 +86,7 @@ class _MedsPageState extends State<MedsPage>
           _todaySchedule = todaySchedule;
           _activeMedications = activeMeds;
           _isLoading = false;
+          _isRefreshing = false;
           _dayStreak = streak;
         });
       }
@@ -123,11 +125,10 @@ class _MedsPageState extends State<MedsPage>
 
       if (now.isBefore(earliestAllowed)) {
         final diff = earliestAllowed.difference(now);
-        final minutes = diff.inMinutes;
         if (!mounted) return;
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('Belum waktunya. Coba lagi dalam $minutes menit.'),
+            content: Text('Belum waktunya. ${_formatWaitTime(diff)}'),
           ),
         );
         return;
@@ -212,11 +213,10 @@ class _MedsPageState extends State<MedsPage>
       );
       if (now.isBefore(earliestAllowed)) {
         final diff = earliestAllowed.difference(now);
-        final minutes = diff.inMinutes;
         if (!mounted) return;
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('Belum waktunya. Coba lagi dalam $minutes menit.'),
+            content: Text('Belum waktunya. ${_formatWaitTime(diff)}'),
           ),
         );
         return;
@@ -320,7 +320,10 @@ class _MedsPageState extends State<MedsPage>
       backgroundColor: Colors.transparent,
       builder: (_) => const MedsModalInput(),
     ).then((_) {
-      if (mounted) _loadMedicationData();
+      if (mounted) {
+        setState(() => _isRefreshing = true);
+        _loadMedicationData();
+      }
     });
   }
 
@@ -337,26 +340,11 @@ class _MedsPageState extends State<MedsPage>
         userMedicationId: medication['id']?.toString(),
       ),
     ).then((_) {
-      if (mounted) _loadMedicationData();
-    });
-  }
-
-  Future<void> _pauseMedication(String userMedicationId) async {
-    try {
-      await _medicationService.updateUserMedicationStatus(userMedicationId);
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Obat dijeda')),
-        );
+        setState(() => _isRefreshing = true);
         _loadMedicationData();
       }
-    } catch (e) {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Kesalahan: $e')),
-        );
-      }
-    }
+    });
   }
 
   Future<void> _deleteMedication(String userMedicationId) async {
@@ -385,6 +373,7 @@ class _MedsPageState extends State<MedsPage>
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text('Obat dihapus')),
         );
+        setState(() => _isRefreshing = true);
         _loadMedicationData();
       }
     } catch (e) {
@@ -461,6 +450,19 @@ class _MedsPageState extends State<MedsPage>
       default:
         return 'Kapan Saja';
     }
+  }
+
+  String _formatWaitTime(Duration diff) {
+    final minutes = diff.inMinutes;
+    if (minutes < 60) {
+      return 'Coba lagi dalam $minutes menit.';
+    }
+    final hours = minutes ~/ 60;
+    final remaining = minutes % 60;
+    if (remaining == 0) {
+      return 'Coba lagi dalam $hours jam.';
+    }
+    return 'Coba lagi dalam $hours jam $remaining menit.';
   }
 
   String _timeBasedGreeting() {
@@ -577,6 +579,12 @@ class _MedsPageState extends State<MedsPage>
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
+                    if (_isRefreshing)
+                      const LinearProgressIndicator(
+                        color: AppColors.primary,
+                        backgroundColor: AppColors.primaryLight,
+                        minHeight: 2,
+                      ),
                     _buildGreeting(),
                     const SizedBox(height: 24),
                     _buildHeroSection(),
@@ -618,7 +626,7 @@ class _MedsPageState extends State<MedsPage>
                 ),
                 const SizedBox(width: 4),
                 Text(
-                  '$_dayStreak Seri Hari',
+                  '$_dayStreak Streak Hari',
                   style: const TextStyle(
                     fontSize: 12,
                     fontWeight: FontWeight.w600,
@@ -680,7 +688,7 @@ class _MedsPageState extends State<MedsPage>
                   ),
                   const SizedBox(height: 4),
                   Text(
-                    'Pertahankan terus seri harimu. Kamu hebat!',
+                    'Pertahankan terus streak harimu. Kamu hebat!',
                     style: TextStyle(
                       fontSize: 13,
                       color: Colors.white.withOpacity(0.8),
@@ -756,7 +764,7 @@ class _MedsPageState extends State<MedsPage>
                       Text(
                         _nextMedication!['is_late'] == true
                             ? "Segera catat agar tidak\nterlewat sepenuhnya."
-                            : "Mari jaga seri kesehatan\nmu tetap kuat. Kamu bisa! 🌟",
+                            : "Mari jaga streak kesehatan\nmu tetap kuat. Kamu bisa! 🌟",
                         style: const TextStyle(
                           fontSize: 13,
                           fontWeight: FontWeight.w400,
@@ -849,8 +857,8 @@ class _MedsPageState extends State<MedsPage>
                               opacity: _canMarkAsTaken() ? 1.0 : 0.55,
                               child: Text(
                                 _nextMedication!['is_late'] == true
-                                    ? 'Diminum (Terlambat)'
-                                    : 'Diminum',
+                                    ? 'Minum (Terlambat)'
+                                    : 'Minum',
                                 style: const TextStyle(
                                   fontSize: 16,
                                   fontWeight: FontWeight.w700,
@@ -1028,7 +1036,6 @@ class _MedsPageState extends State<MedsPage>
           ..._activeMedications.map((med) => MedsListAction(
                 medication: med,
                 onEdit: () => _editMedication(med),
-                onPause: () => _pauseMedication(med['id'] as String),
                 onDelete: () => _deleteMedication(med['id'] as String),
               )),
         const SizedBox(height: 12),

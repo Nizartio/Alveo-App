@@ -90,7 +90,7 @@ class _WeeklyAdherenceCalendarState extends State<WeeklyAdherenceCalendar> {
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: _weekLabels.map((label) {
-        final bool isFriday = label == 'Fri';
+        final bool isFriday = label == 'Jum';
         return Expanded(
           child: Center(
             child: Text(
@@ -160,12 +160,12 @@ class _WeeklyAdherenceCalendarState extends State<WeeklyAdherenceCalendar> {
       children: [
         _LegendDot(
           color: const Color(0xFF6B5CE7),
-          label: 'Completed ($_completedCount)',
+          label: 'Diminum ($_completedCount)',
         ),
         const SizedBox(width: 24),
         _LegendDot(
           color: const Color(0xFFFF6B6B),
-          label: 'Missed ($_missedCount)',
+          label: 'Terlewat ($_missedCount)',
         ),
       ],
     );

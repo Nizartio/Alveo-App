@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../../core/theme/app_colors.dart';
+import '../../notifications/services/notification_service.dart';
 import '../models/medication_form_model.dart';
 import '../services/medication_service.dart';
 import '../widgets/medication_card.dart';
@@ -121,6 +122,7 @@ class _MedicationPlanPageState extends State<MedicationPlanPage> {
         startDate: _treatmentStartDate!,
         medications: _medications,
       );
+      await NotificationService.instance.scheduleMedicationReminders();
       if (mounted) {
         await showMedPlanSavedBottomSheet(
           context,

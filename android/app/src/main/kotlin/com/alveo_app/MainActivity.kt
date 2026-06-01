@@ -1,4 +1,4 @@
-package com.example.alveo_app
+package com.alveo_app
 
 import io.flutter.embedding.android.FlutterActivity
 
