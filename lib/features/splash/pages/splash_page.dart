@@ -28,16 +28,13 @@ class _SplashPageState extends State<SplashPage> {
     _hasCheckedAuth = true;
 
     final user = _supabase.auth.currentUser;
-    final targetRoute = user == null ? '/login' : '/home';
 
     if (user != null) {
       await NotificationService.instance.scheduleMedicationReminders();
+
+      if (!mounted) return;
+      Navigator.of(context).pushReplacementNamed('/home');
     }
-
-    await Future<void>.delayed(const Duration(milliseconds: 300));
-
-    if (!mounted) return;
-    Navigator.of(context).pushReplacementNamed(targetRoute);
   }
 
   @override
@@ -53,38 +50,35 @@ class _SplashPageState extends State<SplashPage> {
           child: Stack(
             children: [
               Positioned(
-                top: -70,
+                top: -60,
                 left: -60,
                 child: _GlowBlob(
-                  size: size.width * 0.62,
+                  size: size.width * 0.6,
                   colors: const [AppColors.bubbleSky, AppColors.bubbleMint],
                 ),
               ),
               Positioned(
                 bottom: -120,
-                left: size.width * 0.18,
+                left: size.width * 0.2,
                 child: _GlowBlob(
-                  size: size.width * 0.58,
+                  size: size.width * 0.6,
                   colors: const [AppColors.bubbleBlue, AppColors.bubbleBlueAlt],
                 ),
               ),
               Center(
                 child: SingleChildScrollView(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 24,
-                    vertical: 28,
-                  ),
+                  padding: const EdgeInsets.all(36),
                   child: Container(
                     width: double.infinity,
-                    padding: const EdgeInsets.fromLTRB(24, 28, 24, 28),
+                    padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 36),
                     decoration: BoxDecoration(
-                      color: AppColors.textLabel,
+                      color: const Color.fromARGB(255, 225, 231, 240).withOpacity(0.8),
                       borderRadius: BorderRadius.circular(28),
                       boxShadow: const [
                         BoxShadow(
                           color: AppColors.black16,
                           blurRadius: 36,
-                          offset: Offset(0, 18),
+                          offset: Offset(0, 20),
                         ),
                       ],
                     ),
@@ -93,8 +87,8 @@ class _SplashPageState extends State<SplashPage> {
                       children: [
                         const SizedBox(height: 12),
                         Container(
-                          width: 170,
-                          height: 170,
+                          width: 160,
+                          height: 160,
                           decoration: BoxDecoration(
                             shape: BoxShape.circle,
                             gradient: const RadialGradient(
@@ -105,13 +99,13 @@ class _SplashPageState extends State<SplashPage> {
                             padding: const EdgeInsets.all(14),
                             child: ClipOval(
                               child: Image.asset(
-                                'lib/assets/maskot-rmv.png',
+                                'lib/assets/app_icon.png',
                                 fit: BoxFit.cover,
                               ),
                             ),
                           ),
                         ),
-                        const SizedBox(height: 26),
+                        const SizedBox(height: 24),
                         Text(
                           'Selamat Datang di Alveo',
                           textAlign: TextAlign.center,
@@ -131,7 +125,7 @@ class _SplashPageState extends State<SplashPage> {
                                 color: AppColors.textSecondary,
                               ),
                         ),
-                        const SizedBox(height: 32),
+                        const SizedBox(height: 24),
                         SizedBox(
                           height: 56,
                           width: double.infinity,
@@ -148,17 +142,28 @@ class _SplashPageState extends State<SplashPage> {
                               ),
                               elevation: 0,
                             ),
-                            child: const Text(
-                              'Mulai Sekarang →',
-                              style: TextStyle(
-                                fontSize: 18,
-                                fontWeight: FontWeight.w700,
-                                color: AppColors.white,
-                              ),
+                            child: const Row(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                Text(
+                                  'Mulai Sekarang',
+                                  style: TextStyle(
+                                    fontSize: 16,
+                                    fontWeight: FontWeight.w800,
+                                    color: AppColors.white,
+                                  ),
+                                ),
+                                SizedBox(width: 4),
+                                Icon(
+                                  Icons.arrow_circle_right_outlined,
+                                  color: AppColors.white,
+                                  size: 22,
+                                ),
+                              ],
                             ),
                           ),
                         ),
-                        const SizedBox(height: 14),
+                        const SizedBox(height: 12),
                         SizedBox(
                           height: 56,
                           width: double.infinity,
@@ -185,6 +190,7 @@ class _SplashPageState extends State<SplashPage> {
                             ),
                           ),
                         ),
+                        const SizedBox(height: 12),
                       ],
                     ),
                   ),
@@ -212,6 +218,44 @@ class _GlowBlob extends StatelessWidget {
       decoration: BoxDecoration(
         shape: BoxShape.circle,
         gradient: RadialGradient(colors: colors),
+      ),
+    );
+  }
+}
+
+class AuthGate extends StatefulWidget {
+  const AuthGate({super.key});
+
+  @override
+  State<AuthGate> createState() => _AuthGateState();
+}
+
+class _AuthGateState extends State<AuthGate> {
+  @override
+  void initState() {
+    super.initState();
+    _checkAuth();
+  }
+
+  Future<void> _checkAuth() async {
+    final user = Supabase.instance.client.auth.currentUser;
+
+    if (user != null) {
+      await NotificationService.instance.scheduleMedicationReminders();
+
+      if (!mounted) return;
+      Navigator.pushReplacementNamed(context, '/home');
+    } else {
+      if (!mounted) return;
+      Navigator.pushReplacementNamed(context, '/splash');
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return const Scaffold(
+      body: Center(
+        child: CircularProgressIndicator(),
       ),
     );
   }

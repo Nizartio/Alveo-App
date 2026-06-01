@@ -66,9 +66,9 @@ class _LoginPageState extends State<LoginPage> {
             children: [
               Positioned(
                 top: -40,
-                left: -25,
+                left: -24,
                 child: _SoftBlob(
-                  size: size.width * 0.5,
+                  size: size.width * 0.4,
                   colors: const [
                     AppColors.bubbleMuted,
                     AppColors.bubbleMutedAlt,
@@ -76,20 +76,20 @@ class _LoginPageState extends State<LoginPage> {
                 ),
               ),
               Positioned(
-                bottom: -30,
+                bottom: -40,
                 right: -40,
                 child: _SoftBlob(
-                  size: size.width * 0.42,
+                  size: size.width * 0.40,
                   colors: const [AppColors.bubbleCool, AppColors.bubbleCoolAlt],
                 ),
               ),
               SingleChildScrollView(
                 padding: const EdgeInsets.symmetric(
-                  horizontal: 24,
-                  vertical: 20,
+                  horizontal: 36,
+                  vertical: 24,
                 ),
                 child: ConstrainedBox(
-                  constraints: BoxConstraints(minHeight: size.height - 40),
+                  constraints: BoxConstraints(minHeight: size.height - 100),
                   child: Column(
                     children: [
                       const SizedBox(height: 8),
@@ -97,7 +97,7 @@ class _LoginPageState extends State<LoginPage> {
                       const SizedBox(height: 20),
                       Container(
                         width: double.infinity,
-                        padding: const EdgeInsets.fromLTRB(22, 26, 22, 22),
+                        padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 36),
                         decoration: BoxDecoration(
                           color: AppColors.white,
                           borderRadius: BorderRadius.circular(28),
@@ -114,43 +114,30 @@ class _LoginPageState extends State<LoginPage> {
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.stretch,
                             children: [
-                              const SizedBox(height: 8),
-                              Text(
-                                'Alveo',
-                                textAlign: TextAlign.center,
-                                style: Theme.of(context).textTheme.headlineSmall
-                                    ?.copyWith(
-                                      fontSize: 28,
-                                      height: 1.12,
-                                      fontWeight: FontWeight.w800,
-                                      color: AppColors.primary,
-                                    ),
-                              ),
-                              const SizedBox(height: 12),
                               Text(
                                 'Selamat datang kembali',
                                 textAlign: TextAlign.center,
                                 style: Theme.of(context).textTheme.headlineSmall
                                     ?.copyWith(
-                                      fontSize: 26,
-                                      height: 1.12,
+                                      fontSize: 24,
+                                      height: 1.25,
                                       fontWeight: FontWeight.w800,
-                                      color: AppColors.textPrimary,
+                                      color: AppColors.primary,
                                     ),
                               ),
-                              const SizedBox(height: 14),
+                              const SizedBox(height: 20),
                               Text(
                                 'Silakan masukkan detail Anda untuk masuk.',
                                 textAlign: TextAlign.center,
                                 style: Theme.of(context).textTheme.titleMedium
                                     ?.copyWith(
-                                      height: 1.35,
+                                      height: 1.25,
                                       color: AppColors.textMuted,
                                     ),
                               ),
-                              const SizedBox(height: 28),
+                              const SizedBox(height: 20),
                               const _FieldLabel(text: 'Email'),
-                              const SizedBox(height: 10),
+                              const SizedBox(height: 8),
                               _InputField(
                                 controller: _emailController,
                                 hintText: 'you@example.com',
@@ -167,7 +154,7 @@ class _LoginPageState extends State<LoginPage> {
                                   return null;
                                 },
                               ),
-                              const SizedBox(height: 18),
+                              const SizedBox(height: 16),
                               Row(
                                 mainAxisAlignment:
                                     MainAxisAlignment.spaceBetween,
@@ -185,13 +172,13 @@ class _LoginPageState extends State<LoginPage> {
                                     child: const Text(
                                       'Lupa kata sandi?',
                                       style: TextStyle(
-                                        fontWeight: FontWeight.w700,
+                                        fontWeight: FontWeight.w600,
                                       ),
                                     ),
                                   ),
                                 ],
                               ),
-                              const SizedBox(height: 10),
+                              const SizedBox(height: 8),
                               _InputField(
                                 controller: _passwordController,
                                 hintText: '••••••••',
@@ -207,7 +194,7 @@ class _LoginPageState extends State<LoginPage> {
                                   return null;
                                 },
                               ),
-                              const SizedBox(height: 24),
+                              const SizedBox(height: 20),
                               SizedBox(
                                 height: 56,
                                 child: DecoratedBox(
@@ -232,8 +219,8 @@ class _LoginPageState extends State<LoginPage> {
                                           'Mulai Perjalananmu',
                                           style: TextStyle(
                                             color: AppColors.white,
-                                            fontSize: 18,
-                                            fontWeight: FontWeight.w700,
+                                            fontSize: 16,
+                                            fontWeight: FontWeight.w600,
                                           ),
                                         ),
                                       ),
@@ -241,7 +228,7 @@ class _LoginPageState extends State<LoginPage> {
                                   ),
                                 ),
                               ),
-                              const SizedBox(height: 16),
+                              const SizedBox(height: 20),
                               Row(
                                 mainAxisAlignment: MainAxisAlignment.center,
                                 children: [
@@ -270,7 +257,7 @@ class _LoginPageState extends State<LoginPage> {
                                     child: const Text(
                                       'Daftar',
                                       style: TextStyle(
-                                        fontWeight: FontWeight.w700,
+                                        fontWeight: FontWeight.w600,
                                       ),
                                     ),
                                   ),
@@ -280,7 +267,7 @@ class _LoginPageState extends State<LoginPage> {
                           ),
                         ),
                       ),
-                      const SizedBox(height: 24),
+                      const SizedBox(height: 8),
                     ],
                   ),
                 ),
@@ -304,7 +291,7 @@ class _FieldLabel extends StatelessWidget {
       text,
       style: Theme.of(context).textTheme.titleMedium?.copyWith(
         fontSize: 16,
-        fontWeight: FontWeight.w700,
+        fontWeight: FontWeight.w800,
         color: AppColors.textLabel,
       ),
     );
@@ -337,7 +324,7 @@ class _InputField extends StatelessWidget {
       validator: validator,
       style: const TextStyle(
         fontSize: 16,
-        fontWeight: FontWeight.w500,
+        fontWeight: FontWeight.w400,
         color: AppColors.textPrimary,
       ),
       decoration: InputDecoration(
@@ -347,7 +334,7 @@ class _InputField extends StatelessWidget {
         hintStyle: const TextStyle(
           color: AppColors.iconMuted,
           fontSize: 16,
-          fontWeight: FontWeight.w500,
+          fontWeight: FontWeight.w400,
         ),
         prefixIcon: Icon(icon, color: AppColors.iconMuted),
         contentPadding: const EdgeInsets.symmetric(
@@ -355,27 +342,27 @@ class _InputField extends StatelessWidget {
           vertical: 18,
         ),
         border: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(14),
+          borderRadius: BorderRadius.circular(16),
           borderSide: BorderSide.none,
         ),
         enabledBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(14),
+          borderRadius: BorderRadius.circular(16),
           borderSide: BorderSide.none,
         ),
         focusedBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(14),
+          borderRadius: BorderRadius.circular(16),
           borderSide: const BorderSide(
             color: AppColors.primaryLight,
-            width: 1.3,
+            width: 1.25,
           ),
         ),
         errorBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(14),
+          borderRadius: BorderRadius.circular(16),
           borderSide: const BorderSide(color: AppColors.danger, width: 1),
         ),
         focusedErrorBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(14),
-          borderSide: const BorderSide(color: AppColors.danger, width: 1.3),
+          borderRadius: BorderRadius.circular(16),
+          borderSide: const BorderSide(color: AppColors.danger, width: 1.25),
         ),
       ),
     );
@@ -388,12 +375,11 @@ class _MascotCircle extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      width: 146,
-      height: 146,
+      width: 140,
+      height: 140,
       decoration: BoxDecoration(
         shape: BoxShape.circle,
         color: AppColors.white,
-        border: Border.all(color: AppColors.white90, width: 8),
         boxShadow: const [
           BoxShadow(
             color: AppColors.softShadow,
@@ -403,29 +389,18 @@ class _MascotCircle extends StatelessWidget {
         ],
       ),
       child: Container(
-        margin: const EdgeInsets.all(8),
         decoration: const BoxDecoration(
           shape: BoxShape.circle,
-          gradient: AppColors.mascotInnerGradient,
+          // gradient: AppColors.mascotInnerGradient,
         ),
-        child: const Center(
-          child: Stack(
-            alignment: Alignment.center,
-            children: [
-              Icon(
-                Icons.favorite_border_rounded,
-                size: 54,
-                color: AppColors.primary,
-              ),
-              Positioned(
-                bottom: 18,
-                child: Icon(
-                  Icons.air_rounded,
-                  size: 34,
-                  color: AppColors.dangerSoft,
-                ),
-              ),
-            ],
+        child: Center(
+          child: ClipOval(
+            child: Image.asset(
+              'lib/assets/app_icon.png',
+              fit: BoxFit.cover,
+              width: 120,
+              height: 120,
+            ),
           ),
         ),
       ),
