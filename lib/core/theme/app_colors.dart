@@ -45,7 +45,7 @@ class AppColors {
   static const Color bubbleCoolAlt = Color(0xFFF7FBFF);
   static const Color bubbleSoft = Color(0xFFF6F3FF);
   static const Color bubbleSky = Color(0xFFB39DFF);
-  static const Color bubbleMint = Color(0xFF78F1D9);
+  static const Color bubbleMint = Color(0xFF78FFD9);
   static const Color bubbleBlue = Color(0xFF8FB8FF);
   static const Color bubbleBlueAlt = Color(0xFFD9EEFF);
   static const Color mutedDivider = Color(0xFFE6E6E6);

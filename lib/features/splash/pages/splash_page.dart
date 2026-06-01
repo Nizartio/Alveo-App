@@ -1,41 +1,9 @@
 import 'package:flutter/material.dart';
+import 'dart:ui' as ui;
 import '../../../core/theme/app_colors.dart';
-import 'package:supabase_flutter/supabase_flutter.dart';
 
-import '../../notifications/services/notification_service.dart';
-
-class SplashPage extends StatefulWidget {
+class SplashPage extends StatelessWidget {
   const SplashPage({super.key});
-
-  @override
-  State<SplashPage> createState() => _SplashPageState();
-}
-
-class _SplashPageState extends State<SplashPage> {
-  final _supabase = Supabase.instance.client;
-  bool _hasCheckedAuth = false;
-
-  @override
-  void initState() {
-    super.initState();
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      _resolveAuthState();
-    });
-  }
-
-  Future<void> _resolveAuthState() async {
-    if (_hasCheckedAuth || !mounted) return;
-    _hasCheckedAuth = true;
-
-    final user = _supabase.auth.currentUser;
-
-    if (user != null) {
-      await NotificationService.instance.scheduleMedicationReminders();
-
-      if (!mounted) return;
-      Navigator.of(context).pushReplacementNamed('/home');
-    }
-  }
 
   @override
   Widget build(BuildContext context) {
@@ -49,30 +17,48 @@ class _SplashPageState extends State<SplashPage> {
           ),
           child: Stack(
             children: [
-              Positioned(
-                top: -60,
-                left: -60,
-                child: _GlowBlob(
-                  size: size.width * 0.6,
-                  colors: const [AppColors.bubbleSky, AppColors.bubbleMint],
-                ),
-              ),
-              Positioned(
-                bottom: -120,
-                left: size.width * 0.2,
-                child: _GlowBlob(
-                  size: size.width * 0.6,
-                  colors: const [AppColors.bubbleBlue, AppColors.bubbleBlueAlt],
+              Positioned.fill(
+                child: IgnorePointer(
+                  child: Stack(
+                    children: [
+                      Positioned(
+                        top: -60,
+                        left: -60,
+                        child: _GlowBlob(
+                          size: size.width * 0.6,
+                          colors: const [
+                            AppColors.bubbleSky,
+                            AppColors.bubbleMint,
+                          ],
+                        ),
+                      ),
+                      Positioned(
+                        bottom: -120,
+                        left: size.width * 0.2,
+                        child: _GlowBlob(
+                          size: size.width * 0.6,
+                          colors: const [
+                            AppColors.bubbleBlue,
+                            AppColors.bubbleBlueAlt,
+                          ],
+                        ),
+                      ),
+                    ],
+                  ),
                 ),
               ),
               Center(
                 child: SingleChildScrollView(
+                  physics: const ClampingScrollPhysics(),
                   padding: const EdgeInsets.all(36),
                   child: Container(
                     width: double.infinity,
-                    padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 36),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 24,
+                      vertical: 36,
+                    ),
                     decoration: BoxDecoration(
-                      color: const Color.fromARGB(255, 225, 231, 240).withOpacity(0.8),
+                      color: AppColors.white85,
                       borderRadius: BorderRadius.circular(28),
                       boxShadow: const [
                         BoxShadow(
@@ -86,21 +72,15 @@ class _SplashPageState extends State<SplashPage> {
                       mainAxisSize: MainAxisSize.min,
                       children: [
                         const SizedBox(height: 12),
-                        Container(
-                          width: 160,
-                          height: 160,
-                          decoration: BoxDecoration(
-                            shape: BoxShape.circle,
-                            gradient: const RadialGradient(
-                              colors: [AppColors.white, AppColors.white90],
-                            ),
-                          ),
-                          child: Padding(
-                            padding: const EdgeInsets.all(14),
-                            child: ClipOval(
+                        SizedBox(
+                          width: 170,
+                          height: 170,
+                          child: Center(
+                            child: Transform.scale(
+                              scale: 1.25,
                               child: Image.asset(
-                                'lib/assets/app_icon.png',
-                                fit: BoxFit.cover,
+                                'lib/assets/app_icon-rmv.png',
+                                fit: BoxFit.contain,
                               ),
                             ),
                           ),
@@ -131,9 +111,7 @@ class _SplashPageState extends State<SplashPage> {
                           width: double.infinity,
                           child: ElevatedButton(
                             onPressed: () {
-                              Navigator.of(
-                                context,
-                              ).pushReplacementNamed('/register');
+                              Navigator.of(context).pushNamed('/register');
                             },
                             style: ElevatedButton.styleFrom(
                               backgroundColor: AppColors.brandPurple,
@@ -169,12 +147,12 @@ class _SplashPageState extends State<SplashPage> {
                           width: double.infinity,
                           child: OutlinedButton(
                             onPressed: () {
-                              Navigator.of(
-                                context,
-                              ).pushReplacementNamed('/login');
+                              Navigator.of(context).pushNamed('/login');
                             },
                             style: OutlinedButton.styleFrom(
-                              side: const BorderSide(color: AppColors.textMutedSoft),
+                              side: const BorderSide(
+                                color: AppColors.textMutedSoft,
+                              ),
                               shape: RoundedRectangleBorder(
                                 borderRadius: BorderRadius.circular(28),
                               ),
@@ -212,50 +190,15 @@ class _GlowBlob extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      width: size,
-      height: size,
-      decoration: BoxDecoration(
-        shape: BoxShape.circle,
-        gradient: RadialGradient(colors: colors),
-      ),
-    );
-  }
-}
-
-class AuthGate extends StatefulWidget {
-  const AuthGate({super.key});
-
-  @override
-  State<AuthGate> createState() => _AuthGateState();
-}
-
-class _AuthGateState extends State<AuthGate> {
-  @override
-  void initState() {
-    super.initState();
-    _checkAuth();
-  }
-
-  Future<void> _checkAuth() async {
-    final user = Supabase.instance.client.auth.currentUser;
-
-    if (user != null) {
-      await NotificationService.instance.scheduleMedicationReminders();
-
-      if (!mounted) return;
-      Navigator.pushReplacementNamed(context, '/home');
-    } else {
-      if (!mounted) return;
-      Navigator.pushReplacementNamed(context, '/splash');
-    }
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return const Scaffold(
-      body: Center(
-        child: CircularProgressIndicator(),
+    return ImageFiltered(
+      imageFilter: ui.ImageFilter.blur(sigmaX: 28.0, sigmaY: 28.0),
+      child: Container(
+        width: size,
+        height: size,
+        decoration: BoxDecoration(
+          shape: BoxShape.circle,
+          gradient: RadialGradient(colors: colors),
+        ),
       ),
     );
   }
