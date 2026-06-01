@@ -8,6 +8,7 @@ import 'features/auth/pages/login_page.dart';
 import 'features/auth/pages/register_page.dart';
 import 'features/notifications/pages/medication_notifications_page.dart';
 import 'features/notifications/services/notification_service.dart';
+import 'features/profile/pages/profile_page.dart';
 import 'main_navigation_page.dart';
 import 'features/medication/pages/meds_page.dart';
 import 'features/medication/pages/medication_plan_page.dart';
@@ -41,6 +42,7 @@ class AlveoApp extends StatelessWidget {
         '/login': (_) => const LoginPage(),
         '/register': (_) => const RegisterPage(),
         '/home': (_) => const MainNavigationPage(),
+        '/profile': (_) => const ProfilePage(),
         '/medication_plan': (_) => const MedicationPlanPage(),
         '/medication': (_) => const MedsPage(),
         '/notifications': (_) => const MedicationNotificationsPage(),
