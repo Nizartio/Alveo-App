@@ -22,6 +22,8 @@ class NotificationService {
 
   bool _initialized = false;
 
+  // ─── Initialization ──────────────────────────────────────────
+
   Future<void> initialize() async {
     if (_initialized) return;
 
@@ -67,20 +69,15 @@ class NotificationService {
   }
 
   void _handleNotificationTap(NotificationResponse response) {
-    final payload = response.payload;
-    if (payload == null || payload.isEmpty) {
-      appNavigatorKey.currentState?.pushNamed('/notifications');
-      return;
-    }
-
-    try {
-      final data = jsonDecode(payload) as Map<String, dynamic>;
-      final route = data['route']?.toString() ?? '/notifications';
-      appNavigatorKey.currentState?.pushNamed(route);
-    } catch (_) {
-      appNavigatorKey.currentState?.pushNamed('/notifications');
-    }
+    // Navigate to home → meds tab (initialIndex: 1) for medication reminders
+    appNavigatorKey.currentState?.pushNamedAndRemoveUntil(
+      '/home',
+      (route) => route.settings.name == '/home',
+      arguments: {'initialIndex': 1},
+    );
   }
+
+  // ─── Notifications CRUD ──────────────────────────────────────
 
   Future<void> refreshUnreadCount() async {
     final user = _supabase.auth.currentUser;
@@ -99,22 +96,41 @@ class NotificationService {
   }
 
   Future<List<Map<String, dynamic>>> fetchNotifications({
-    int limit = 50,
+    int limit = 100,
+    int? daysAgo,
+    bool includeFuture = false,
   }) async {
     final user = _supabase.auth.currentUser;
-    if (user == null) {
-      return [];
-    }
+    if (user == null) return [];
 
-    final rows = await _supabase
+    final query = _supabase
         .from('notifications')
-        .select()
+        .select('*, medication_schedules(user_medications(reminder_minutes_before))')
         .eq('user_id', user.id)
         .order('date', ascending: false)
         .order('time', ascending: false)
         .limit(limit);
 
-    return List<Map<String, dynamic>>.from(rows);
+    final rows = await query;
+    var notifications = List<Map<String, dynamic>>.from(rows);
+
+    // Exclude future notifications unless explicitly requested (for scheduling)
+    if (!includeFuture) {
+      final todayStr = DateTime.now().toIso8601String().split('T')[0];
+      notifications = notifications
+          .where((n) => (n['date']?.toString() ?? '').compareTo(todayStr) <= 0)
+          .toList();
+    }
+
+    if (daysAgo != null) {
+      final cutoff = DateTime.now().subtract(Duration(days: daysAgo));
+      final cutoffStr = cutoff.toIso8601String().split('T')[0];
+      notifications = notifications
+          .where((n) => (n['date']?.toString() ?? '').compareTo(cutoffStr) >= 0)
+          .toList();
+    }
+
+    return notifications;
   }
 
   Future<void> markAsSent(String notificationId) async {
@@ -130,50 +146,120 @@ class NotificationService {
     await refreshUnreadCount();
   }
 
+  Future<void> markAllAsSent() async {
+    final user = _supabase.auth.currentUser;
+    if (user == null) return;
+
+    await _supabase
+        .from('notifications')
+        .update({'sent': true})
+        .eq('user_id', user.id)
+        .eq('sent', false);
+
+    await refreshUnreadCount();
+  }
+
+  // ─── Scheduling ──────────────────────────────────────────────
+
+  Future<void> scheduleMedicationReminders() async {
+    await syncMedicationReminders();
+  }
+
   Future<void> syncMedicationReminders() async {
     final user = _supabase.auth.currentUser;
     if (user == null) {
+      print('[NotifSync] No user, aborting');
       unreadCount.value = 0;
       return;
     }
 
     await _plugin.cancelAll();
 
-    final notifications = await fetchNotifications(limit: 100);
+    final notifications = await fetchNotifications(limit: 200, includeFuture: true);
     final now = tz.TZDateTime.now(tz.local);
+    print('[NotifSync] Fetched ${notifications.length} notifications from DB. Now is $now');
+
+    int scheduledExact = 0;
+    int scheduledEarly = 0;
+    int skippedPast = 0;
 
     for (final notification in notifications) {
-      final id = _stableId(notification['id']?.toString() ?? '0');
       final scheduledAt = _scheduledDateTime(notification);
-      if (scheduledAt.isBefore(now)) {
-        continue;
+      final rawId = notification['id']?.toString() ?? '0';
+      final message =
+          notification['message']?.toString() ?? 'Waktunya minum obat';
+      final reminderMinutes = _extractReminderMinutes(notification);
+
+      print('[NotifSync] Notification: id=${rawId.substring(0, 8)}... '
+          'date=${notification['date']} time=${notification['time']} '
+          'scheduledAt=$scheduledAt reminderMin=$reminderMinutes msg=$message');
+
+      // ── Exact-time notification ──
+      if (!scheduledAt.isBefore(now)) {
+        await _plugin.zonedSchedule(
+          _stableId(rawId),
+          'Waktunya Minum Obat',
+          message,
+          scheduledAt,
+          _notificationDetails(),
+          androidScheduleMode: AndroidScheduleMode.exactAllowWhileIdle,
+          uiLocalNotificationDateInterpretation:
+              UILocalNotificationDateInterpretation.absoluteTime,
+          payload: jsonEncode({'route': '/medication'}),
+        );
+        scheduledExact++;
+        print('[NotifSync]   → Exact scheduled for $scheduledAt');
+      } else {
+        skippedPast++;
+        print('[NotifSync]   → Exact SKIPPED (past: $scheduledAt < $now)');
       }
 
-      await _plugin.zonedSchedule(
-        id,
-        'Pengingat Obat',
-        notification['message']?.toString() ?? 'Waktunya minum obat',
-        scheduledAt,
-        const NotificationDetails(
-          android: AndroidNotificationDetails(
-            'medication_reminders',
-            'Medication Reminders',
-            channelDescription: 'Reminder notifications for medications',
-            importance: Importance.max,
-            priority: Priority.high,
-            playSound: true,
-          ),
-          iOS: DarwinNotificationDetails(),
-        ),
-        androidScheduleMode: AndroidScheduleMode.exactAllowWhileIdle,
-        uiLocalNotificationDateInterpretation:
-            UILocalNotificationDateInterpretation.absoluteTime,
-        payload: jsonEncode({'route': '/notifications'}),
-      );
+      // ── Early-reminder notification ──
+      final reminderTime = scheduledAt.subtract(Duration(minutes: reminderMinutes));
+      if (!reminderTime.isBefore(now)) {
+        final label = _reminderLabel(reminderMinutes);
+        await _plugin.zonedSchedule(
+          _stableId('${rawId}_early'),
+          'Pengingat $label',
+          '$label lagi: $message',
+          reminderTime,
+          _notificationDetails(),
+          androidScheduleMode: AndroidScheduleMode.exactAllowWhileIdle,
+          uiLocalNotificationDateInterpretation:
+              UILocalNotificationDateInterpretation.absoluteTime,
+          payload: jsonEncode({'route': '/medication'}),
+        );
+        scheduledEarly++;
+        print('[NotifSync]   → Early ($reminderMinutes min) scheduled for $reminderTime');
+      } else {
+        print('[NotifSync]   → Early ($reminderMinutes min) SKIPPED (past: $reminderTime < $now)');
+      }
     }
 
+    print('[NotifSync] Done: $scheduledExact exact, $scheduledEarly early, $skippedPast skipped (past)');
     await refreshUnreadCount();
   }
+
+  NotificationDetails _notificationDetails() {
+    return const NotificationDetails(
+      android: AndroidNotificationDetails(
+        'medication_reminders',
+        'Pengingat Obat',
+        channelDescription: 'Notifikasi pengingat jadwal minum obat',
+        importance: Importance.max,
+        priority: Priority.high,
+        playSound: true,
+        enableVibration: true,
+      ),
+      iOS: DarwinNotificationDetails(
+        presentAlert: true,
+        presentBadge: true,
+        presentSound: true,
+      ),
+    );
+  }
+
+  // ─── Helpers ─────────────────────────────────────────────────
 
   tz.TZDateTime _scheduledDateTime(Map<String, dynamic> notification) {
     final dateStr = notification['date']?.toString();
@@ -197,15 +283,31 @@ class NotificationService {
     );
   }
 
-  int _stableId(String rawId) {
-    final clean = rawId.replaceAll('-', '');
-    final hex = clean.length >= 8
-        ? clean.substring(0, 8)
-        : clean.padLeft(8, '0');
-    return int.parse(hex, radix: 16);
+  /// Extract reminder_minutes_before from the nested relation chain:
+  /// notifications → medication_schedules → user_medications
+  int _extractReminderMinutes(Map<String, dynamic> notification) {
+    try {
+      final schedules = notification['medication_schedules'];
+      final userMeds = schedules is Map ? schedules['user_medications'] : null;
+      final mins = userMeds is Map ? userMeds['reminder_minutes_before'] : null;
+      return (mins is int && mins > 0) ? mins : 15;
+    } catch (_) {
+      return 15;
+    }
   }
 
-  Future<void> scheduleMedicationReminders() async {
-    await syncMedicationReminders();
+  String _reminderLabel(int minutes) {
+    if (minutes >= 60) return '1 Jam';
+    return '$minutes Menit';
+  }
+
+  int _stableId(String rawId) {
+    final clean = rawId.replaceAll('-', '');
+    final hex = clean.length >= 7
+        ? clean.substring(0, 7)
+        : clean.padLeft(7, '0');
+    final value = int.parse(hex, radix: 16);
+    // Clamp to 31-bit signed int (Android notification ID limit)
+    return value & 0x7FFFFFFF;
   }
 }

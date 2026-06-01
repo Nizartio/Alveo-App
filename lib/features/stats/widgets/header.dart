@@ -7,7 +7,7 @@ class SectionHeader extends StatelessWidget {
   const SectionHeader({
     super.key,
     this.title = 'Progresmu',
-    this.subtitle = "Teruskan! Kamu luar biasa minggu ini.",
+    required this.subtitle,
   });
 
   @override

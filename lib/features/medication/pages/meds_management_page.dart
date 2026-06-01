@@ -258,8 +258,6 @@ class _MedsManagementPageState extends State<MedsManagementPage> {
                           return MedsListAction(
                             medication: medication,
                             onEdit: () => _editMedication(medication),
-                            onPause: () =>
-                                _pauseMedication(medication['id'] as String),
                             onDelete: () =>
                                 _deleteMedication(medication['id'] as String),
                           );

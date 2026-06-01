@@ -152,9 +152,74 @@ class MedicationService {
           userMedicationId: userMedId,
           times: times,
         );
+
+        // Create notification records for the next 7 days
+        await _createNotificationsForMedication(
+          userMedicationId: userMedId,
+          medicineName: med.medicineName,
+          startDate: startDate,
+        );
       }
     } catch (e) {
       rethrow;
+    }
+  }
+
+  /// Create notification rows in the DB for a medication's schedules
+  /// for today + 6 days, so they can be picked up by the notification scheduler.
+  Future<void> _createNotificationsForMedication({
+    required String userMedicationId,
+    required String medicineName,
+    required DateTime startDate,
+  }) async {
+    try {
+      final user = supabase.auth.currentUser;
+      if (user == null) return;
+
+      // Fetch the schedules we just created
+      final schedules = await supabase
+          .from('medication_schedules')
+          .select('id, time')
+          .eq('user_medication_id', userMedicationId);
+
+      if (schedules.isEmpty) return;
+
+      final today = DateTime.now();
+      final effectiveStart =
+          startDate.isAfter(today) ? startDate : today;
+
+      for (final schedule in schedules) {
+        final scheduleId = schedule['id'] as String;
+        final timeStr = schedule['time'] as String;
+
+        // Create notifications for the next 7 days
+        for (int i = 0; i < 7; i++) {
+          final date = effectiveStart.add(Duration(days: i));
+          final dateStr = date.toIso8601String().split('T')[0];
+
+          // Skip if a notification already exists for this schedule+date
+          final existing = await supabase
+              .from('notifications')
+              .select('id')
+              .eq('medication_schedule_id', scheduleId)
+              .eq('date', dateStr)
+              .maybeSingle();
+
+          if (existing != null) continue;
+
+          await supabase.from('notifications').insert({
+            'user_id': user.id,
+            'medication_schedule_id': scheduleId,
+            'date': dateStr,
+            'time': timeStr,
+            'message': 'Waktunya minum $medicineName',
+          });
+        }
+      }
+      print('[NotifCreate] Created notifications for $medicineName');
+    } catch (e) {
+      print('[NotifCreate] Failed to create notifications: $e');
+      // Non-fatal: plan is saved even if notification creation fails
     }
   }
 
@@ -269,6 +334,7 @@ class MedicationService {
 
       if (resp == null) return 0;
       final streak = resp['current_streak'] as int?;
+      print('[Streak] fetchCurrentStreak read: ${streak ?? 0}');
       return streak ?? 0;
     } catch (e) {
       return 0;
@@ -466,8 +532,8 @@ class MedicationService {
     }
   }
 
-  /// Check whether all of today's scheduled doses have been taken,
-  /// and if so, increment the user's day streak.
+  /// If the user has taken at least one dose today, continue or start the streak.
+  /// The streak only breaks on days with zero doses taken.
   Future<void> _checkAndUpdateStreak() async {
     try {
       final user = supabase.auth.currentUser;
@@ -476,9 +542,7 @@ class MedicationService {
       final now = DateTime.now();
       final todayStr = now.toString().split(' ')[0];
 
-      // Count total active schedules for today
       final medications = await fetchActiveMedications();
-      int totalSchedules = 0;
       int takenCount = 0;
       final userMedIds = medications
           .map((m) => m['id']?.toString())
@@ -487,14 +551,7 @@ class MedicationService {
 
       if (userMedIds.isEmpty) return;
 
-      for (final med in medications) {
-        totalSchedules +=
-            (med['medication_schedules'] as List? ?? []).length;
-      }
-
-      if (totalSchedules == 0) return;
-
-      // Count how many are taken/late_taken today
+      // Count how many doses were taken today (taken or late_taken both count)
       final logs = await supabase
           .from('medication_logs')
           .select('status')
@@ -508,42 +565,39 @@ class MedicationService {
         }
       }
 
-      // If not all doses are taken yet, don't update streak
-      if (takenCount < totalSchedules) return;
+      // Streak continues as long as at least one dose was taken today
+      if (takenCount == 0) return;
 
-      // All doses taken today — update streak
+      // At least one dose taken today — update streak
       final profile = await supabase
           .from('user_profile')
           .select('current_streak, longest_streak, last_streak_date')
           .eq('user_id', user.id)
           .maybeSingle();
 
-      if (profile == null) return;
+      if (profile == null) {
+        print('[Streak] user_profile row not found for user ${user.id}');
+        return;
+      }
 
       final currentStreak = profile['current_streak'] as int? ?? 0;
       final longestStreak = profile['longest_streak'] as int? ?? 0;
-      final lastStreakDateStr = profile['last_streak_date'] as String?;
+      // last_streak_date is a date column; Supabase returns it as String
+      final lastStreakDateStr = profile['last_streak_date']?.toString();
 
-      final today = DateTime(now.year, now.month, now.day);
-      int newStreak = currentStreak;
+      // Compare dates as strings to avoid DateTime timezone ambiguity
+      final yesterdayStr = DateTime(now.year, now.month, now.day - 1)
+          .toIso8601String()
+          .split('T')[0];
 
-      if (lastStreakDateStr != null) {
-        final lastDate = DateTime.tryParse(lastStreakDateStr);
-        if (lastDate != null) {
-          final yesterday = today.subtract(const Duration(days: 1));
-          if (lastDate == yesterday) {
-            // Consecutive day → increment
-            newStreak = currentStreak + 1;
-          } else if (lastDate == today) {
-            // Already counted today → no change
-            newStreak = currentStreak;
-          } else {
-            // Streak broken → reset
-            newStreak = 1;
-          }
-        }
+      int newStreak;
+      if (lastStreakDateStr == null || lastStreakDateStr.isEmpty) {
+        newStreak = 1;
+      } else if (lastStreakDateStr == yesterdayStr) {
+        newStreak = currentStreak + 1;
+      } else if (lastStreakDateStr == todayStr) {
+        newStreak = currentStreak;
       } else {
-        // First ever streak
         newStreak = 1;
       }
 
@@ -556,11 +610,12 @@ class MedicationService {
             'current_streak': newStreak,
             'longest_streak': newLongest,
             'last_streak_date': todayStr,
-            'updated_at': now.toIso8601String(),
           })
           .eq('user_id', user.id);
-    } catch (_) {
-      // Non-fatal: streak update failure shouldn't block medication logging
+
+      print('[Streak] Updated: streak=$newStreak longest=$newLongest date=$todayStr');
+    } catch (e) {
+      print('[Streak] ERROR: $e');
     }
   }
 

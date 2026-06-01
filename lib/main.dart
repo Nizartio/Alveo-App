@@ -38,7 +38,12 @@ class AlveoApp extends StatelessWidget {
         '/splash': (_) => const SplashPage(),
         '/login': (_) => const LoginPage(),
         '/register': (_) => const RegisterPage(),
-        '/home': (_) => const MainNavigationPage(),
+        '/home': (context) {
+          final args = ModalRoute.of(context)?.settings.arguments;
+          final initialIndex =
+              args is Map<String, dynamic> ? (args['initialIndex'] as int?) ?? 0 : 0;
+          return MainNavigationPage(initialIndex: initialIndex);
+        },
         '/profile': (_) => const ProfilePage(),
         '/medication_plan': (_) => const MedicationPlanPage(),
         '/medication': (_) => const MedsPage(),
@@ -67,11 +72,20 @@ class _StartupGateState extends State<StartupGate> {
 
   Future<bool> _bootstrapApp() async {
     await Supabase.initialize(url: supabaseUrl, anonKey: supabaseAnonKey);
-    await NotificationService.instance.initialize();
+
+    try {
+      await NotificationService.instance.initialize();
+    } catch (e) {
+      print('[Bootstrap] Notification init failed: $e');
+    }
 
     final user = Supabase.instance.client.auth.currentUser;
     if (user != null) {
-      await NotificationService.instance.scheduleMedicationReminders();
+      try {
+        await NotificationService.instance.scheduleMedicationReminders();
+      } catch (e) {
+        print('[Bootstrap] Schedule reminders failed: $e');
+      }
       return true;
     }
 

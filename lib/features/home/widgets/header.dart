@@ -3,7 +3,8 @@ import '../../../core/theme/app_colors.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 class HeaderContent extends StatefulWidget {
-  const HeaderContent({super.key});
+  final int streakDays;
+  const HeaderContent({super.key, this.streakDays = 0});
 
   @override
   State<HeaderContent> createState() => _HeaderContentState();
@@ -11,7 +12,7 @@ class HeaderContent extends StatefulWidget {
 
 class _HeaderContentState extends State<HeaderContent> {
   final _supabase = Supabase.instance.client;
-  String _greetingName = 'there';
+  String _greetingName = '';
 
   @override
   void initState() {
@@ -30,36 +31,47 @@ class _HeaderContentState extends State<HeaderContent> {
           .eq('user_id', user.id)
           .maybeSingle();
 
-      final fullName =
-          (profile?['full_name'] ??
-                  user.userMetadata?['full_name'] ??
-                  user.email)
-              ?.toString();
+      final fullName = (profile?['full_name'] ??
+              user.userMetadata?['full_name'] ??
+              user.email)
+          ?.toString();
 
       if (!mounted) return;
 
       setState(() {
-        if (fullName == null || fullName.trim().isEmpty) {
-          _greetingName = 'there';
-        } else {
+        if (fullName != null && fullName.trim().isNotEmpty) {
           _greetingName = fullName.trim().split(RegExp(r'\s+')).first;
         }
       });
     } catch (_) {
       if (!mounted) return;
-      setState(() {
-        _greetingName = 'there';
-      });
+      setState(() => _greetingName = '');
     }
+  }
+
+  String _motivationalMessage() {
+    if (widget.streakDays >= 7) {
+      return 'Keren! ${widget.streakDays} hari berturut-turut minum obat. Terus pertahankan! 🔥';
+    }
+    if (widget.streakDays >= 3) {
+      return 'Kamu sudah ${widget.streakDays} hari streak. Semangat terus! 💪';
+    }
+    final hour = DateTime.now().hour;
+    if (hour < 11) return 'Semangat pagi! Jangan lupa minum obat hari ini. ☀️';
+    if (hour < 15) return 'Jangan lupa jadwal obat siang ini. Tetap sehat! 🌤️';
+    if (hour < 19) return 'Sore yang tenang. Sudah minum obat belum? 🌅';
+    return 'Jangan lupa minum obat sebelum tidur. Istirahat yang cukup! 🌙';
   }
 
   @override
   Widget build(BuildContext context) {
+    final greeting = _greetingName.isNotEmpty ? 'Hai, $_greetingName 👋' : 'Hai 👋';
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
-          'Hai, $_greetingName 👋',
+          greeting,
           style: const TextStyle(
             fontSize: 28,
             fontWeight: FontWeight.bold,
@@ -84,9 +96,9 @@ class _HeaderContentState extends State<HeaderContent> {
                   ),
                 ],
               ),
-              child: const Text(
-                'Kamu hebat hari ini!\nTarik napas dalam-dalam dan teruslah berusaha.',
-                style: TextStyle(
+              child: Text(
+                _motivationalMessage(),
+                style: const TextStyle(
                   color: AppColors.textBody,
                   fontSize: 16,
                   height: 1.5,

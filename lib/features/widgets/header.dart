@@ -214,7 +214,9 @@ class _StatsHeaderState extends State<StatsHeader> {
             const Spacer(),
 
             GestureDetector(
-              onTap: () {},
+              onTap: () {
+                Navigator.of(context).pushNamed('/notifications');
+              },
               child: Container(
                 width: 48,
                 height: 48,

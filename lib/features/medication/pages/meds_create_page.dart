@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../../notifications/services/notification_service.dart';
 import '../models/medication_form_model.dart';
 import '../services/medication_service.dart';
 import '../widgets/create/btn_add.dart';
@@ -121,6 +122,7 @@ class _MedsCreatePageState extends State<MedsCreatePage> {
           medications: _medications,
         );
       }
+      await NotificationService.instance.scheduleMedicationReminders();
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
