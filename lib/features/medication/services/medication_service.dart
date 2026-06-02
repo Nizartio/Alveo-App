@@ -550,7 +550,7 @@ class MedicationService {
   }
 
   /// If the user has taken at least one dose today, continue or start the streak.
-  /// The streak only breaks on days with zero doses taken.
+  /// The streak only advances once per day.
   Future<void> _checkAndUpdateStreak() async {
     try {
       if (supabase.auth.currentUser == null) return;
@@ -558,37 +558,61 @@ class MedicationService {
       final now = DateTime.now();
       final todayStr = now.toString().split(' ')[0];
 
-      final medications = await fetchActiveMedications();
-      int takenCount = 0;
-      final userMedIds = medications
-          .map((m) => m['id']?.toString())
-          .whereType<String>()
-          .toList();
+      final todaySchedule = await fetchTodaySchedule();
+      if (todaySchedule.isEmpty) return;
 
-      if (userMedIds.isEmpty) return;
+      final hasTakenDoseToday = todaySchedule.any((schedule) {
+        final status = schedule['status']?.toString() ?? '';
+        return status == 'taken' || status == 'late_taken';
+      });
 
-      // Count how many doses were taken today (taken or late_taken both count)
-      final logs = await supabase
-          .from('medication_logs')
-          .select('status')
-          .inFilter('user_medication_id', userMedIds)
-          .eq('date', todayStr);
+      if (!hasTakenDoseToday) return;
 
-      for (final l in (logs as List)) {
-        final s = l['status']?.toString() ?? '';
-        if (s == 'taken' || s == 'late_taken') {
-          takenCount++;
-        }
+      final user = supabase.auth.currentUser;
+      if (user == null) return;
+
+      final profile = await supabase
+          .from('user_profile')
+          .select('current_streak, longest_streak, last_streak_date')
+          .eq('user_id', user.id)
+          .maybeSingle();
+
+      if (profile == null) {
+        print('[Streak] user_profile row not found for user ${user.id}');
+        return;
       }
 
-      // Streak continues as long as at least one dose was taken today
-      if (takenCount == 0) return;
+      final currentStreak = profile['current_streak'] as int? ?? 0;
+      final longestStreak = profile['longest_streak'] as int? ?? 0;
+      final lastStreakDateStr = profile['last_streak_date']?.toString();
+      final yesterdayStr = DateTime(
+        now.year,
+        now.month,
+        now.day - 1,
+      ).toIso8601String().split('T')[0];
 
-      // Update streak inside Postgres so the latest database value is the source of truth.
-      await supabase.rpc(
-        'bump_current_user_streak',
-        params: {'p_today': todayStr},
-      );
+      int newStreak;
+      if (lastStreakDateStr == todayStr) {
+        newStreak = currentStreak;
+      } else if (lastStreakDateStr == yesterdayStr ||
+          lastStreakDateStr == null ||
+          lastStreakDateStr.isEmpty) {
+        newStreak = currentStreak + 1;
+      } else {
+        newStreak = 1;
+      }
+
+      final newLongest = newStreak > longestStreak ? newStreak : longestStreak;
+
+      await supabase
+          .from('user_profile')
+          .update({
+            'current_streak': newStreak,
+            'longest_streak': newLongest,
+            'last_streak_date': todayStr,
+            'updated_at': now.toIso8601String(),
+          })
+          .eq('user_id', user.id);
 
       final refreshedStreak = await fetchCurrentStreak();
       print('[Streak] Synced from database: $refreshedStreak on $todayStr');

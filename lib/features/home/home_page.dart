@@ -168,6 +168,23 @@ class _HomePageState extends State<HomePage> {
     }
   }
 
+  bool get _hasPendingDoseToday {
+    return _todaySchedule.any((schedule) {
+      final status = schedule['status']?.toString() ?? '';
+      return status != 'taken' && status != 'late_taken';
+    });
+  }
+
+  bool get _allTodayTaken {
+    return _todaySchedule.isNotEmpty && !_hasPendingDoseToday;
+  }
+
+  int get _lateTakenTodayCount {
+    return _todaySchedule.where((schedule) {
+      return (schedule['status']?.toString() ?? '') == 'late_taken';
+    }).length;
+  }
+
   Widget _buildPendingDoseTile(Map<String, dynamic> schedule) {
     final medicineName = schedule['medicine_name']?.toString() ?? 'Obat';
     final dosage = schedule['dosage']?.toString() ?? '0';
@@ -283,26 +300,86 @@ class _HomePageState extends State<HomePage> {
                     ),
                   ),
                   const SizedBox(height: 12),
-                  NextActionCard(
-                    medicineName: _nextMedication?['medicines']?['name']?.toString(),
-                    scheduleTime: _formatNextMedicationTime(_nextMedication),
-                    intakeRuleLabel: _formatIntakeRule(_nextMedication?['intake_rule']?.toString()),
-                    isLate: _nextMedication?['is_late'] == true,
-                    isMarking: _isMarking && _markingScheduleKey == null,
-                    onMark: _nextMedication != null ? _markHomeMedication : null,
-                    onNavigateToMeds: () {
-                      Navigator.of(context).pushReplacement(
-                        MaterialPageRoute(
-                          builder: (_) => const MainNavigationPage(initialIndex: 1),
+                  if (_allTodayTaken)
+                    Container(
+                      padding: const EdgeInsets.all(20),
+                      decoration: BoxDecoration(
+                        gradient: const LinearGradient(
+                          colors: [Color(0xFF27AE60), Color(0xFF2ECC71)],
+                          begin: Alignment.topLeft,
+                          end: Alignment.bottomRight,
                         ),
-                      );
-                    },
-                  ),
+                        borderRadius: BorderRadius.circular(28),
+                        boxShadow: const [
+                          BoxShadow(
+                            color: AppColors.loginShadow,
+                            blurRadius: 16,
+                            offset: Offset(0, 8),
+                          ),
+                        ],
+                      ),
+                      child: Row(
+                        children: [
+                          Container(
+                            padding: const EdgeInsets.all(14),
+                            decoration: BoxDecoration(
+                              color: Colors.white.withOpacity(0.2),
+                              borderRadius: BorderRadius.circular(16),
+                            ),
+                            child: const Icon(
+                              Icons.celebration,
+                              color: Colors.white,
+                              size: 30,
+                            ),
+                          ),
+                          const SizedBox(width: 14),
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                const Text(
+                                  'Semua obat hari ini sudah diminum! 🎉',
+                                  style: TextStyle(
+                                    fontSize: 18,
+                                    fontWeight: FontWeight.w800,
+                                    color: Colors.white,
+                                  ),
+                                ),
+                                const SizedBox(height: 4),
+                                Text(
+                                  _lateTakenTodayCount > 0
+                                      ? 'Ada $_lateTakenTodayCount dosis yang tercatat terlambat, tapi semuanya sudah selesai dicatat.'
+                                      : 'Semua dosis tercatat tepat waktu. Pertahankan streak harimu!',
+                                  style: TextStyle(
+                                    fontSize: 13,
+                                    color: Colors.white.withOpacity(0.85),
+                                    height: 1.4,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ],
+                      ),
+                    )
+                  else
+                    NextActionCard(
+                      medicineName: _nextMedication?['medicines']?['name']?.toString(),
+                      scheduleTime: _formatNextMedicationTime(_nextMedication),
+                      intakeRuleLabel: _formatIntakeRule(_nextMedication?['intake_rule']?.toString()),
+                      isLate: _nextMedication?['is_late'] == true,
+                      isMarking: _isMarking && _markingScheduleKey == null,
+                      onMark: _nextMedication != null ? _markHomeMedication : null,
+                      onNavigateToMeds: () {
+                        Navigator.of(context).pushReplacement(
+                          MaterialPageRoute(
+                            builder: (_) => const MainNavigationPage(initialIndex: 1),
+                          ),
+                        );
+                      },
+                    ),
                   // Today's pending doses
-                  if (_todaySchedule.any((s) {
-                    final st = s['status']?.toString() ?? '';
-                    return st != 'taken' && st != 'late_taken';
-                  })) ...[
+                  if (_hasPendingDoseToday) ...[
                     const SizedBox(height: 24),
                     Text(
                       'Dosis Hari Ini',
