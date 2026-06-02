@@ -991,6 +991,13 @@ class MedicationService {
         throw Exception('Medication does not belong to the current user');
       }
 
+      final medicine = await supabase
+          .from('medicines')
+          .select('name')
+          .eq('id', medicineId)
+          .maybeSingle();
+      final medicineName = medicine?['name']?.toString() ?? 'obat';
+
       await supabase
           .from('user_medications')
           .update({
@@ -1016,6 +1023,12 @@ class MedicationService {
             .toList();
         await supabase.from('medication_schedules').insert(schedules);
       }
+
+      await _createNotificationsForMedication(
+        userMedicationId: userMedicationId,
+        medicineName: medicineName,
+        startDate: DateTime.now(),
+      );
     } catch (e) {
       throw Exception('Failed to update user medication: $e');
     }

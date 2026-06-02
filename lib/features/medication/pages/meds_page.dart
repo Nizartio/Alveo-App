@@ -130,9 +130,7 @@ class _MedsPageState extends State<MedsPage> {
         final diff = earliestAllowed.difference(now);
         if (!mounted) return;
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Belum waktunya. ${_formatWaitTime(diff)}'),
-          ),
+          SnackBar(content: Text('Belum waktunya. ${_formatWaitTime(diff)}')),
         );
         return;
       }
@@ -173,9 +171,11 @@ class _MedsPageState extends State<MedsPage> {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text(isLate
-                ? '⚠ Obat terlambat diminum dan telah dicatat.'
-                : '✓ Obat ditandai telah diminum!'),
+            content: Text(
+              isLate
+                  ? '⚠ Obat terlambat diminum dan telah dicatat.'
+                  : '✓ Obat ditandai telah diminum!',
+            ),
             backgroundColor: isLate ? Colors.orange : Colors.green,
           ),
         );
@@ -188,10 +188,11 @@ class _MedsPageState extends State<MedsPage> {
         ).showSnackBar(SnackBar(content: Text('Kesalahan: $e')));
       }
     } finally {
-      if (mounted) setState(() {
-        _isMarking = false;
-        _markingTarget = null;
-      });
+      if (mounted)
+        setState(() {
+          _isMarking = false;
+          _markingTarget = null;
+        });
     }
   }
 
@@ -226,9 +227,7 @@ class _MedsPageState extends State<MedsPage> {
         final diff = earliestAllowed.difference(now);
         if (!mounted) return;
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Belum waktunya. ${_formatWaitTime(diff)}'),
-          ),
+          SnackBar(content: Text('Belum waktunya. ${_formatWaitTime(diff)}')),
         );
         return;
       }
@@ -267,9 +266,11 @@ class _MedsPageState extends State<MedsPage> {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text(isLate
-                ? '⚠ Obat terlambat diminum dan telah dicatat.'
-                : '✓ Obat ditandai telah diminum!'),
+            content: Text(
+              isLate
+                  ? '⚠ Obat terlambat diminum dan telah dicatat.'
+                  : '✓ Obat ditandai telah diminum!',
+            ),
             backgroundColor: isLate ? Colors.orange : Colors.green,
           ),
         );
@@ -282,10 +283,11 @@ class _MedsPageState extends State<MedsPage> {
         ).showSnackBar(SnackBar(content: Text('Kesalahan: $e')));
       }
     } finally {
-      if (mounted) setState(() {
-        _isMarking = false;
-        _markingTarget = null;
-      });
+      if (mounted)
+        setState(() {
+          _isMarking = false;
+          _markingTarget = null;
+        });
     }
   }
 
@@ -317,14 +319,31 @@ class _MedsPageState extends State<MedsPage> {
     }
   }
 
-  void _snooze() {
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(
-        content: Text(
-          'Tunda diatur. Anda akan mendapat pengingat dalam 15 menit.',
+  Future<void> _snooze() async {
+    final medicationName =
+        _nextMedication?['medicine_name']?.toString() ?? 'obat';
+
+    try {
+      await NotificationService.instance.scheduleSnoozeReminder(
+        title: 'Pengingat Obat',
+        body: 'Waktunya minum $medicationName lagi.',
+        minutes: 15,
+      );
+
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text(
+            'Tunda diatur. Anda akan mendapat pengingat dalam 15 menit.',
+          ),
         ),
-      ),
-    );
+      );
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text('Gagal menunda pengingat: $e')));
+    }
   }
 
   // ─── Medication management ─────────────────────────────────────
@@ -389,17 +408,17 @@ class _MedsPageState extends State<MedsPage> {
     try {
       await _medicationService.deleteMedication(userMedicationId);
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Obat dihapus')),
-        );
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(const SnackBar(content: Text('Obat dihapus')));
         setState(() => _isRefreshing = true);
         _loadMedicationData();
       }
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Kesalahan: $e')),
-        );
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('Kesalahan: $e')));
       }
     }
   }
@@ -417,8 +436,9 @@ class _MedsPageState extends State<MedsPage> {
     Map<String, dynamic> medication,
   ) {
     final medicine = medication['medicines'];
-    final schedules =
-        (medication['medication_schedules'] as List? ?? []).map((schedule) {
+    final schedules = (medication['medication_schedules'] as List? ?? []).map((
+      schedule,
+    ) {
       final time = schedule['time']?.toString() ?? '08:00:00';
       return _parseScheduleTime(time);
     }).toList();
@@ -548,10 +568,7 @@ class _MedsPageState extends State<MedsPage> {
             const SizedBox(height: 24),
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                _shimmerBox(140, 18),
-                _shimmerBox(100, 18),
-              ],
+              children: [_shimmerBox(140, 18), _shimmerBox(100, 18)],
             ),
             const SizedBox(height: 12),
             _shimmerBox(double.infinity, 80, radius: 12),
@@ -689,7 +706,11 @@ class _MedsPageState extends State<MedsPage> {
                 color: Colors.white.withOpacity(0.2),
                 borderRadius: BorderRadius.circular(16),
               ),
-              child: const Icon(Icons.celebration, color: Colors.white, size: 32),
+              child: const Icon(
+                Icons.celebration,
+                color: Colors.white,
+                size: 32,
+              ),
             ),
             const SizedBox(width: 16),
             Expanded(
@@ -758,7 +779,8 @@ class _MedsPageState extends State<MedsPage> {
                                 : 'BERIKUTNYA • ') +
                             (_nextMedication != null
                                 ? _formatTime(
-                                    '${_nextMedication!['scheduled_time'].hour.toString().padLeft(2, '0')}:${_nextMedication!['scheduled_time'].minute.toString().padLeft(2, '0')}')
+                                    '${_nextMedication!['scheduled_time'].hour.toString().padLeft(2, '0')}:${_nextMedication!['scheduled_time'].minute.toString().padLeft(2, '0')}',
+                                  )
                                 : ''),
                         style: const TextStyle(
                           fontSize: 12,
@@ -798,7 +820,11 @@ class _MedsPageState extends State<MedsPage> {
                       color: Colors.white.withOpacity(0.2),
                       borderRadius: BorderRadius.circular(16),
                     ),
-                    child: const Icon(Icons.medication, color: Colors.white, size: 32),
+                    child: const Icon(
+                      Icons.medication,
+                      color: Colors.white,
+                      size: 32,
+                    ),
                   ),
                 ],
               ),
@@ -815,7 +841,11 @@ class _MedsPageState extends State<MedsPage> {
                   children: [
                     Row(
                       children: [
-                        const Icon(Icons.medication, color: Colors.white, size: 24),
+                        const Icon(
+                          Icons.medication,
+                          color: Colors.white,
+                          size: 24,
+                        ),
                         const SizedBox(width: 12),
                         Expanded(
                           child: Column(
@@ -848,7 +878,11 @@ class _MedsPageState extends State<MedsPage> {
                             color: Colors.white.withOpacity(0.2),
                             borderRadius: BorderRadius.circular(8),
                           ),
-                          child: const Icon(Icons.opacity, color: Colors.white, size: 20),
+                          child: const Icon(
+                            Icons.opacity,
+                            color: Colors.white,
+                            size: 20,
+                          ),
                         ),
                       ],
                     ),
@@ -896,7 +930,9 @@ class _MedsPageState extends State<MedsPage> {
                       decoration: BoxDecoration(
                         color: Colors.white.withOpacity(0.2),
                         borderRadius: BorderRadius.circular(24),
-                        border: Border.all(color: Colors.white.withOpacity(0.3)),
+                        border: Border.all(
+                          color: Colors.white.withOpacity(0.3),
+                        ),
                       ),
                       child: Material(
                         color: Colors.transparent,
@@ -948,8 +984,11 @@ class _MedsPageState extends State<MedsPage> {
                 color: AppColors.chipBackground,
                 borderRadius: BorderRadius.circular(20),
               ),
-              child: const Icon(Icons.medication_outlined,
-                  color: AppColors.primary, size: 48),
+              child: const Icon(
+                Icons.medication_outlined,
+                color: AppColors.primary,
+                size: 48,
+              ),
             ),
             const SizedBox(height: 16),
             const Text(
@@ -1051,19 +1090,23 @@ class _MedsPageState extends State<MedsPage> {
             ),
           )
         else
-          ..._activeMedications.map((med) => MedsListAction(
-                medication: med,
-                onEdit: () => _editMedication(med),
-                onDelete: () => _deleteMedication(med['id'] as String),
-              )),
+          ..._activeMedications.map(
+            (med) => MedsListAction(
+              medication: med,
+              onEdit: () => _editMedication(med),
+              onDelete: () => _deleteMedication(med['id'] as String),
+            ),
+          ),
         const SizedBox(height: 12),
         SizedBox(
           width: double.infinity,
           child: OutlinedButton.icon(
             onPressed: _showAddMedicationSheet,
             icon: const Icon(Icons.add, color: AppColors.primary),
-            label: const Text('Tambah Obat',
-                style: TextStyle(color: AppColors.primary)),
+            label: const Text(
+              'Tambah Obat',
+              style: TextStyle(color: AppColors.primary),
+            ),
             style: OutlinedButton.styleFrom(
               side: const BorderSide(color: AppColors.primary, width: 1.5),
               padding: const EdgeInsets.symmetric(vertical: 14),
@@ -1145,8 +1188,7 @@ class _MedsPageState extends State<MedsPage> {
                 color: Colors.transparent,
                 child: InkWell(
                   borderRadius: BorderRadius.circular(12),
-                  onTap:
-                      canTap ? () => _markScheduleAsTaken(schedule) : null,
+                  onTap: canTap ? () => _markScheduleAsTaken(schedule) : null,
                   child: Container(
                     margin: const EdgeInsets.only(bottom: 12),
                     padding: const EdgeInsets.all(12),
@@ -1157,10 +1199,10 @@ class _MedsPageState extends State<MedsPage> {
                         color: isLateTaken
                             ? Colors.orange
                             : isTaken
-                                ? AppColors.primary
-                                : isOverdue
-                                    ? AppColors.danger
-                                    : Colors.transparent,
+                            ? AppColors.primary
+                            : isOverdue
+                            ? AppColors.danger
+                            : Colors.transparent,
                         width: 2,
                       ),
                       boxShadow: const [
@@ -1180,10 +1222,10 @@ class _MedsPageState extends State<MedsPage> {
                             color: isLateTaken
                                 ? Colors.orange.withOpacity(0.1)
                                 : isTaken
-                                    ? AppColors.primary.withOpacity(0.1)
-                                    : isOverdue
-                                        ? AppColors.danger.withOpacity(0.1)
-                                        : AppColors.chipBackground,
+                                ? AppColors.primary.withOpacity(0.1)
+                                : isOverdue
+                                ? AppColors.danger.withOpacity(0.1)
+                                : AppColors.chipBackground,
                             borderRadius: BorderRadius.circular(10),
                           ),
                           child: Center(
@@ -1191,17 +1233,17 @@ class _MedsPageState extends State<MedsPage> {
                               isLateTaken
                                   ? Icons.warning_amber_rounded
                                   : isTaken
-                                      ? Icons.check_circle
-                                      : isOverdue
-                                          ? Icons.close_rounded
-                                          : Icons.medication,
+                                  ? Icons.check_circle
+                                  : isOverdue
+                                  ? Icons.close_rounded
+                                  : Icons.medication,
                               color: isLateTaken
                                   ? Colors.orange
                                   : isTaken
-                                      ? AppColors.primary
-                                      : isOverdue
-                                          ? AppColors.danger
-                                          : AppColors.textSecondary,
+                                  ? AppColors.primary
+                                  : isOverdue
+                                  ? AppColors.danger
+                                  : AppColors.textSecondary,
                               size: 20,
                             ),
                           ),
@@ -1248,11 +1290,17 @@ class _MedsPageState extends State<MedsPage> {
                           ),
                         ),
                         if (isLateTaken)
-                          const Icon(Icons.warning_amber_rounded,
-                              color: Colors.orange, size: 24)
+                          const Icon(
+                            Icons.warning_amber_rounded,
+                            color: Colors.orange,
+                            size: 24,
+                          )
                         else if (isTaken)
-                          const Icon(Icons.check_circle,
-                              color: AppColors.primary, size: 24)
+                          const Icon(
+                            Icons.check_circle,
+                            color: AppColors.primary,
+                            size: 24,
+                          )
                         else
                           Container(
                             width: 24,

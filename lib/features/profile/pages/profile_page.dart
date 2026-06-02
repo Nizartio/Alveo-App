@@ -131,13 +131,11 @@ class _ProfilePageState extends State<ProfilePage> {
 
       // Update full_name in user_profile
       if (newName.isNotEmpty && newName != _displayName) {
-        await _supabase
-            .from('user_profile')
-            .upsert({
-              'user_id': user.id,
-              'full_name': newName,
-              'updated_at': DateTime.now().toIso8601String(),
-            });
+        await _supabase.from('user_profile').upsert({
+          'user_id': user.id,
+          'full_name': newName,
+          'updated_at': DateTime.now().toIso8601String(),
+        });
       }
 
       // Update email if changed (Supabase sends confirmation to new email)
@@ -173,7 +171,10 @@ class _ProfilePageState extends State<ProfilePage> {
     } on AuthException catch (e) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Gagal: ${e.message}'), backgroundColor: Colors.red),
+        SnackBar(
+          content: Text('Gagal: ${e.message}'),
+          backgroundColor: Colors.red,
+        ),
       );
     } catch (e) {
       if (!mounted) return;
@@ -191,7 +192,12 @@ class _ProfilePageState extends State<ProfilePage> {
     Navigator.of(context).pushNamedAndRemoveUntil('/login', (route) => false);
   }
 
-  Widget _statItem(IconData icon, String value, String label) {
+  Widget _statItem(
+    IconData icon,
+    String value,
+    String label,
+    String description,
+  ) {
     return Expanded(
       child: Column(
         children: [
@@ -211,6 +217,19 @@ class _ProfilePageState extends State<ProfilePage> {
               color: Colors.white.withOpacity(0.7),
               fontSize: 11,
               fontWeight: FontWeight.w500,
+            ),
+          ),
+          const SizedBox(height: 4),
+          Text(
+            description,
+            textAlign: TextAlign.center,
+            maxLines: 4,
+            overflow: TextOverflow.ellipsis,
+            style: TextStyle(
+              color: Colors.white.withOpacity(0.8),
+              fontSize: 10,
+              height: 1.35,
+              fontWeight: FontWeight.w400,
             ),
           ),
         ],
@@ -323,7 +342,10 @@ class _ProfilePageState extends State<ProfilePage> {
                       children: [
                         // Level badge
                         Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 16,
+                            vertical: 8,
+                          ),
                           decoration: BoxDecoration(
                             color: Colors.white.withOpacity(0.2),
                             borderRadius: BorderRadius.circular(20),
@@ -344,7 +366,8 @@ class _ProfilePageState extends State<ProfilePage> {
                             borderRadius: BorderRadius.circular(4),
                             child: LinearProgressIndicator(
                               value: (_nextThreshold - _prevThreshold) > 0
-                                  ? _currentXp / (_nextThreshold - _prevThreshold)
+                                  ? _currentXp /
+                                        (_nextThreshold - _prevThreshold)
                                   : 0,
                               backgroundColor: Colors.white.withOpacity(0.3),
                               color: Colors.white,
@@ -365,9 +388,24 @@ class _ProfilePageState extends State<ProfilePage> {
                         // Streak + stats row
                         Row(
                           children: [
-                            _statItem(Icons.local_fire_department, '$_streak', 'Streak'),
-                            _statItem(Icons.emoji_events, '$_longestStreak', 'Terbaik'),
-                            _statItem(Icons.medication, '$_totalMeds', 'Total'),
+                            _statItem(
+                              Icons.local_fire_department,
+                              '$_streak',
+                              'Streak saat ini',
+                              'Jumlah hari berturut-turut terakhir kamu berhasil minum obat tanpa terputus. Jika ada hari yang terlewat, nilainya akan kembali dari nol.',
+                            ),
+                            _statItem(
+                              Icons.emoji_events,
+                              '$_longestStreak',
+                              'Streak terbaik',
+                              'Rekor streak terpanjang yang pernah kamu capai sejak mulai memakai aplikasi ini. Angka ini menjadi patokan pribadi untuk target berikutnya.',
+                            ),
+                            _statItem(
+                              Icons.medication,
+                              '$_totalMeds',
+                              'Total obat diminum',
+                              'Total seluruh dosis obat yang sudah kamu tandai sebagai diminum di aplikasi. Ini membantu melihat seberapa konsisten kamu mengikuti pengobatan.',
+                            ),
                           ],
                         ),
                       ],

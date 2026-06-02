@@ -121,7 +121,9 @@ class NotificationService {
 
     final query = _supabase
         .from('notifications')
-        .select('*, medication_schedules(user_medications(reminder_minutes_before))')
+        .select(
+          '*, medication_schedules(user_medications(reminder_minutes_before))',
+        )
         .eq('user_id', user.id)
         .order('date', ascending: false)
         .order('time', ascending: false)
@@ -181,6 +183,27 @@ class NotificationService {
     await syncMedicationReminders();
   }
 
+  Future<void> scheduleSnoozeReminder({
+    required String title,
+    required String body,
+    int minutes = 15,
+  }) async {
+    final scheduledAt = tz.TZDateTime.now(
+      tz.local,
+    ).add(Duration(minutes: minutes));
+    final notificationId = _stableId(
+      'snooze_${DateTime.now().millisecondsSinceEpoch}',
+    );
+
+    await _safeSchedule(
+      id: notificationId,
+      title: title,
+      body: body,
+      scheduledAt: scheduledAt,
+      payload: jsonEncode({'route': '/medication'}),
+    );
+  }
+
   Future<void> syncMedicationReminders() async {
     final user = _supabase.auth.currentUser;
     if (user == null) {
@@ -191,9 +214,15 @@ class NotificationService {
 
     await _plugin.cancelAll();
 
-    final notifications = await fetchNotifications(limit: 200, includeFuture: true);
+    final notifications = await fetchNotifications(
+      limit: 200,
+      includeFuture: true,
+    );
     final now = tz.TZDateTime.now(tz.local);
-    print('[NotifSync] Fetched ${notifications.length} notifications from DB. Now is $now');
+    const gracePeriod = Duration(hours: 1);
+    print(
+      '[NotifSync] Fetched ${notifications.length} notifications from DB. Now is $now',
+    );
 
     int scheduledExact = 0;
     int scheduledEarly = 0;
@@ -206,9 +235,11 @@ class NotificationService {
           notification['message']?.toString() ?? 'Waktunya minum obat';
       final reminderMinutes = _extractReminderMinutes(notification);
 
-      print('[NotifSync] Notification: id=${rawId.substring(0, 8)}... '
-          'date=${notification['date']} time=${notification['time']} '
-          'scheduledAt=$scheduledAt reminderMin=$reminderMinutes msg=$message');
+      print(
+        '[NotifSync] Notification: id=${rawId.substring(0, 8)}... '
+        'date=${notification['date']} time=${notification['time']} '
+        'scheduledAt=$scheduledAt reminderMin=$reminderMinutes msg=$message',
+      );
 
       // ── Exact-time notification ──
       if (!scheduledAt.isBefore(now)) {
@@ -223,13 +254,30 @@ class NotificationService {
           print('[NotifSync]   → Exact scheduled for $scheduledAt');
         }
         await Future.delayed(const Duration(milliseconds: 30));
+      } else if (now.difference(scheduledAt) <= gracePeriod) {
+        final immediateAt = now.add(const Duration(seconds: 10));
+        if (await _safeSchedule(
+          id: _stableId(rawId),
+          title: 'Waktunya Minum Obat',
+          body: message,
+          scheduledAt: immediateAt,
+          payload: jsonEncode({'route': '/medication'}),
+        )) {
+          scheduledExact++;
+          print(
+            '[NotifSync]   → Immediate reminder scheduled for $immediateAt (late but within grace)',
+          );
+        }
+        await Future.delayed(const Duration(milliseconds: 30));
       } else {
         skippedPast++;
         print('[NotifSync]   → Exact SKIPPED (past: $scheduledAt < $now)');
       }
 
       // ── Early-reminder notification ──
-      final reminderTime = scheduledAt.subtract(Duration(minutes: reminderMinutes));
+      final reminderTime = scheduledAt.subtract(
+        Duration(minutes: reminderMinutes),
+      );
       if (!reminderTime.isBefore(now)) {
         final label = _reminderLabel(reminderMinutes);
         if (await _safeSchedule(
@@ -240,15 +288,21 @@ class NotificationService {
           payload: jsonEncode({'route': '/medication'}),
         )) {
           scheduledEarly++;
-          print('[NotifSync]   → Early ($reminderMinutes min) scheduled for $reminderTime');
+          print(
+            '[NotifSync]   → Early ($reminderMinutes min) scheduled for $reminderTime',
+          );
         }
         await Future.delayed(const Duration(milliseconds: 30));
       } else {
-        print('[NotifSync]   → Early ($reminderMinutes min) SKIPPED (past: $reminderTime < $now)');
+        print(
+          '[NotifSync]   → Early ($reminderMinutes min) SKIPPED (past: $reminderTime < $now)',
+        );
       }
     }
 
-    print('[NotifSync] Done: $scheduledExact exact, $scheduledEarly early, $skippedPast skipped (past)');
+    print(
+      '[NotifSync] Done: $scheduledExact exact, $scheduledEarly early, $skippedPast skipped (past)',
+    );
 
     // Debug: show how many are actually pending in the OS
     final pending = await _plugin.pendingNotificationRequests();
