@@ -2,10 +2,12 @@ import 'package:flutter/material.dart';
 import 'package:shimmer/shimmer.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../../core/theme/app_colors.dart';
+import '../../notifications/services/notification_service.dart';
 import '../models/medication_form_model.dart';
 import '../services/medication_service.dart';
 import '../widgets/meds_list_action.dart';
 import '../widgets/create/meds_modal_input.dart';
+import '../widgets/level_up_sheet.dart';
 import 'meds_history_page.dart';
 
 class MedsPage extends StatefulWidget {
@@ -15,8 +17,7 @@ class MedsPage extends StatefulWidget {
   State<MedsPage> createState() => _MedsPageState();
 }
 
-class _MedsPageState extends State<MedsPage>
-    with AutomaticKeepAliveClientMixin {
+class _MedsPageState extends State<MedsPage> {
   final _medicationService = MedicationService();
   final _supabase = Supabase.instance.client;
   Map<String, dynamic>? _nextMedication;
@@ -28,9 +29,6 @@ class _MedsPageState extends State<MedsPage>
   String? _markingTarget;
   String _greetingName = 'there';
   int _dayStreak = 0;
-
-  @override
-  bool get wantKeepAlive => true;
 
   @override
   void initState() {
@@ -90,6 +88,11 @@ class _MedsPageState extends State<MedsPage>
           _dayStreak = streak;
         });
       }
+
+      // Re-sync notifications every time data loads
+      try {
+        await NotificationService.instance.scheduleMedicationReminders();
+      } catch (_) {}
     } catch (e) {
       if (mounted) {
         setState(() => _isLoading = false);
@@ -141,11 +144,19 @@ class _MedsPageState extends State<MedsPage>
     });
     final status = isLate ? 'late_taken' : 'taken';
     try {
-      await _medicationService.markMedicationAsTaken(
+      final levelUp = await _medicationService.markMedicationAsTaken(
         userMedicationId: _nextMedication!['id'],
         scheduledTime: scheduledTime,
         status: status,
       );
+
+      if (levelUp != null && mounted) {
+        LevelUpSheet.show(
+          context,
+          oldLevel: levelUp['oldLevel'] as int,
+          newLevel: levelUp['newLevel'] as int,
+        );
+      }
 
       try {
         final timeStr =
@@ -229,11 +240,19 @@ class _MedsPageState extends State<MedsPage>
     });
     final newStatus = isLate ? 'late_taken' : 'taken';
     try {
-      await _medicationService.markMedicationAsTaken(
+      final levelUp = await _medicationService.markMedicationAsTaken(
         userMedicationId: schedule['user_medication_id'] as String,
         scheduledTime: scheduledTime,
         status: newStatus,
       );
+
+      if (levelUp != null && mounted) {
+        LevelUpSheet.show(
+          context,
+          oldLevel: levelUp['oldLevel'] as int,
+          newLevel: levelUp['newLevel'] as int,
+        );
+      }
 
       final matchKey =
           '${scheduledTime.hour.toString().padLeft(2, '0')}:${scheduledTime.minute.toString().padLeft(2, '0')}:00';
@@ -557,7 +576,6 @@ class _MedsPageState extends State<MedsPage>
 
   @override
   Widget build(BuildContext context) {
-    super.build(context);
     final mq = MediaQuery.of(context);
     final navHeight = (mq.size.height * 0.09).clamp(60.0, 80.0);
     final bottomInset = mq.viewPadding.bottom;

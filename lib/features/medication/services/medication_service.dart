@@ -185,8 +185,7 @@ class MedicationService {
       if (schedules.isEmpty) return;
 
       final today = DateTime.now();
-      final effectiveStart =
-          startDate.isAfter(today) ? startDate : today;
+      final effectiveStart = startDate.isAfter(today) ? startDate : today;
 
       for (final schedule in schedules) {
         final scheduleId = schedule['id'] as String;
@@ -453,8 +452,9 @@ class MedicationService {
     }
   }
 
-  /// Mark medication as taken (or late_taken for overdue doses)
-  Future<void> markMedicationAsTaken({
+  /// Mark medication as taken (or late_taken for overdue doses).
+  /// Returns level-up info if the user leveled up: { 'leveledUp': true, 'newLevel': N }
+  Future<Map<String, dynamic>?> markMedicationAsTaken({
     required String userMedicationId,
     required TimeOfDay scheduledTime,
     String status = 'taken',
@@ -478,57 +478,74 @@ class MedicationService {
           .eq('date', today.toString().split(' ')[0])
           .eq('scheduled_time', timeStr);
 
-      final previousStatus =
-          existingLogs.isNotEmpty ? existingLogs[0]['status'] as String? : null;
+      final previousStatus = existingLogs.isNotEmpty
+          ? existingLogs[0]['status'] as String?
+          : null;
       final wasAlreadyTaken =
           previousStatus == 'taken' || previousStatus == 'late_taken';
       final isNowTaken = status == 'taken' || status == 'late_taken';
 
       if (existingLogs.isNotEmpty) {
-        // Update existing log
         await supabase
             .from('medication_logs')
-            .update({
-              'status': status,
-              'taken_at': now.toIso8601String(),
-            })
+            .update({'status': status, 'taken_at': now.toIso8601String()})
             .eq('id', existingLogs[0]['id']);
       } else {
-        // Create new log
-        await supabase
-            .from('medication_logs')
-            .insert({
-              'user_medication_id': userMedicationId,
-              'date': today.toString().split(' ')[0],
-              'scheduled_time': timeStr,
-              'taken_at': now.toIso8601String(),
-              'status': status,
-            });
+        await supabase.from('medication_logs').insert({
+          'user_medication_id': userMedicationId,
+          'date': today.toString().split(' ')[0],
+          'scheduled_time': timeStr,
+          'taken_at': now.toIso8601String(),
+          'status': status,
+        });
       }
 
-      // Award XP for drinking the medication (only if not already taken)
+      Map<String, dynamic>? levelUpResult;
       if (isNowTaken && !wasAlreadyTaken) {
-        await _awardMedicationXp();
+        levelUpResult = await _awardMedicationXp();
         await _checkAndUpdateStreak();
       }
+      return levelUpResult;
     } catch (e) {
       throw Exception('Failed to mark medication as taken: $e');
     }
   }
 
-  Future<void> _awardMedicationXp() async {
+  /// Awards XP and checks for level-up. Returns level-up info if leveled up.
+  Future<Map<String, dynamic>?> _awardMedicationXp() async {
     try {
       final user = supabase.auth.currentUser;
-      if (user == null) return;
+      if (user == null) return null;
 
       await supabase.from('xp_events').insert({
         'user_id': user.id,
         'xp_delta': 10,
         'reason': 'med_taken',
       });
+
+      final oldLevel = await _getCurrentLevel(user.id);
       await _adjustUserProfileTotals(xpDelta: 10, medsDelta: 1);
+      final newLevel = await _getCurrentLevel(user.id);
+
+      if (newLevel > oldLevel) {
+        return {'leveledUp': true, 'newLevel': newLevel, 'oldLevel': oldLevel};
+      }
+      return null;
     } catch (_) {
-      // Non-fatal: medication was logged successfully even if XP fails
+      return null;
+    }
+  }
+
+  Future<int> _getCurrentLevel(String userId) async {
+    try {
+      final profile = await supabase
+          .from('user_profile')
+          .select('level')
+          .eq('user_id', userId)
+          .maybeSingle();
+      return (profile?['level'] as int?) ?? 1;
+    } catch (_) {
+      return 1;
     }
   }
 
@@ -536,8 +553,7 @@ class MedicationService {
   /// The streak only breaks on days with zero doses taken.
   Future<void> _checkAndUpdateStreak() async {
     try {
-      final user = supabase.auth.currentUser;
-      if (user == null) return;
+      if (supabase.auth.currentUser == null) return;
 
       final now = DateTime.now();
       final todayStr = now.toString().split(' ')[0];
@@ -568,52 +584,14 @@ class MedicationService {
       // Streak continues as long as at least one dose was taken today
       if (takenCount == 0) return;
 
-      // At least one dose taken today — update streak
-      final profile = await supabase
-          .from('user_profile')
-          .select('current_streak, longest_streak, last_streak_date')
-          .eq('user_id', user.id)
-          .maybeSingle();
+      // Update streak inside Postgres so the latest database value is the source of truth.
+      await supabase.rpc(
+        'bump_current_user_streak',
+        params: {'p_today': todayStr},
+      );
 
-      if (profile == null) {
-        print('[Streak] user_profile row not found for user ${user.id}');
-        return;
-      }
-
-      final currentStreak = profile['current_streak'] as int? ?? 0;
-      final longestStreak = profile['longest_streak'] as int? ?? 0;
-      // last_streak_date is a date column; Supabase returns it as String
-      final lastStreakDateStr = profile['last_streak_date']?.toString();
-
-      // Compare dates as strings to avoid DateTime timezone ambiguity
-      final yesterdayStr = DateTime(now.year, now.month, now.day - 1)
-          .toIso8601String()
-          .split('T')[0];
-
-      int newStreak;
-      if (lastStreakDateStr == null || lastStreakDateStr.isEmpty) {
-        newStreak = 1;
-      } else if (lastStreakDateStr == yesterdayStr) {
-        newStreak = currentStreak + 1;
-      } else if (lastStreakDateStr == todayStr) {
-        newStreak = currentStreak;
-      } else {
-        newStreak = 1;
-      }
-
-      final newLongest =
-          newStreak > longestStreak ? newStreak : longestStreak;
-
-      await supabase
-          .from('user_profile')
-          .update({
-            'current_streak': newStreak,
-            'longest_streak': newLongest,
-            'last_streak_date': todayStr,
-          })
-          .eq('user_id', user.id);
-
-      print('[Streak] Updated: streak=$newStreak longest=$newLongest date=$todayStr');
+      final refreshedStreak = await fetchCurrentStreak();
+      print('[Streak] Synced from database: $refreshedStreak on $todayStr');
     } catch (e) {
       print('[Streak] ERROR: $e');
     }
@@ -796,7 +774,7 @@ class MedicationService {
 
     final currentProfile = await supabase
         .from('user_profile')
-        .select('total_xp, total_meds_taken')
+        .select('total_xp, total_meds_taken, level')
         .eq('user_id', user.id)
         .single();
 
@@ -806,14 +784,85 @@ class MedicationService {
     final newTotalXp = (currentXp + xpDelta).clamp(0, 1 << 31);
     final newMedsTaken = (currentMedsTaken + medsDelta).clamp(0, 1 << 31);
 
+    // Compute level from cumulative XP
+    final levelInfo = await _computeLevelFromXp(newTotalXp);
+
     await supabase
         .from('user_profile')
         .update({
           'total_xp': newTotalXp,
           'total_meds_taken': newMedsTaken,
+          'level': levelInfo['level'],
           'updated_at': DateTime.now().toIso8601String(),
         })
         .eq('user_id', user.id);
+  }
+
+  /// Public method to fetch level + XP progress for the profile page.
+  Future<Map<String, dynamic>> fetchLevelProgress() async {
+    final user = supabase.auth.currentUser;
+    if (user == null)
+      return {
+        'level': 1,
+        'remainingXp': 0,
+        'currentThreshold': 0,
+        'nextThreshold': 0,
+      };
+
+    final profile = await supabase
+        .from('user_profile')
+        .select('total_xp')
+        .eq('user_id', user.id)
+        .maybeSingle();
+
+    final totalXp = (profile?['total_xp'] as int?) ?? 0;
+    return _computeLevelFromXp(totalXp);
+  }
+
+  /// Compute level and remaining XP from the xp_levels table.
+  /// XP is consumed on level-up (spend-to-level model).
+  Future<Map<String, dynamic>> _computeLevelFromXp(int totalXp) async {
+    try {
+      final levels = await supabase
+          .from('xp_levels')
+          .select('level, xp_required')
+          .order('xp_required', ascending: true);
+
+      int currentLevel = 1;
+      int currentThreshold = 0;
+      int nextThreshold = 0;
+      int remainingXp = totalXp;
+
+      for (final row in (levels as List)) {
+        final required = (row['xp_required'] as int?) ?? 0;
+        final lvl = (row['level'] as int?) ?? 1;
+
+        if (totalXp >= required) {
+          currentLevel = lvl;
+          currentThreshold = required;
+        } else {
+          nextThreshold = required;
+          break;
+        }
+      }
+
+      // XP deducted = threshold for current level, remainder carries forward
+      remainingXp = totalXp - currentThreshold;
+
+      return {
+        'level': currentLevel,
+        'remainingXp': remainingXp,
+        'currentThreshold': currentThreshold,
+        'nextThreshold': nextThreshold,
+      };
+    } catch (_) {
+      return {
+        'level': 1,
+        'remainingXp': totalXp,
+        'currentThreshold': 0,
+        'nextThreshold': 0,
+      };
+    }
   }
 
   Future<void> createMedicationLog({
@@ -835,15 +884,13 @@ class MedicationService {
           ? DateTime.now().toIso8601String()
           : null;
 
-      await supabase
-          .from('medication_logs')
-          .insert({
-            'user_medication_id': userMedicationId,
-            'date': date.toIso8601String().split('T')[0],
-            'scheduled_time': timeStr,
-            'taken_at': takenAt,
-            'status': normalizedStatus,
-          });
+      await supabase.from('medication_logs').insert({
+        'user_medication_id': userMedicationId,
+        'date': date.toIso8601String().split('T')[0],
+        'scheduled_time': timeStr,
+        'taken_at': takenAt,
+        'status': normalizedStatus,
+      });
     } catch (e) {
       throw Exception('Failed to create medication log: $e');
     }
@@ -976,10 +1023,40 @@ class MedicationService {
 
   Future<void> deleteMedication(String userMedicationId) async {
     try {
+      // Soft-delete the medication
       await supabase
           .from('user_medications')
           .update({'is_active': false})
           .eq('id', userMedicationId);
+
+      // Clean up future notifications for this medication's schedules
+      try {
+        final user = supabase.auth.currentUser;
+        final schedules = await supabase
+            .from('medication_schedules')
+            .select('id')
+            .eq('user_medication_id', userMedicationId);
+
+        if (schedules.isNotEmpty && user != null) {
+          final scheduleIds = (schedules as List)
+              .map((s) => s['id']?.toString())
+              .whereType<String>()
+              .toList();
+
+          if (scheduleIds.isNotEmpty) {
+            final todayStr = DateTime.now().toIso8601String().split('T')[0];
+            // Delete future notifications only (keep past for history)
+            await supabase
+                .from('notifications')
+                .delete()
+                .inFilter('medication_schedule_id', scheduleIds)
+                .gte('date', todayStr);
+          }
+        }
+      } catch (_) {
+        // Non-fatal: cleanup is best-effort
+        print('[Delete] Failed to clean up notifications');
+      }
     } catch (e) {
       throw Exception('Failed to delete medication: $e');
     }

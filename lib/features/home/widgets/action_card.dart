@@ -8,6 +8,7 @@ class NextActionCard extends StatelessWidget {
   final bool isLate;
   final bool isMarking;
   final VoidCallback? onMark;
+  final VoidCallback? onNavigateToMeds;
 
   const NextActionCard({
     super.key,
@@ -17,6 +18,7 @@ class NextActionCard extends StatelessWidget {
     this.isLate = false,
     this.isMarking = false,
     this.onMark,
+    this.onNavigateToMeds,
   });
 
   @override
@@ -96,10 +98,9 @@ class NextActionCard extends StatelessWidget {
             width: double.infinity,
             height: 55,
             child: ElevatedButton(
-              onPressed: hasMedication ? onMark : null,
+              onPressed: hasMedication ? onMark : onNavigateToMeds,
               style: ElevatedButton.styleFrom(
                 backgroundColor: isLate ? Colors.orange : AppColors.primaryDeep,
-                disabledBackgroundColor: Colors.grey.shade300,
                 shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(50)),
               ),
               child: isMarking

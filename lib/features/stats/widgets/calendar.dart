@@ -87,18 +87,21 @@ class _WeeklyAdherenceCalendarState extends State<WeeklyAdherenceCalendar> {
   }
 
   Widget _buildWeekdayLabels() {
+    // Get today's weekday label (Monday=1, Sunday=7)
+    final todayLabel = _weekLabels[_today.weekday - 1];
+
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: _weekLabels.map((label) {
-        final bool isFriday = label == 'Jum';
+        final bool isToday = label == todayLabel;
         return Expanded(
           child: Center(
             child: Text(
               label,
               style: TextStyle(
                 fontSize: 12,
-                fontWeight: FontWeight.w600,
-                color: isFriday
+                fontWeight: isToday ? FontWeight.w800 : FontWeight.w600,
+                color: isToday
                     ? const Color(0xFF6B5CE7)
                     : const Color(0xFFB0ABCC),
               ),

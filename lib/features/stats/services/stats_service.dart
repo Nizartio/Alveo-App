@@ -63,7 +63,10 @@ class StatsService {
       }
 
       final takenCount = logsList
-          .where((log) => log['status'] == 'taken')
+          .where((log) {
+            final s = log['status']?.toString() ?? '';
+            return s == 'taken' || s == 'late_taken';
+          })
           .length;
       final adherence = (takenCount / logsList.length) * 100;
 
@@ -107,8 +110,9 @@ class StatsService {
 
       for (var log in logs) {
         final date = log['date'] as String;
+        final isTaken = log['status'] == 'taken' || log['status'] == 'late_taken';
         takenByDate[date] =
-            (takenByDate[date] ?? 0) + (log['status'] == 'taken' ? 1 : 0);
+            (takenByDate[date] ?? 0) + (isTaken ? 1 : 0);
         totalByDate[date] = (totalByDate[date] ?? 0) + 1;
       }
 
@@ -205,7 +209,7 @@ class StatsService {
         final day = parsed.day;
         final status = log['status']?.toString();
 
-        if (status == 'taken') {
+        if (status == 'taken' || status == 'late_taken') {
           dayStatuses[day] = 'completed';
         } else if (status == 'missed' && dayStatuses[day] != 'completed') {
           dayStatuses[day] = 'missed';
