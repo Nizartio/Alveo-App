@@ -12,7 +12,7 @@ import 'features/profile/pages/profile_page.dart';
 import 'main_navigation_page.dart';
 import 'features/medication/pages/meds_page.dart';
 import 'features/medication/pages/medication_plan_page.dart';
-import 'features/splash/pages/splash_page.dart';
+import 'features/splash/pages/splash_page.dart'; // Tetap mempertahankan import ini
 import 'features/stats/stats_page.dart';
 
 Future<void> main() async {
@@ -98,11 +98,13 @@ class _StartupGateState extends State<StartupGate> {
       future: _bootstrapFuture,
       builder: (context, snapshot) {
         if (snapshot.connectionState != ConnectionState.done) {
-          return const SplashPage(showLoading: true);
+          // Menggunakan nama Class baru tanpa underscore dari splash_page.dart
+          return const StartupSplashScreen();
         }
 
         if (snapshot.hasError) {
-          return const _StartupErrorScreen(
+          // Menggunakan nama Class baru tanpa underscore dari splash_page.dart
+          return const StartupErrorScreen(
             message: 'Aplikasi gagal dimulai. Coba tutup dan buka lagi.',
           );
         }
@@ -114,35 +116,6 @@ class _StartupGateState extends State<StartupGate> {
 
         return const SplashPage();
       },
-    );
-  }
-}
-
-class _StartupErrorScreen extends StatelessWidget {
-  const _StartupErrorScreen({required this.message});
-
-  final String message;
-
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      body: Center(
-        child: Padding(
-          padding: const EdgeInsets.all(24),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              const Icon(Icons.error_outline, size: 48),
-              const SizedBox(height: 12),
-              Text(
-                message,
-                textAlign: TextAlign.center,
-                style: Theme.of(context).textTheme.titleMedium,
-              ),
-            ],
-          ),
-        ),
-      ),
     );
   }
 }

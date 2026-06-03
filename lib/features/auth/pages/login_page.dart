@@ -15,6 +15,8 @@ class _LoginPageState extends State<LoginPage> {
   final _formKey = GlobalKey<FormState>();
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
+  
+  bool _obscurePassword = true;
 
   @override
   void dispose() {
@@ -248,7 +250,20 @@ class _LoginPageState extends State<LoginPage> {
                                 controller: _passwordController,
                                 hintText: '••••••••',
                                 icon: Icons.lock_outline_rounded,
-                                obscureText: true,
+                                obscureText: _obscurePassword,
+                                suffixIcon: IconButton(
+                                  icon: Icon(
+                                    _obscurePassword
+                                        ? Icons.visibility_off_outlined
+                                        : Icons.visibility_outlined,
+                                    color: AppColors.iconMuted,
+                                  ),
+                                  onPressed: () {
+                                    setState(() {
+                                      _obscurePassword = !_obscurePassword;
+                                    });
+                                  },
+                                ),
                                 validator: (value) {
                                   if ((value ?? '').isEmpty) {
                                     return 'Kata sandi wajib diisi';
@@ -369,6 +384,7 @@ class _InputField extends StatelessWidget {
     required this.hintText,
     required this.icon,
     this.obscureText = false,
+    this.suffixIcon,
     this.keyboardType,
     this.validator,
   });
@@ -377,6 +393,7 @@ class _InputField extends StatelessWidget {
   final String hintText;
   final IconData icon;
   final bool obscureText;
+  final Widget? suffixIcon;
   final TextInputType? keyboardType;
   final String? Function(String?)? validator;
 
@@ -390,7 +407,7 @@ class _InputField extends StatelessWidget {
       style: const TextStyle(
         fontSize: 16,
         fontWeight: FontWeight.w400,
-        color: AppColors.textPrimary,
+        color: AppColors.textNavy,
       ),
       decoration: InputDecoration(
         filled: true,
@@ -402,6 +419,7 @@ class _InputField extends StatelessWidget {
           fontWeight: FontWeight.w400,
         ),
         prefixIcon: Icon(icon, color: AppColors.iconMuted),
+        suffixIcon: suffixIcon,
         contentPadding: const EdgeInsets.symmetric(
           horizontal: 16,
           vertical: 18,
@@ -442,10 +460,10 @@ class _MascotCircle extends StatelessWidget {
     return Container(
       width: 140,
       height: 140,
-      decoration: BoxDecoration(
+      decoration: const BoxDecoration(
         shape: BoxShape.circle,
         color: AppColors.white,
-        boxShadow: const [
+        boxShadow: [
           BoxShadow(
             color: AppColors.softShadow,
             blurRadius: 24,
@@ -453,19 +471,13 @@ class _MascotCircle extends StatelessWidget {
           ),
         ],
       ),
-      child: Container(
-        decoration: const BoxDecoration(
-          shape: BoxShape.circle,
-          // gradient: AppColors.mascotInnerGradient,
-        ),
-        child: Center(
-          child: ClipOval(
-            child: Image.asset(
-              'lib/assets/app_icon.png',
-              fit: BoxFit.cover,
-              width: 120,
-              height: 120,
-            ),
+      child: Center(
+        child: ClipOval(
+          child: Image.asset(
+            'lib/assets/app_icon.png',
+            fit: BoxFit.cover,
+            width: 120,
+            height: 120,
           ),
         ),
       ),

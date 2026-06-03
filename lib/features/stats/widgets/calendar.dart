@@ -24,28 +24,51 @@ class WeeklyAdherenceCalendar extends StatefulWidget {
 }
 
 class _WeeklyAdherenceCalendarState extends State<WeeklyAdherenceCalendar> {
-  static const List<String> _weekLabels = [
-    'Sen',
-    'Sel',
-    'Rab',
-    'Kam',
-    'Jum',
-    'Sab',
-    'Min',
-  ];
+  late DateTime _currentMonth;
+  late DateTime _firstDayOfMonth;
+  late int _daysInMonth;
+  late int _prevMonthDays;
+  final DateTime _actualToday = DateTime.now(); // Untuk mendeteksi highlight hari ini secara akurat
 
-  DateTime get _month =>
-      DateTime(widget.visibleMonth.year, widget.visibleMonth.month, 1);
-  DateTime get _today => DateTime.now();
-  int get _daysInMonth => DateTime(_month.year, _month.month + 1, 0).day;
-  int get _startWeekday => (_month.weekday - 1) % 7;
-  int get _prevMonthDays => DateTime(_month.year, _month.month, 0).day;
+  @override
+  void initState() {
+    super.initState();
+    _currentMonth = DateTime(_actualToday.year, _actualToday.month, 1);
+    _updateCalendarData();
+  }
+
+  // Fungsi untuk memperbarui kalkulasi tanggal saat bulan berpindah
+  void _updateCalendarData() {
+    _firstDayOfMonth = DateTime(_currentMonth.year, _currentMonth.month, 1);
+    _daysInMonth = DateTime(_currentMonth.year, _currentMonth.month + 1, 0).day;
+    _prevMonthDays = DateTime(_currentMonth.year, _currentMonth.month, 0).day;
+  }
+
+  void _goToPreviousMonth() {
+    setState(() {
+      _currentMonth = DateTime(_currentMonth.year, _currentMonth.month - 1, 1);
+      _updateCalendarData();
+    });
+  }
+
+  void _goToNextMonth() {
+    setState(() {
+      _currentMonth = DateTime(_currentMonth.year, _currentMonth.month + 1, 1);
+      _updateCalendarData();
+    });
+  }
+
+  int get _startWeekday => (_firstDayOfMonth.weekday - 1) % 7;
 
   int get _completedCount =>
       widget.dayStatuses.values.where((s) => s == DayStatus.completed).length;
 
   int get _missedCount =>
       widget.dayStatuses.values.where((s) => s == DayStatus.missed).length;
+
+  static const List<String> _weekLabels = [
+    'Sen', 'Sel', 'Rab', 'Kam', 'Jum', 'Sab', 'Min'
+  ];
 
   @override
   Widget build(BuildContext context) {
@@ -66,7 +89,7 @@ class _WeeklyAdherenceCalendarState extends State<WeeklyAdherenceCalendar> {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           _buildMonthTitle(),
-          const SizedBox(height: 16),
+          const SizedBox(height: 8),
           _buildWeekdayLabels(),
           const SizedBox(height: 8),
           _buildCalendarGrid(),
@@ -77,41 +100,51 @@ class _WeeklyAdherenceCalendarState extends State<WeeklyAdherenceCalendar> {
     );
   }
 
+  // Widget _buildMonthTitle() {
   Widget _buildMonthTitle() {
-    final monthName = _monthName(_month.month);
+    final monthName = _monthName(_currentMonth.month);
     return Row(
+      mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
-        IconButton(
-          onPressed: widget.onPreviousMonth,
-          icon: const Icon(Icons.chevron_left_rounded),
-          color: const Color(0xFF6B5CE7),
-          tooltip: 'Bulan sebelumnya',
+        Text(
+          '$monthName ${_currentMonth.year}',
+          style: const TextStyle(
+            fontSize: 16,
+            fontWeight: FontWeight.w600,
+            color: Color(0xFF9E9AB8),
+            letterSpacing: 0.5,
+          ),
         ),
-        Expanded(
-          child: InkWell(
-            onTap: widget.onPickMonthYear,
-            borderRadius: BorderRadius.circular(12),
-            child: Padding(
-              padding: const EdgeInsets.symmetric(vertical: 10),
-              child: Center(
-                child: Text(
-                  '$monthName ${_month.year}',
-                  style: const TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.w700,
-                    color: Color(0xFF9E9AB8),
-                    letterSpacing: 0.5,
-                  ),
+        Row(
+          children: [
+            // Tombol Kiri (Bulan Sebelumnya)
+            InkWell(
+              onTap: _goToPreviousMonth,
+              borderRadius: BorderRadius.circular(100), // Agar efek ripple bundar rapi
+              child: const Padding(
+                padding: EdgeInsets.all(0), // Kontrol manual area sentuh tombol
+                child: Icon(
+                  Icons.chevron_left_rounded, 
+                  color: Color(0xFF9E9AB8),
+                  size: 24,
                 ),
               ),
             ),
-          ),
-        ),
-        IconButton(
-          onPressed: widget.onNextMonth,
-          icon: const Icon(Icons.chevron_right_rounded),
-          color: const Color(0xFF6B5CE7),
-          tooltip: 'Bulan berikutnya',
+            const SizedBox(width: 12), // Jarak horizontal antar panah
+            // Tombol Kanan (Bulan Berikutnya)
+            InkWell(
+              onTap: _goToNextMonth,
+              borderRadius: BorderRadius.circular(100),
+              child: const Padding(
+                padding: EdgeInsets.all(0), // Kontrol manual area sentuh tombol
+                child: Icon(
+                  Icons.chevron_right_rounded, 
+                  color: Color(0xFF9E9AB8),
+                  size: 24,
+                ),
+              ),
+            ),
+          ],
         ),
       ],
     );
@@ -153,19 +186,20 @@ class _WeeklyAdherenceCalendarState extends State<WeeklyAdherenceCalendar> {
         cells.add(_DayCell(day: nextDay, isCurrentMonth: false));
       } else {
         final int day = dayOffset + 1;
-        final DayStatus status = widget.dayStatuses[day] ?? DayStatus.none;
-        final bool isToday =
-            day == _today.day &&
-            _month.month == _today.month &&
-            _month.year == _today.year;
-        cells.add(
-          _DayCell(
-            day: day,
-            status: status,
-            isToday: isToday,
-            isCurrentMonth: true,
-          ),
-        );
+        final DayStatus status =
+            widget.dayStatuses[day] ?? DayStatus.none;
+            
+        // Validasi kecocokan hari ini (Hanya aktif jika kalender sedang membuka bulan & tahun berjalan saat ini)
+        final bool isToday = day == _actualToday.day &&
+            _currentMonth.month == _actualToday.month &&
+            _currentMonth.year == _actualToday.year;
+
+        cells.add(_DayCell(
+          day: day,
+          status: status,
+          isToday: isToday,
+          isCurrentMonth: true,
+        ));
       }
     }
 
