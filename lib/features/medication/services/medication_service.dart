@@ -158,6 +158,7 @@ class MedicationService {
           userMedicationId: userMedId,
           medicineName: med.medicineName,
           startDate: startDate,
+          reminderMinutesBefore: med.reminderMinutesBefore,
         );
       }
     } catch (e) {
@@ -167,10 +168,14 @@ class MedicationService {
 
   /// Create notification rows in the DB for a medication's schedules
   /// for today + 6 days, so they can be picked up by the notification scheduler.
+  /// Creates TWO records per schedule per day:
+  ///   1. At the medication time: "Waktunya minum {medicineName}"
+  ///   2. At the reminder time: "Pengingat: {medicineName} dalam X menit"
   Future<void> _createNotificationsForMedication({
     required String userMedicationId,
     required String medicineName,
     required DateTime startDate,
+    int reminderMinutesBefore = 15,
   }) async {
     try {
       final user = supabase.auth.currentUser;
@@ -196,29 +201,117 @@ class MedicationService {
           final date = effectiveStart.add(Duration(days: i));
           final dateStr = date.toIso8601String().split('T')[0];
 
-          // Skip if a notification already exists for this schedule+date
+          // ── 1. Medication-time notification ──
           final existing = await supabase
               .from('notifications')
               .select('id')
               .eq('medication_schedule_id', scheduleId)
               .eq('date', dateStr)
+              .eq('time', timeStr)
               .maybeSingle();
 
-          if (existing != null) continue;
+          if (existing == null) {
+            await supabase.from('notifications').insert({
+              'user_id': user.id,
+              'medication_schedule_id': scheduleId,
+              'date': dateStr,
+              'time': timeStr,
+              'message': 'Waktunya minum $medicineName',
+            });
+          }
 
-          await supabase.from('notifications').insert({
-            'user_id': user.id,
-            'medication_schedule_id': scheduleId,
-            'date': dateStr,
-            'time': timeStr,
-            'message': 'Waktunya minum $medicineName',
-          });
+          // ── 2. Reminder notification (reminder_minutes_before) ──
+          final timeParts = timeStr.split(':');
+          final schedTotalMinutes =
+              int.parse(timeParts[0]) * 60 + int.parse(timeParts[1]);
+          final reminderTotalMinutes =
+              schedTotalMinutes - reminderMinutesBefore;
+
+          if (reminderTotalMinutes >= 0 && reminderTotalMinutes < 1440) {
+            final reminderHour = reminderTotalMinutes ~/ 60;
+            final reminderMinute = reminderTotalMinutes % 60;
+            final reminderTimeStr =
+                '${reminderHour.toString().padLeft(2, '0')}:${reminderMinute.toString().padLeft(2, '0')}:00';
+
+            final existingReminder = await supabase
+                .from('notifications')
+                .select('id')
+                .eq('medication_schedule_id', scheduleId)
+                .eq('date', dateStr)
+                .eq('time', reminderTimeStr)
+                .maybeSingle();
+
+            if (existingReminder == null) {
+              await supabase.from('notifications').insert({
+                'user_id': user.id,
+                'medication_schedule_id': scheduleId,
+                'date': dateStr,
+                'time': reminderTimeStr,
+                'message':
+                    'Pengingat: $medicineName akan diminum dalam $reminderMinutesBefore menit',
+              });
+            }
+          }
         }
       }
-      print('[NotifCreate] Created notifications for $medicineName');
+      print(
+        '[NotifCreate] Created medication + reminder notifications for $medicineName',
+      );
     } catch (e) {
       print('[NotifCreate] Failed to create notifications: $e');
       // Non-fatal: plan is saved even if notification creation fails
+    }
+  }
+
+  /// Ensure notifications exist for the next 14 days for all active medications.
+  /// Call this on app startup so reminders keep working past the initial 7-day window.
+  Future<void> extendNotificationWindow() async {
+    try {
+      final user = supabase.auth.currentUser;
+      if (user == null) return;
+
+      final meds = await fetchActiveMedications();
+      for (final med in meds) {
+        final medId = med['id']?.toString();
+        final medicineName = med['medicines']?['name']?.toString() ?? 'obat';
+        final reminderMin =
+            med['reminder_minutes_before'] as int? ?? 15;
+        if (medId == null) continue;
+
+        // Find the furthest notification date in DB for this medication's schedules
+        final lastNotif = await supabase
+            .from('notifications')
+            .select('date')
+            .eq('user_id', user.id)
+            .eq('medication_schedule_id',
+                med['medication_schedules'] is List &&
+                    (med['medication_schedules'] as List).isNotEmpty
+                    ? (med['medication_schedules'] as List).first['id']
+                    : '')
+            .order('date', ascending: false)
+            .limit(1)
+            .maybeSingle();
+
+        final today = DateTime.now();
+        final lastDate = lastNotif != null
+            ? DateTime.tryParse(lastNotif['date']?.toString() ?? '')
+            : null;
+
+        // If the last notification is more than 7 days from now, skip
+        // If it's less than 14 days out, extend
+        final targetEnd = today.add(const Duration(days: 14));
+        if (lastDate == null || lastDate.isBefore(targetEnd)) {
+          // Re-run notification creation from today onward (dedup internally)
+          await _createNotificationsForMedication(
+            userMedicationId: medId,
+            medicineName: medicineName,
+            startDate: today,
+            reminderMinutesBefore: reminderMin,
+          );
+        }
+      }
+    } catch (e) {
+      print('[NotifExtend] Failed: $e');
     }
   }
 
@@ -319,7 +412,8 @@ class MedicationService {
     }
   }
 
-  /// Fetch current user's streak (from user_profile.current_streak)
+  /// Fetch current user's streak (from user_profile.current_streak).
+  /// Automatically breaks the streak if last_streak_date is older than yesterday.
   Future<int> fetchCurrentStreak() async {
     try {
       final user = supabase.auth.currentUser;
@@ -327,14 +421,41 @@ class MedicationService {
 
       final resp = await supabase
           .from('user_profile')
-          .select('current_streak')
+          .select('current_streak, last_streak_date')
           .eq('user_id', user.id)
           .maybeSingle();
 
       if (resp == null) return 0;
-      final streak = resp['current_streak'] as int?;
-      print('[Streak] fetchCurrentStreak read: ${streak ?? 0}');
-      return streak ?? 0;
+
+      final lastDateStr = resp['last_streak_date']?.toString();
+      final streak = resp['current_streak'] as int? ?? 0;
+
+      // Check if streak needs to be broken
+      if (lastDateStr != null && lastDateStr.isNotEmpty && streak > 0) {
+        final now = DateTime.now();
+        final todayStr = now.toIso8601String().split('T')[0];
+        final yesterdayStr = now.subtract(const Duration(days: 1))
+            .toIso8601String().split('T')[0];
+
+        // Streak is broken if last_streak_date is before yesterday
+        if (lastDateStr.compareTo(yesterdayStr) < 0 &&
+            lastDateStr.compareTo(todayStr) < 0) {
+          print(
+            '[Streak] Breaking stale streak: last=$lastDateStr, today=$todayStr',
+          );
+          await supabase
+              .from('user_profile')
+              .update({
+                'current_streak': 0,
+                'updated_at': now.toIso8601String(),
+              })
+              .eq('user_id', user.id);
+          return 0;
+        }
+      }
+
+      print('[Streak] fetchCurrentStreak read: $streak');
+      return streak;
     } catch (e) {
       return 0;
     }
@@ -671,6 +792,29 @@ class MedicationService {
       // Get all active medications
       final medications = await fetchActiveMedications();
 
+      // ── Batch fetch all today's logs in one query (fix N+1) ──
+      final allMedIds = medications
+          .map((m) => m['id']?.toString())
+          .whereType<String>()
+          .toList();
+
+      final logMap = <String, Map<String, dynamic>>{}; // key: "$medId|$timeStr" → log
+      if (allMedIds.isNotEmpty) {
+        final idQuery =
+            '(${allMedIds.map((id) => '"$id"').join(',')})';
+        final logsRaw = await supabase
+            .from('medication_logs')
+            .select('user_medication_id, scheduled_time, status')
+            .eq('date', todayStr)
+            .filter('user_medication_id', 'in', idQuery);
+
+        for (final log in (logsRaw as List)) {
+          final uid = log['user_medication_id']?.toString() ?? '';
+          final st = log['scheduled_time']?.toString() ?? '';
+          logMap['$uid|$st'] = Map<String, dynamic>.from(log);
+        }
+      }
+
       final scheduleList = <Map<String, dynamic>>[];
 
       for (final med in medications) {
@@ -678,16 +822,11 @@ class MedicationService {
         for (final schedule in schedules) {
           final timeStr = schedule['time'] as String;
 
-          // Check if log exists for this schedule
-          final logs = await supabase
-              .from('medication_logs')
-              .select()
-              .eq('user_medication_id', med['id'])
-              .eq('date', todayStr)
-              .eq('scheduled_time', timeStr);
+          // Look up log from batch result instead of querying per schedule
+          final logEntry = logMap['${med['id']}|$timeStr'];
 
           String logStatus;
-          if (logs.isEmpty) {
+          if (logEntry == null) {
             // No log yet — only mark as overdue if more than 1 hour past
             final parts = timeStr.split(':');
             final schedDt = DateTime(
@@ -702,7 +841,7 @@ class MedicationService {
                 ? 'overdue'
                 : 'upcoming';
           } else {
-            logStatus = logs[0]['status'] ?? 'upcoming';
+            logStatus = logEntry['status']?.toString() ?? 'upcoming';
           }
 
           scheduleList.add({
@@ -712,6 +851,8 @@ class MedicationService {
             'scheduled_time': timeStr,
             'status': logStatus,
             'intake_rule': med['intake_rule'],
+            'reminder_minutes_before':
+                med['reminder_minutes_before'] as int? ?? 15,
           });
         }
       }
@@ -836,7 +977,19 @@ class MedicationService {
         .from('user_profile')
         .select('total_xp, total_meds_taken, level')
         .eq('user_id', user.id)
-        .single();
+        .maybeSingle();
+
+    if (currentProfile == null) {
+      // Create a minimal profile row if none exists
+      await supabase.from('user_profile').insert({
+        'user_id': user.id,
+        'total_xp': xpDelta,
+        'total_meds_taken': medsDelta,
+        'level': 1,
+        'updated_at': DateTime.now().toIso8601String(),
+      });
+      return;
+    }
 
     final currentXp = currentProfile['total_xp'] as int? ?? 0;
     final currentMedsTaken = currentProfile['total_meds_taken'] as int? ?? 0;
@@ -1070,10 +1223,28 @@ class MedicationService {
           })
           .eq('id', userMedicationId);
 
+      // Fetch old schedule IDs before deleting them so we can clean up orphaned notifications
+      final oldSchedules = await supabase
+          .from('medication_schedules')
+          .select('id')
+          .eq('user_medication_id', userMedicationId);
+      final oldScheduleIds = (oldSchedules as List)
+          .map((s) => s['id']?.toString())
+          .whereType<String>()
+          .toList();
+
       await supabase
           .from('medication_schedules')
           .delete()
           .eq('user_medication_id', userMedicationId);
+
+      // Clean up orphaned notifications that referenced the deleted schedules
+      if (oldScheduleIds.isNotEmpty) {
+        await supabase
+            .from('notifications')
+            .delete()
+            .inFilter('medication_schedule_id', oldScheduleIds);
+      }
 
       if (times.isNotEmpty) {
         final schedules = times
@@ -1088,6 +1259,7 @@ class MedicationService {
         userMedicationId: userMedicationId,
         medicineName: medicineName,
         startDate: DateTime.now(),
+        reminderMinutesBefore: reminderMinutesBefore,
       );
     } catch (e) {
       throw Exception('Failed to update user medication: $e');

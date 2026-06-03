@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../../core/theme/app_colors.dart';
+import '../../notifications/services/notification_service.dart';
 import '../models/medication_form_model.dart';
 import '../widgets/meds_list_action.dart';
 import '../widgets/create/meds_modal_input.dart';
@@ -123,6 +124,11 @@ class _MedsManagementPageState extends State<MedsManagementPage> {
     try {
       await _medicationService.updateUserMedicationStatus(userMedicationId);
 
+      // Cancel pending OS notifications by resyncing
+      try {
+        await NotificationService.instance.scheduleMedicationReminders();
+      } catch (_) {}
+
       if (mounted) {
         ScaffoldMessenger.of(
           context,
@@ -154,6 +160,11 @@ class _MedsManagementPageState extends State<MedsManagementPage> {
               Navigator.pop(context);
               try {
                 await _medicationService.deleteMedication(userMedicationId);
+                // Cancel pending OS notifications by resyncing
+                try {
+                  await NotificationService.instance
+                      .scheduleMedicationReminders();
+                } catch (_) {}
                 if (mounted) {
                   ScaffoldMessenger.of(
                     context,

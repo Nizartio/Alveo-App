@@ -18,12 +18,32 @@ class StatsService {
             'total_xp, level, current_streak, longest_streak, total_meds_taken',
           )
           .eq('user_id', user.id)
-          .single();
+          .maybeSingle();
+
+      if (response == null) {
+        return {
+          'total_xp': 0,
+          'level': 1,
+          'current_streak': 0,
+          'longest_streak': 0,
+          'total_meds_taken': 0,
+        };
+      }
 
       return response;
     } catch (e) {
       throw Exception('Failed to fetch user stats: $e');
     }
+  }
+
+  /// Count expected daily doses from active medications' schedules.
+  int _countExpectedDailyDoses(List<Map<String, dynamic>> meds) {
+    int count = 0;
+    for (final med in meds) {
+      final schedules = med['medication_schedules'] as List? ?? [];
+      count += schedules.length;
+    }
+    return count;
   }
 
   Future<double> calculateWeeklyAdherence() async {
@@ -41,14 +61,21 @@ class StatsService {
       // Determine current user's medication ids then fetch logs for them
       final medService = MedicationService();
       final meds = await medService.fetchActiveMedications();
+
+      if (meds.isEmpty) return 0;
+
+      // Expected doses per day = total schedule count across all meds
+      final expectedPerDay = _countExpectedDailyDoses(meds);
+      if (expectedPerDay == 0) return 0;
+
+      // Days elapsed this week (Mon through today)
+      final daysThisWeek = now.weekday; // Mon=1, Sun=7
+      final expectedTotal = expectedPerDay * daysThisWeek;
+
       final medIds = meds
           .map((m) => m['id']?.toString())
           .whereType<String>()
           .toList();
-
-      if (medIds.isEmpty) {
-        return 0;
-      }
 
       final medIdsQuery = '(${medIds.map((id) => '"$id"').join(',')})';
       final logsRaw = await supabase
@@ -58,15 +85,12 @@ class StatsService {
           .filter('user_medication_id', 'in', medIdsQuery);
 
       final logsList = List.from(logsRaw as List);
-      if (logsList.isEmpty) {
-        return 0;
-      }
 
       final takenCount = logsList.where((log) {
         final s = log['status']?.toString() ?? '';
         return s == 'taken' || s == 'late_taken';
       }).length;
-      final adherence = (takenCount / logsList.length) * 100;
+      final adherence = (takenCount / expectedTotal) * 100;
 
       return adherence.clamp(0, 100).toDouble();
     } catch (e) {
@@ -89,6 +113,23 @@ class StatsService {
       // Scope logs to current user's medications
       final medService = MedicationService();
       final meds = await medService.fetchActiveMedications();
+
+      final expectedPerDay = _countExpectedDailyDoses(meds);
+      if (meds.isEmpty || expectedPerDay == 0) {
+        // Return zeroed-out week
+        return List.generate(7, (i) {
+          final date = monday.add(Duration(days: i));
+          return {
+            'date': date.toString().split(' ')[0],
+            'day_of_week': [
+              'Monday', 'Tuesday', 'Wednesday', 'Thursday',
+              'Friday', 'Saturday', 'Sunday',
+            ][i],
+            'adherence_percentage': 0.0,
+          };
+        });
+      }
+
       final medIds = meds
           .map((m) => m['id']?.toString())
           .whereType<String>()
@@ -102,37 +143,31 @@ class StatsService {
           .filter('user_medication_id', 'in', medIdsQuery);
       final logs = List.from(logsRaw);
 
-      // Group by date and calculate adherence for each day
+      // Group taken doses by date
       Map<String, int> takenByDate = {};
-      Map<String, int> totalByDate = {};
 
       for (var log in logs) {
         final date = log['date'] as String;
         final isTaken =
             log['status'] == 'taken' || log['status'] == 'late_taken';
-        takenByDate[date] = (takenByDate[date] ?? 0) + (isTaken ? 1 : 0);
-        totalByDate[date] = (totalByDate[date] ?? 0) + 1;
+        if (isTaken) {
+          takenByDate[date] = (takenByDate[date] ?? 0) + 1;
+        }
       }
 
-      // Create daily adherence list
+      // Create daily adherence list using expectedPerDay as denominator
       List<Map<String, dynamic>> result = [];
       for (int i = 0; i < 7; i++) {
         final date = monday.add(Duration(days: i));
         final dateStr = date.toString().split(' ')[0];
         final taken = takenByDate[dateStr] ?? 0;
-        final total = totalByDate[dateStr] ?? 0;
-        final adherence = total > 0 ? (taken / total) * 100 : 0.0;
+        final adherence = (taken / expectedPerDay) * 100;
 
         result.add({
           'date': dateStr,
           'day_of_week': [
-            'Monday',
-            'Tuesday',
-            'Wednesday',
-            'Thursday',
-            'Friday',
-            'Saturday',
-            'Sunday',
+            'Monday', 'Tuesday', 'Wednesday', 'Thursday',
+            'Friday', 'Saturday', 'Sunday',
           ][i],
           'adherence_percentage': adherence,
         });

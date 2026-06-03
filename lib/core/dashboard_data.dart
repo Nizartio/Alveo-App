@@ -13,6 +13,7 @@ class DashboardData extends ChangeNotifier {
   final statsService = StatsService();
 
   bool isLoading = true;
+  bool hasLoadError = false;
 
   // Shared stats data
   double weeklyAdherence = 0;
@@ -34,6 +35,30 @@ class DashboardData extends ChangeNotifier {
     });
   }
 
+  void reset() {
+    isLoading = true;
+    hasLoadError = false;
+    weeklyAdherence = 0;
+    streakDays = 0;
+    personalBest = 0;
+    nextMedication = null;
+    todaySchedule = [];
+    activeMedications = [];
+    dayStreak = 0;
+    greetingName = 'there';
+    notifyListeners();
+  }
+
+  /// Fraction of today's scheduled doses that have been taken (0.0 – 1.0).
+  double get todayProgress {
+    if (todaySchedule.isEmpty) return 0;
+    final taken = todaySchedule.where((s) {
+      final st = s['status']?.toString() ?? '';
+      return st == 'taken' || st == 'late_taken';
+    }).length;
+    return taken / todaySchedule.length;
+  }
+
   bool get allTodayTaken => todaySchedule.isNotEmpty && !hasPendingDoseToday;
 
   int get lateTakenTodayCount {
@@ -45,6 +70,7 @@ class DashboardData extends ChangeNotifier {
   /// Load all data once, called from MainNavigationPage.initState.
   Future<void> loadAll() async {
     isLoading = true;
+    hasLoadError = false;
 
     try {
       final results = await Future.wait([
@@ -67,7 +93,7 @@ class DashboardData extends ChangeNotifier {
       dayStreak = results[5] as int;
       greetingName = results[6] as String;
     } catch (_) {
-      // Keep previous state on error
+      hasLoadError = true;
     }
 
     isLoading = false;
@@ -77,6 +103,14 @@ class DashboardData extends ChangeNotifier {
     try {
       await NotificationService.instance.scheduleMedicationReminders();
     } catch (_) {}
+
+    // Extend notification window so reminders never go silent after 7 days
+    try {
+      await medicationService.extendNotificationWindow();
+    } catch (_) {}
+
+    // Check for in-app reminders that should show right now
+    NotificationService.instance.checkForDueReminders(todaySchedule);
   }
 
   Future<String> _loadGreetingName() async {

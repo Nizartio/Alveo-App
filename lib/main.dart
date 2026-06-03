@@ -7,6 +7,7 @@ import 'core/supabase_config.dart';
 import 'core/dashboard_data.dart';
 import 'features/auth/pages/login_page.dart';
 import 'features/auth/pages/register_page.dart';
+import 'features/auth/pages/reset_password_page.dart';
 import 'features/notifications/pages/medication_notifications_page.dart';
 import 'features/notifications/services/notification_service.dart';
 import 'features/profile/pages/profile_page.dart';
@@ -50,6 +51,7 @@ class AlveoApp extends StatelessWidget {
         '/medication': (_) => MedsPage(data: DashboardData.instance),
         '/notifications': (_) => const MedicationNotificationsPage(),
         '/stats': (_) => StatsPage(data: DashboardData.instance),
+        '/reset_password': (_) => const ResetPasswordPage(),
       },
     );
   }
@@ -73,6 +75,13 @@ class _StartupGateState extends State<StartupGate> {
 
   Future<bool> _bootstrapApp() async {
     await Supabase.initialize(url: supabaseUrl, anonKey: supabaseAnonKey);
+
+    // Listen for password-recovery deep links from Supabase emails
+    Supabase.instance.client.auth.onAuthStateChange.listen((event) {
+      if (event.event == AuthChangeEvent.passwordRecovery && mounted) {
+        Navigator.of(context).pushNamed('/reset_password');
+      }
+    });
 
     try {
       await NotificationService.instance.initialize();

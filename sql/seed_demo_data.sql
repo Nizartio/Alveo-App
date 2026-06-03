@@ -17,7 +17,7 @@ SELECT n, d FROM (VALUES
   ('Amlodipine', 'Obat hipertensi / darah tinggi'),
   ('Simvastatin', 'Obat penurun kolesterol'),
   ('Dexamethasone', 'Kortikosteroid anti-inflamasi'),
-  ('Vitamin C 500mg', 'Suplemen daya tahan tubuh')
+  ('Vitamin C', 'Suplemen daya tahan tubuh')
 ) AS t(n, d)
 WHERE NOT EXISTS (SELECT 1 FROM medicines m WHERE m.name = t.n);
 

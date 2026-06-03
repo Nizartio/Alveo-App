@@ -4,6 +4,8 @@ import 'core/dashboard_data.dart';
 import 'features/widgets/bottom_navbar.dart';
 import 'features/home/home_page.dart';
 import 'features/medication/pages/meds_page.dart';
+import 'features/notifications/services/notification_service.dart';
+import 'features/notifications/widgets/medication_reminder_bar.dart';
 import 'features/stats/stats_page.dart';
 import 'features/widgets/header.dart';
 
@@ -30,11 +32,16 @@ class _MainNavigationPageState extends State<MainNavigationPage> {
     _currentIndex = widget.initialIndex.clamp(0, 2);
     _pageController = PageController(initialPage: _currentIndex);
     _data = DashboardData.instance;
-    _data.loadAll();
+    _data.loadAll().then((_) {
+      if (mounted) {
+        NotificationService.instance.startReminderChecker();
+      }
+    });
   }
 
   @override
   void dispose() {
+    NotificationService.instance.stopReminderChecker();
     _pageController.dispose();
     super.dispose();
   }
@@ -96,6 +103,14 @@ class _MainNavigationPageState extends State<MainNavigationPage> {
             left: _kFloatV,
             right: _kFloatV,
             child: const StatsHeader(),
+          ),
+
+          // In-app medication reminder snack bar (below header)
+          Positioned(
+            top: statusBarH + _kFloatH + 72,
+            left: _kFloatV,
+            right: _kFloatV,
+            child: const MedicationReminderBar(),
           ),
 
           Positioned(
