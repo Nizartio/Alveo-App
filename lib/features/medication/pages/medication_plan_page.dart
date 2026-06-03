@@ -122,7 +122,15 @@ class _MedicationPlanPageState extends State<MedicationPlanPage> {
         startDate: _treatmentStartDate!,
         medications: _medications,
       );
-      await NotificationService.instance.scheduleMedicationReminders();
+
+      // Notification sync is best-effort here — DashboardData.loadAll()
+      // also syncs when navigating to /home below.
+      try {
+        await NotificationService.instance.scheduleMedicationReminders();
+      } catch (e) {
+        print('[SavePlan] Notification sync failed (non-fatal): $e');
+      }
+
       if (mounted) {
         await showMedPlanSavedBottomSheet(
           context,

@@ -74,6 +74,11 @@ class NotificationService {
           AndroidFlutterLocalNotificationsPlugin
         >();
     await androidPlugin?.requestNotificationsPermission();
+    try {
+      await androidPlugin?.requestExactAlarmsPermission();
+    } catch (_) {
+      // Not available on older Android versions — fine
+    }
 
     final iOSPlugin = _plugin
         .resolvePlatformSpecificImplementation<
@@ -212,7 +217,12 @@ class NotificationService {
       return;
     }
 
-    await _plugin.cancelAll();
+    try {
+      await _plugin.cancelAll();
+    } catch (_) {
+      // cancelAll can throw on Android 14+ if exact alarm permission is
+      // missing or if the OS blocks it. Non-fatal — we re-schedule below.
+    }
 
     final notifications = await fetchNotifications(
       limit: 200,
@@ -413,8 +423,8 @@ class NotificationService {
         );
         return true;
       } on PlatformException catch (e2) {
-        if (e2.code == 'exact_alarms_not_permitted') {
-          // Last resort: inexact mode (may be delayed by OS)
+        // exactAllowWhileIdle failed — fall back to inexact for any error
+        try {
           await _plugin.zonedSchedule(
             id,
             title,
@@ -427,20 +437,16 @@ class NotificationService {
             payload: payload,
           );
           return true;
+        } catch (_) {
+          // Even inexact failed — skip this notification
+          print('[NotifSync] Inexact schedule also failed for $id');
+          return false;
         }
-        print('[NotifSync] All schedule modes failed: $e2');
-        return false;
       }
     }
   }
 
   int _stableId(String rawId) {
-    final clean = rawId.replaceAll('-', '');
-    final hex = clean.length >= 7
-        ? clean.substring(0, 7)
-        : clean.padLeft(7, '0');
-    final value = int.parse(hex, radix: 16);
-    // Clamp to 31-bit signed int (Android notification ID limit)
-    return value & 0x7FFFFFFF;
+    return rawId.hashCode & 0x7FFFFFFF;
   }
 }

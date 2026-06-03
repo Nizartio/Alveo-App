@@ -452,6 +452,34 @@ class MedicationService {
     }
   }
 
+  (bool, Duration?) canConsumeMedicationNow(
+    TimeOfDay scheduledTime,
+    bool isLate,
+  ) {
+    final now = DateTime.now();
+    final scheduledDateTime = DateTime(
+      now.year,
+      now.month,
+      now.day,
+      scheduledTime.hour,
+      scheduledTime.minute,
+    );
+
+    if (!isLate) {
+      // For upcoming medications: can only consume 1 hour before scheduled time
+      final earliestAllowed = scheduledDateTime.subtract(
+        const Duration(hours: 1),
+      );
+
+      if (now.isBefore(earliestAllowed)) {
+        final waitTime = earliestAllowed.difference(now);
+        return (false, waitTime);
+      }
+    }
+    // For late medications or within the allowed time window: can consume
+    return (true, null);
+  }
+
   /// Mark medication as taken (or late_taken for overdue doses).
   /// Returns level-up info if the user leveled up: { 'leveledUp': true, 'newLevel': N }
   Future<Map<String, dynamic>?> markMedicationAsTaken({
