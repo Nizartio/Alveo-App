@@ -196,7 +196,6 @@ class _ProfilePageState extends State<ProfilePage> {
     IconData icon,
     String value,
     String label,
-    String description,
   ) {
     return Expanded(
       child: Column(
@@ -217,19 +216,6 @@ class _ProfilePageState extends State<ProfilePage> {
               color: Colors.white.withOpacity(0.7),
               fontSize: 11,
               fontWeight: FontWeight.w500,
-            ),
-          ),
-          const SizedBox(height: 4),
-          Text(
-            description,
-            textAlign: TextAlign.center,
-            maxLines: 4,
-            overflow: TextOverflow.ellipsis,
-            style: TextStyle(
-              color: Colors.white.withOpacity(0.8),
-              fontSize: 10,
-              height: 1.35,
-              fontWeight: FontWeight.w400,
             ),
           ),
         ],
@@ -391,20 +377,17 @@ class _ProfilePageState extends State<ProfilePage> {
                             _statItem(
                               Icons.local_fire_department,
                               '$_streak',
-                              'Streak saat ini',
-                              'Jumlah hari berturut-turut terakhir kamu berhasil minum obat tanpa terputus. Jika ada hari yang terlewat, nilainya akan kembali dari nol.',
+                              'Streak saat ini'
                             ),
                             _statItem(
                               Icons.emoji_events,
                               '$_longestStreak',
-                              'Streak terbaik',
-                              'Rekor streak terpanjang yang pernah kamu capai sejak mulai memakai aplikasi ini. Angka ini menjadi patokan pribadi untuk target berikutnya.',
+                              'Streak terbaik'
                             ),
                             _statItem(
                               Icons.medication,
                               '$_totalMeds',
-                              'Total obat diminum',
-                              'Total seluruh dosis obat yang sudah kamu tandai sebagai diminum di aplikasi. Ini membantu melihat seberapa konsisten kamu mengikuti pengobatan.',
+                              'Total obat diminum'
                             ),
                           ],
                         ),

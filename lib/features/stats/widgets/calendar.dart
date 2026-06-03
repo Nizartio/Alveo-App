@@ -24,38 +24,19 @@ class WeeklyAdherenceCalendar extends StatefulWidget {
 }
 
 class _WeeklyAdherenceCalendarState extends State<WeeklyAdherenceCalendar> {
-  late DateTime _currentMonth;
-  late DateTime _firstDayOfMonth;
-  late int _daysInMonth;
-  late int _prevMonthDays;
-  final DateTime _actualToday = DateTime.now(); // Untuk mendeteksi highlight hari ini secara akurat
+  final DateTime _actualToday = DateTime.now();
 
-  @override
-  void initState() {
-    super.initState();
-    _currentMonth = DateTime(_actualToday.year, _actualToday.month, 1);
-    _updateCalendarData();
-  }
-
-  // Fungsi untuk memperbarui kalkulasi tanggal saat bulan berpindah
-  void _updateCalendarData() {
-    _firstDayOfMonth = DateTime(_currentMonth.year, _currentMonth.month, 1);
-    _daysInMonth = DateTime(_currentMonth.year, _currentMonth.month + 1, 0).day;
-    _prevMonthDays = DateTime(_currentMonth.year, _currentMonth.month, 0).day;
-  }
+  DateTime get _currentMonth => widget.visibleMonth;
+  DateTime get _firstDayOfMonth => DateTime(_currentMonth.year, _currentMonth.month, 1);
+  int get _daysInMonth => DateTime(_currentMonth.year, _currentMonth.month + 1, 0).day;
+  int get _prevMonthDays => DateTime(_currentMonth.year, _currentMonth.month, 0).day;
 
   void _goToPreviousMonth() {
-    setState(() {
-      _currentMonth = DateTime(_currentMonth.year, _currentMonth.month - 1, 1);
-      _updateCalendarData();
-    });
+    widget.onPreviousMonth();
   }
 
   void _goToNextMonth() {
-    setState(() {
-      _currentMonth = DateTime(_currentMonth.year, _currentMonth.month + 1, 1);
-      _updateCalendarData();
-    });
+    widget.onNextMonth();
   }
 
   int get _startWeekday => (_firstDayOfMonth.weekday - 1) % 7;
@@ -100,7 +81,6 @@ class _WeeklyAdherenceCalendarState extends State<WeeklyAdherenceCalendar> {
     );
   }
 
-  // Widget _buildMonthTitle() {
   Widget _buildMonthTitle() {
     final monthName = _monthName(_currentMonth.month);
     return Row(

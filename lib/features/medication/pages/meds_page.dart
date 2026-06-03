@@ -21,6 +21,8 @@ class MedsPage extends StatefulWidget {
 class _MedsPageState extends State<MedsPage> {
   bool _isMarking = false;
   String? _markingTarget;
+  String _greetingName = 'there';
+  int _dayStreak = 0;
 
   DashboardData get _data => widget.data;
 

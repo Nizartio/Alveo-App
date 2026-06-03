@@ -516,16 +516,24 @@ class MedicationService {
       if (existingLogs.isNotEmpty) {
         await supabase
             .from('medication_logs')
-            .update({'status': status, 'taken_at': now.toIso8601String()})
+            .update({
+              'status': status,
+              'taken_at': now.toIso8601String(),
+            })
             .eq('id', existingLogs[0]['id']);
       } else {
-        await supabase.from('medication_logs').insert({
-          'user_medication_id': userMedicationId,
-          'date': today.toString().split(' ')[0],
-          'scheduled_time': timeStr,
-          'taken_at': now.toIso8601String(),
-          'status': status,
-        });
+        // Create new log
+        final logResponse = await supabase
+            .from('medication_logs')
+            .insert({
+              'user_medication_id': userMedicationId,
+              'date': today.toString().split(' ')[0],
+              'scheduled_time': timeStr,
+              'taken_at': now.toIso8601String(),
+              'status': status,
+            })
+            .select()
+            .single();
       }
 
       Map<String, dynamic>? levelUpResult;

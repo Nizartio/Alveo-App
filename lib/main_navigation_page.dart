@@ -36,7 +36,6 @@ class _MainNavigationPageState extends State<MainNavigationPage> {
   @override
   void dispose() {
     _pageController.dispose();
-    _data.dispose();
     super.dispose();
   }
 
