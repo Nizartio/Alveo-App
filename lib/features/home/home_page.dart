@@ -98,12 +98,13 @@ class _HomePageState extends State<HomePage> {
         context,
       ).showSnackBar(SnackBar(content: Text('Kesalahan: $e')));
     } finally {
-      if (mounted)
+      if (mounted) {
         setState(() {
           _isMarking = false;
           _markingScheduleKey = null;
         });
-      await _data.loadAll();
+        await _data.loadAll();
+      }
     }
   }
 
@@ -171,12 +172,13 @@ class _HomePageState extends State<HomePage> {
         context,
       ).showSnackBar(SnackBar(content: Text('Kesalahan: $e')));
     } finally {
-      if (mounted)
+      if (mounted) {
         setState(() {
           _isMarking = false;
           _markingScheduleKey = null;
         });
-      await _data.loadAll();
+        await _data.loadAll();
+      }
     }
   }
 
@@ -344,6 +346,28 @@ class _HomePageState extends State<HomePage> {
                   bottomPad + 16,
                 ),
                 children: [
+                  if (_data.hasLoadError)
+                    Container(
+                      margin: const EdgeInsets.only(bottom: 12),
+                      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+                      decoration: BoxDecoration(
+                        color: Colors.orange.shade50,
+                        borderRadius: BorderRadius.circular(12),
+                        border: Border.all(color: Colors.orange.shade200),
+                      ),
+                      child: Row(
+                        children: [
+                          Icon(Icons.warning_amber_rounded, color: Colors.orange.shade700, size: 20),
+                          const SizedBox(width: 8),
+                          const Expanded(
+                            child: Text(
+                              'Data tidak dapat dimuat. Menampilkan data tersimpan sebelumnya.',
+                              style: TextStyle(fontSize: 12, color: Colors.black87),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
                   HeaderContent(streakDays: _data.streakDays),
                   const SizedBox(height: 24),
                   Row(
@@ -357,7 +381,7 @@ class _HomePageState extends State<HomePage> {
                       const SizedBox(width: 16),
                       Expanded(
                         child: GoalCard(
-                          progress: _data.weeklyAdherence / 100,
+                          progress: _data.todayProgress,
                         ),
                       ),
                     ],

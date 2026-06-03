@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
+import '../../../core/dashboard_data.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../medication/services/medication_service.dart';
+import '../../notifications/services/notification_service.dart';
 
 class ProfilePage extends StatefulWidget {
   const ProfilePage({super.key});
@@ -124,6 +126,7 @@ class _ProfilePageState extends State<ProfilePage> {
     if (user == null) return;
 
     setState(() => _isSaving = true);
+    final messages = <String>[];
     try {
       final newName = _usernameController.text.trim();
       final newEmail = _emailController.text.trim();
@@ -136,11 +139,13 @@ class _ProfilePageState extends State<ProfilePage> {
           'full_name': newName,
           'updated_at': DateTime.now().toIso8601String(),
         });
+        messages.add('Nama diperbarui');
       }
 
       // Update email if changed (Supabase sends confirmation to new email)
       if (newEmail.isNotEmpty && newEmail != _email) {
         await _supabase.auth.updateUser(UserAttributes(email: newEmail));
+        messages.add('Email: tautan konfirmasi telah dikirim ke email baru Anda');
       }
 
       // Update password if provided
@@ -158,21 +163,29 @@ class _ProfilePageState extends State<ProfilePage> {
         }
         await _supabase.auth.updateUser(UserAttributes(password: newPassword));
         _passwordController.clear();
+        messages.add('Kata sandi diperbarui');
       }
 
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Profil berhasil disimpan'),
+        SnackBar(
+          content: Text(
+            messages.isNotEmpty
+                ? messages.join('. ')
+                : 'Profil berhasil disimpan',
+          ),
           backgroundColor: Colors.green,
         ),
       );
       await _loadProfile();
     } on AuthException catch (e) {
       if (!mounted) return;
+      final message = e.message.toLowerCase().contains('reauthenticate')
+          ? 'Perlu masuk ulang. Silakan logout lalu login kembali sebelum mengganti kata sandi.'
+          : 'Gagal: ${e.message}';
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text('Gagal: ${e.message}'),
+          content: Text(message),
           backgroundColor: Colors.red,
         ),
       );
@@ -187,6 +200,8 @@ class _ProfilePageState extends State<ProfilePage> {
   }
 
   Future<void> _logout() async {
+    DashboardData.instance.reset();
+    NotificationService.instance.clearReminder();
     await _supabase.auth.signOut();
     if (!mounted) return;
     Navigator.of(context).pushNamedAndRemoveUntil('/login', (route) => false);

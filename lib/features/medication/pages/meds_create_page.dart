@@ -122,22 +122,9 @@ class _MedsCreatePageState extends State<MedsCreatePage> {
           medications: _medications,
         );
       }
-      await NotificationService.instance.scheduleMedicationReminders();
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(
-              _isEditing
-                  ? '✓ Obat berhasil diperbarui'
-                  : '✓ Obat berhasil disimpan',
-            ),
-            backgroundColor: Colors.green,
-          ),
-        );
-        Navigator.of(context).pop();
-      }
     } catch (e) {
       if (mounted) {
+        setState(() => _isSaving = false);
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text('Kesalahan menyimpan obat: $e'),
@@ -145,8 +132,29 @@ class _MedsCreatePageState extends State<MedsCreatePage> {
           ),
         );
       }
-    } finally {
-      if (mounted) setState(() => _isSaving = false);
+      return;
+    }
+
+    // Notification sync is best-effort — save already succeeded
+    try {
+      await NotificationService.instance.scheduleMedicationReminders();
+    } catch (e) {
+      print('[MedsCreate] Notification sync failed (non-fatal): $e');
+    }
+
+    if (mounted) {
+      setState(() => _isSaving = false);
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            _isEditing
+                ? '✓ Obat berhasil diperbarui'
+                : '✓ Obat berhasil disimpan',
+          ),
+          backgroundColor: Colors.green,
+        ),
+      );
+      Navigator.of(context).pop();
     }
   }
 

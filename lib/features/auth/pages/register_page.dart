@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../../core/theme/app_colors.dart';
+import '../../notifications/services/notification_service.dart';
 
 class RegisterPage extends StatefulWidget {
   const RegisterPage({super.key});
@@ -229,6 +230,14 @@ class _RegisterPageState extends State<RegisterPage> {
                                           final user = res.user;
 
                                           if (session != null && user != null) {
+                                            // Ensure NotificationService is ready before navigating
+                                            try {
+                                              await NotificationService
+                                                  .instance
+                                                  .initialize();
+                                            } catch (_) {}
+
+                                            if (!mounted) return;
                                             Navigator.of(
                                               context,
                                             ).pushReplacementNamed(

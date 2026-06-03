@@ -17,6 +17,7 @@ class _LoginPageState extends State<LoginPage> {
   final _passwordController = TextEditingController();
   
   bool _obscurePassword = true;
+  bool _isLoading = false;
 
   @override
   void dispose() {
@@ -26,6 +27,7 @@ class _LoginPageState extends State<LoginPage> {
   }
 
   void _submit() {
+    if (_isLoading) return;
     if (_formKey.currentState?.validate() ?? false) {
       _signIn();
     }
@@ -97,6 +99,7 @@ class _LoginPageState extends State<LoginPage> {
   }
 
   Future<void> _signIn() async {
+    setState(() => _isLoading = true);
     final email = _emailController.text.trim();
     final password = _passwordController.text;
 
@@ -109,10 +112,14 @@ class _LoginPageState extends State<LoginPage> {
       if (!mounted) return;
       Navigator.of(context).pushReplacementNamed('/home');
     } on AuthException catch (e) {
+      if (!mounted) return;
+      setState(() => _isLoading = false);
       ScaffoldMessenger.of(
         context,
       ).showSnackBar(SnackBar(content: Text('Login gagal: ${e.message}')));
     } catch (e) {
+      if (!mounted) return;
+      setState(() => _isLoading = false);
       ScaffoldMessenger.of(
         context,
       ).showSnackBar(SnackBar(content: Text('Login error: $e')));
@@ -293,16 +300,30 @@ class _LoginPageState extends State<LoginPage> {
                                     color: Colors.transparent,
                                     child: InkWell(
                                       borderRadius: BorderRadius.circular(28),
-                                      onTap: _submit,
-                                      child: const Center(
-                                        child: Text(
-                                          'Mulai Perjalananmu',
-                                          style: TextStyle(
-                                            color: AppColors.white,
-                                            fontSize: 16,
-                                            fontWeight: FontWeight.w600,
-                                          ),
-                                        ),
+                                      onTap: _isLoading ? null : _submit,
+                                      child: Center(
+                                        child: _isLoading
+                                            ? const SizedBox(
+                                                width: 22,
+                                                height: 22,
+                                                child:
+                                                    CircularProgressIndicator(
+                                                  strokeWidth: 2,
+                                                  valueColor:
+                                                      AlwaysStoppedAnimation<
+                                                          Color>(
+                                                    Colors.white,
+                                                  ),
+                                                ),
+                                              )
+                                            : const Text(
+                                                'Mulai Perjalananmu',
+                                                style: TextStyle(
+                                                  color: AppColors.white,
+                                                  fontSize: 16,
+                                                  fontWeight: FontWeight.w600,
+                                                ),
+                                              ),
                                       ),
                                     ),
                                   ),

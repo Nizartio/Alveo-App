@@ -1,7 +1,7 @@
+import 'dart:async';
+import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'dart:convert';
-
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:flutter_timezone/flutter_timezone.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
@@ -9,6 +9,8 @@ import 'package:timezone/data/latest_all.dart' as tzdata;
 import 'package:timezone/timezone.dart' as tz;
 
 import '../../../../core/navigation/app_navigator.dart';
+import '../../../../core/dashboard_data.dart';
+import '../models/reminder_event.dart';
 
 /// Top-level background handler — must be a static or top-level function
 /// for Flutter to find it when the app is not running.
@@ -32,6 +34,14 @@ class NotificationService {
       FlutterLocalNotificationsPlugin();
 
   final unreadCount = ValueNotifier<int>(0);
+
+  final currentReminder = ValueNotifier<ReminderEvent?>(null);
+  Timer? _reminderCheckerTimer;
+  Timer? _dismissTimer;
+
+  /// Tracks manually dismissed reminder keys so they don't re-appear
+  /// immediately. Key = "type|userMedicationId|scheduledTime" → expiry time.
+  final Map<String, DateTime> _dismissedUntil = {};
 
   bool _initialized = false;
 
@@ -108,12 +118,18 @@ class NotificationService {
     final todayStr = DateTime.now().toIso8601String().split('T')[0];
     final rows = await _supabase
         .from('notifications')
-        .select('id')
+        .select('id, date, time')
         .eq('user_id', user.id)
         .eq('sent', false)
         .lte('date', todayStr);
 
-    unreadCount.value = (rows as List).length;
+    final now = tz.TZDateTime.now(tz.local);
+    final count = (rows as List).where((n) {
+      final scheduledAt = _scheduledDateTime(n);
+      return !scheduledAt.isAfter(now);
+    }).length;
+
+    unreadCount.value = count;
   }
 
   Future<List<Map<String, dynamic>>> fetchNotifications({
@@ -124,25 +140,33 @@ class NotificationService {
     final user = _supabase.auth.currentUser;
     if (user == null) return [];
 
-    final query = _supabase
+    var builder = _supabase
         .from('notifications')
         .select(
           '*, medication_schedules(user_medications(reminder_minutes_before))',
         )
-        .eq('user_id', user.id)
+        .eq('user_id', user.id);
+
+    // Exclude future notifications from the query itself if not requested
+    if (!includeFuture) {
+      final todayStr = DateTime.now().toIso8601String().split('T')[0];
+      builder = builder.lte('date', todayStr);
+    }
+
+    final rows = await builder
         .order('date', ascending: false)
         .order('time', ascending: false)
         .limit(limit);
 
-    final rows = await query;
-    var notifications = List<Map<String, dynamic>>.from(rows);
+    var notifications = List<Map<String, dynamic>>.from(rows as List);
 
-    // Exclude future notifications unless explicitly requested (for scheduling)
+    // Further refine today's notifications by time
     if (!includeFuture) {
-      final todayStr = DateTime.now().toIso8601String().split('T')[0];
-      notifications = notifications
-          .where((n) => (n['date']?.toString() ?? '').compareTo(todayStr) <= 0)
-          .toList();
+      final now = tz.TZDateTime.now(tz.local);
+      notifications = notifications.where((n) {
+        final scheduledAt = _scheduledDateTime(n);
+        return !scheduledAt.isAfter(now);
+      }).toList();
     }
 
     if (daysAgo != null) {
@@ -265,48 +289,43 @@ class NotificationService {
         }
         await Future.delayed(const Duration(milliseconds: 30));
       } else if (now.difference(scheduledAt) <= gracePeriod) {
-        final immediateAt = now.add(const Duration(seconds: 10));
-        if (await _safeSchedule(
-          id: _stableId(rawId),
-          title: 'Waktunya Minum Obat',
-          body: message,
-          scheduledAt: immediateAt,
-          payload: jsonEncode({'route': '/medication'}),
-        )) {
-          scheduledExact++;
-          print(
-            '[NotifSync]   → Immediate reminder scheduled for $immediateAt (late but within grace)',
-          );
-        }
-        await Future.delayed(const Duration(milliseconds: 30));
+        // In-app reminder bar handles near-past meds via checkForDueReminders.
+        // Skip OS notification here to avoid false alarms at unexpected times.
+        skippedPast++;
+        print(
+          '[NotifSync]   → Grace-period OS notification SKIPPED (in-app handles this): $scheduledAt',
+        );
       } else {
         skippedPast++;
         print('[NotifSync]   → Exact SKIPPED (past: $scheduledAt < $now)');
       }
 
       // ── Early-reminder notification ──
-      final reminderTime = scheduledAt.subtract(
-        Duration(minutes: reminderMinutes),
-      );
-      if (!reminderTime.isBefore(now)) {
-        final label = _reminderLabel(reminderMinutes);
-        if (await _safeSchedule(
-          id: _stableId('${rawId}_early'),
-          title: 'Pengingat $label',
-          body: '$label lagi: $message',
-          scheduledAt: reminderTime,
-          payload: jsonEncode({'route': '/medication'}),
-        )) {
-          scheduledEarly++;
+      final isAlreadyEarlyReminder = message.startsWith('Pengingat:');
+      if (!isAlreadyEarlyReminder) {
+        final reminderTime = scheduledAt.subtract(
+          Duration(minutes: reminderMinutes),
+        );
+        if (!reminderTime.isBefore(now)) {
+          final label = _reminderLabel(reminderMinutes);
+          if (await _safeSchedule(
+            id: _stableId('${rawId}_early'),
+            title: 'Pengingat $label',
+            body: '$label lagi: $message',
+            scheduledAt: reminderTime,
+            payload: jsonEncode({'route': '/medication'}),
+          )) {
+            scheduledEarly++;
+            print(
+              '[NotifSync]   → Early ($reminderMinutes min) scheduled for $reminderTime',
+            );
+          }
+          await Future.delayed(const Duration(milliseconds: 30));
+        } else {
           print(
-            '[NotifSync]   → Early ($reminderMinutes min) scheduled for $reminderTime',
+            '[NotifSync]   → Early ($reminderMinutes min) SKIPPED (past: $reminderTime < $now)',
           );
         }
-        await Future.delayed(const Duration(milliseconds: 30));
-      } else {
-        print(
-          '[NotifSync]   → Early ($reminderMinutes min) SKIPPED (past: $reminderTime < $now)',
-        );
       }
     }
 
@@ -319,6 +338,124 @@ class NotificationService {
     print('[NotifSync] OS pending notifications: ${pending.length}');
 
     await refreshUnreadCount();
+  }
+
+  // ─── In-App Reminder Checker ───────────────────────────────────
+
+  String _reminderKey(
+    String type,
+    String userMedicationId,
+    String scheduledTime,
+  ) {
+    return '$type|$userMedicationId|$scheduledTime';
+  }
+
+  /// Check today's schedule for any medication reminders that should
+  /// be shown right now as an in-app snack bar.
+  void checkForDueReminders(List<Map<String, dynamic>> todaySchedule) {
+    final now = DateTime.now();
+    const window = Duration(minutes: 2);
+
+    // Housekeeping: expire old dismissals after 60 seconds
+    _dismissedUntil.removeWhere((_, expiry) => now.isAfter(expiry));
+
+    for (final sched in todaySchedule) {
+      final status = sched['status']?.toString() ?? '';
+      if (status == 'taken' || status == 'late_taken') continue;
+
+      final timeStr = sched['scheduled_time'] as String;
+      final parts = timeStr.split(':');
+      if (parts.length < 2) continue;
+
+      final userMedId = sched['user_medication_id']?.toString() ?? '';
+      final medicineName = sched['medicine_name']?.toString() ?? 'Obat';
+
+      final schedDt = DateTime(
+        now.year,
+        now.month,
+        now.day,
+        int.parse(parts[0]),
+        int.parse(parts[1]),
+      );
+
+      // Priority 1: Medication time notification (at the exact scheduled time)
+      if (now.difference(schedDt).abs() <= window) {
+        final key = _reminderKey('medication_time', userMedId, timeStr);
+        if (_dismissedUntil.containsKey(key)) continue;
+
+        currentReminder.value = ReminderEvent(
+          type: 'medication_time',
+          medicineName: medicineName,
+          dosage: sched['dosage']?.toString() ?? '',
+          userMedicationId: userMedId,
+          scheduledTime: timeStr,
+          message: 'Waktunya minum $medicineName',
+          intakeRule: sched['intake_rule']?.toString() ?? '',
+          reminderMinutesBefore:
+              sched['reminder_minutes_before'] as int? ?? 15,
+        );
+        return;
+      }
+
+      // Priority 2: Early reminder notification (reminder_minutes_before)
+      final reminderMinutes =
+          sched['reminder_minutes_before'] as int? ?? 15;
+      final reminderDt =
+          schedDt.subtract(Duration(minutes: reminderMinutes));
+
+      if (now.difference(reminderDt).abs() <= window) {
+        final key = _reminderKey('reminder', userMedId, timeStr);
+        if (_dismissedUntil.containsKey(key)) continue;
+
+        currentReminder.value = ReminderEvent(
+          type: 'reminder',
+          medicineName: medicineName,
+          dosage: sched['dosage']?.toString() ?? '',
+          userMedicationId: userMedId,
+          scheduledTime: timeStr,
+          message:
+              'Pengingat: $medicineName akan diminum dalam $reminderMinutes menit',
+          intakeRule: sched['intake_rule']?.toString() ?? '',
+          reminderMinutesBefore: reminderMinutes,
+        );
+        return;
+      }
+    }
+  }
+
+  /// Clear the current in-app reminder and suppress it for 60 seconds
+  /// so it doesn't immediately re-appear after manual dismiss.
+  void clearReminder() {
+    final current = currentReminder.value;
+    if (current != null) {
+      final key = _reminderKey(
+        current.type,
+        current.userMedicationId,
+        current.scheduledTime,
+      );
+      _dismissedUntil[key] = DateTime.now().add(const Duration(seconds: 60));
+    }
+    _dismissTimer?.cancel();
+    currentReminder.value = null;
+  }
+
+  /// Start periodic checking for due reminders (runs every 30s).
+  /// Reads the latest [todaySchedule] from [DashboardData] on each tick.
+  void startReminderChecker() {
+    _reminderCheckerTimer?.cancel();
+    // Use DashboardData todaySchedule directly on each tick
+    checkForDueReminders(DashboardData.instance.todaySchedule);
+    _reminderCheckerTimer = Timer.periodic(
+      const Duration(seconds: 30),
+      (_) =>
+          checkForDueReminders(DashboardData.instance.todaySchedule),
+    );
+  }
+
+  /// Stop the periodic reminder checker.
+  void stopReminderChecker() {
+    _reminderCheckerTimer?.cancel();
+    _reminderCheckerTimer = null;
   }
 
   NotificationDetails _notificationDetails() {
