@@ -62,9 +62,10 @@ class StatsService {
         return 0;
       }
 
-      final takenCount = logsList
-          .where((log) => log['status'] == 'taken')
-          .length;
+      final takenCount = logsList.where((log) {
+        final s = log['status']?.toString() ?? '';
+        return s == 'taken' || s == 'late_taken';
+      }).length;
       final adherence = (takenCount / logsList.length) * 100;
 
       return adherence.clamp(0, 100).toDouble();
@@ -107,8 +108,9 @@ class StatsService {
 
       for (var log in logs) {
         final date = log['date'] as String;
-        takenByDate[date] =
-            (takenByDate[date] ?? 0) + (log['status'] == 'taken' ? 1 : 0);
+        final isTaken =
+            log['status'] == 'taken' || log['status'] == 'late_taken';
+        takenByDate[date] = (takenByDate[date] ?? 0) + (isTaken ? 1 : 0);
         totalByDate[date] = (totalByDate[date] ?? 0) + 1;
       }
 
@@ -161,16 +163,16 @@ class StatsService {
     }
   }
 
-  Future<Map<int, String>> fetchMonthlyDayStatuses() async {
+  Future<Map<int, String>> fetchMonthlyDayStatuses({DateTime? month}) async {
     try {
       final user = supabase.auth.currentUser;
       if (user == null) {
         throw Exception('User not authenticated');
       }
 
-      final now = DateTime.now();
-      final firstDay = DateTime(now.year, now.month, 1);
-      final nextMonth = DateTime(now.year, now.month + 1, 1);
+      final targetMonth = month ?? DateTime.now();
+      final firstDay = DateTime(targetMonth.year, targetMonth.month, 1);
+      final nextMonth = DateTime(targetMonth.year, targetMonth.month + 1, 1);
       final firstDayStr = firstDay.toIso8601String().split('T')[0];
       final nextMonthStr = nextMonth.toIso8601String().split('T')[0];
 
@@ -205,7 +207,7 @@ class StatsService {
         final day = parsed.day;
         final status = log['status']?.toString();
 
-        if (status == 'taken') {
+        if (status == 'taken' || status == 'late_taken') {
           dayStatuses[day] = 'completed';
         } else if (status == 'missed' && dayStatuses[day] != 'completed') {
           dayStatuses[day] = 'missed';

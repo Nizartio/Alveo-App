@@ -452,3 +452,4 @@ class _MedicationCardState extends State<MedicationCard> {
     );
   }
 }
+

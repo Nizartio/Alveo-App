@@ -1,138 +1,66 @@
 import 'package:flutter/material.dart';
 import 'package:shimmer/shimmer.dart';
-import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../../core/theme/app_colors.dart';
+import '../../../core/dashboard_data.dart';
+import '../../notifications/services/notification_service.dart';
 import '../models/medication_form_model.dart';
-import '../services/medication_service.dart';
 import '../widgets/meds_list_action.dart';
 import '../widgets/create/meds_modal_input.dart';
+import '../widgets/level_up_sheet.dart';
 import 'meds_history_page.dart';
 
 class MedsPage extends StatefulWidget {
-  const MedsPage({super.key});
+  final DashboardData data;
+
+  const MedsPage({super.key, required this.data});
 
   @override
   State<MedsPage> createState() => _MedsPageState();
 }
 
-class _MedsPageState extends State<MedsPage>
-    with AutomaticKeepAliveClientMixin {
-  final _medicationService = MedicationService();
-  final _supabase = Supabase.instance.client;
-  Map<String, dynamic>? _nextMedication;
-  List<Map<String, dynamic>> _todaySchedule = [];
-  List<Map<String, dynamic>> _activeMedications = [];
-  bool _isLoading = true;
+class _MedsPageState extends State<MedsPage> {
   bool _isMarking = false;
-  bool _isRefreshing = false;
   String? _markingTarget;
   String _greetingName = 'there';
   int _dayStreak = 0;
 
-  @override
-  bool get wantKeepAlive => true;
+  DashboardData get _data => widget.data;
 
   @override
   void initState() {
     super.initState();
-    _loadGreetingName();
-    _loadMedicationData();
+    _data.addListener(_onDataChanged);
   }
 
-  Future<void> _loadGreetingName() async {
-    final user = _supabase.auth.currentUser;
-    if (user == null) return;
-
-    try {
-      final profile = await _supabase
-          .from('user_profile')
-          .select('full_name')
-          .eq('user_id', user.id)
-          .maybeSingle();
-
-      final fullName =
-          (profile?['full_name'] ??
-                  user.userMetadata?['full_name'] ??
-                  user.email)
-              ?.toString();
-
-      if (!mounted) return;
-
-      setState(() {
-        if (fullName == null || fullName.trim().isEmpty) {
-          _greetingName = 'there';
-        } else {
-          _greetingName = fullName.trim().split(RegExp(r'\s+')).first;
-        }
-      });
-    } catch (_) {
-      if (!mounted) return;
-      setState(() {
-        _greetingName = 'there';
-      });
-    }
+  @override
+  void dispose() {
+    _data.removeListener(_onDataChanged);
+    super.dispose();
   }
 
-  Future<void> _loadMedicationData() async {
-    try {
-      final nextMed = await _medicationService.fetchNextMedicationSchedule();
-      final todaySchedule = await _medicationService.fetchTodaySchedule();
-      final activeMeds = await _medicationService.fetchActiveMedications();
-      final streak = await _medicationService.fetchCurrentStreak();
-
-      if (mounted) {
-        setState(() {
-          _nextMedication = nextMed;
-          _todaySchedule = todaySchedule;
-          _activeMedications = activeMeds;
-          _isLoading = false;
-          _isRefreshing = false;
-          _dayStreak = streak;
-        });
-      }
-    } catch (e) {
-      if (mounted) {
-        setState(() => _isLoading = false);
-        ScaffoldMessenger.of(
-          context,
-        ).showSnackBar(SnackBar(content: Text('Kesalahan memuat obat: $e')));
-      }
-    }
+  void _onDataChanged() {
+    if (mounted) setState(() {});
   }
 
   // ─── Marking ───────────────────────────────────────────────────
 
   Future<void> _markAsTaken() async {
-    if (_nextMedication == null) return;
-    if (_isMarking) return;
+    final next = _data.nextMedication;
+    if (next == null || _isMarking) return;
 
-    final scheduledTime = _nextMedication!['scheduled_time'] as TimeOfDay;
-    final now = DateTime.now();
-    final scheduledDateTime = DateTime(
-      now.year,
-      now.month,
-      now.day,
-      scheduledTime.hour,
-      scheduledTime.minute,
-    );
+    final scheduledTime = next['scheduled_time'] as TimeOfDay;
+    final isLate = next['is_late'] == true;
 
-    final isLate = _nextMedication!['is_late'] == true;
-
-    if (!isLate) {
-      final earliestAllowed = scheduledDateTime.subtract(
-        const Duration(hours: 1),
+    final (canConsume, waitTime) =
+        _data.medicationService.canConsumeMedicationNow(scheduledTime, isLate);
+    if (!canConsume) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Belum waktunya. ${_formatWaitTime(waitTime!)}'),
+        ),
       );
-
-      if (now.isBefore(earliestAllowed)) {
-        final diff = earliestAllowed.difference(now);
-        if (!mounted) return;
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Belum waktunya. ${_formatWaitTime(diff)}'),
-          ),
-        );
-        return;
-      }
+      return;
     }
 
     setState(() {
@@ -141,34 +69,32 @@ class _MedsPageState extends State<MedsPage>
     });
     final status = isLate ? 'late_taken' : 'taken';
     try {
-      await _medicationService.markMedicationAsTaken(
-        userMedicationId: _nextMedication!['id'],
+      final levelUp = await _data.medicationService.markMedicationAsTaken(
+        userMedicationId: next['id'],
         scheduledTime: scheduledTime,
         status: status,
       );
 
-      try {
-        final timeStr =
-            '${scheduledTime.hour.toString().padLeft(2, '0')}:${scheduledTime.minute.toString().padLeft(2, '0')}:00';
-        for (var s in _todaySchedule) {
-          if (s['user_medication_id'] == _nextMedication!['id'] &&
-              s['scheduled_time'] == timeStr) {
-            s['status'] = status;
-            s['taken_at'] = DateTime.now().toIso8601String();
-          }
-        }
-      } catch (_) {}
+      if (levelUp != null && mounted) {
+        LevelUpSheet.show(
+          context,
+          oldLevel: levelUp['oldLevel'] as int,
+          newLevel: levelUp['newLevel'] as int,
+        );
+      }
 
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text(isLate
-                ? '⚠ Obat terlambat diminum dan telah dicatat.'
-                : '✓ Obat ditandai telah diminum!'),
+            content: Text(
+              isLate
+                  ? '⚠ Obat terlambat diminum dan telah dicatat.'
+                  : '✓ Obat ditandai telah diminum!',
+            ),
             backgroundColor: isLate ? Colors.orange : Colors.green,
           ),
         );
-        await _loadMedicationData();
+        await _data.loadAll();
       }
     } catch (e) {
       if (mounted) {
@@ -177,10 +103,11 @@ class _MedsPageState extends State<MedsPage>
         ).showSnackBar(SnackBar(content: Text('Kesalahan: $e')));
       }
     } finally {
-      if (mounted) setState(() {
-        _isMarking = false;
-        _markingTarget = null;
-      });
+      if (mounted)
+        setState(() {
+          _isMarking = false;
+          _markingTarget = null;
+        });
     }
   }
 
@@ -190,37 +117,25 @@ class _MedsPageState extends State<MedsPage>
     final status = schedule['status'] as String? ?? '';
     if (status == 'taken' || status == 'late_taken') return;
 
-    final now = DateTime.now();
     final timeStr = schedule['scheduled_time'] as String;
     final parts = timeStr.split(':');
     final scheduledTime = TimeOfDay(
       hour: int.parse(parts[0]),
       minute: int.parse(parts[1]),
     );
-    final scheduledDateTime = DateTime(
-      now.year,
-      now.month,
-      now.day,
-      scheduledTime.hour,
-      scheduledTime.minute,
-    );
 
     final isLate = status == 'overdue';
 
-    if (!isLate) {
-      final earliestAllowed = scheduledDateTime.subtract(
-        const Duration(hours: 1),
+    final (canConsume, waitTime) =
+        _data.medicationService.canConsumeMedicationNow(scheduledTime, isLate);
+    if (!canConsume) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Belum waktunya. ${_formatWaitTime(waitTime!)}'),
+        ),
       );
-      if (now.isBefore(earliestAllowed)) {
-        final diff = earliestAllowed.difference(now);
-        if (!mounted) return;
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Belum waktunya. ${_formatWaitTime(diff)}'),
-          ),
-        );
-        return;
-      }
+      return;
     }
 
     setState(() {
@@ -229,32 +144,32 @@ class _MedsPageState extends State<MedsPage>
     });
     final newStatus = isLate ? 'late_taken' : 'taken';
     try {
-      await _medicationService.markMedicationAsTaken(
+      final levelUp = await _data.medicationService.markMedicationAsTaken(
         userMedicationId: schedule['user_medication_id'] as String,
         scheduledTime: scheduledTime,
         status: newStatus,
       );
 
-      final matchKey =
-          '${scheduledTime.hour.toString().padLeft(2, '0')}:${scheduledTime.minute.toString().padLeft(2, '0')}:00';
-      for (var s in _todaySchedule) {
-        if (s['user_medication_id'] == schedule['user_medication_id'] &&
-            s['scheduled_time'] == matchKey) {
-          s['status'] = newStatus;
-          s['taken_at'] = DateTime.now().toIso8601String();
-        }
+      if (levelUp != null && mounted) {
+        LevelUpSheet.show(
+          context,
+          oldLevel: levelUp['oldLevel'] as int,
+          newLevel: levelUp['newLevel'] as int,
+        );
       }
 
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text(isLate
-                ? '⚠ Obat terlambat diminum dan telah dicatat.'
-                : '✓ Obat ditandai telah diminum!'),
+            content: Text(
+              isLate
+                  ? '⚠ Obat terlambat diminum dan telah dicatat.'
+                  : '✓ Obat ditandai telah diminum!',
+            ),
             backgroundColor: isLate ? Colors.orange : Colors.green,
           ),
         );
-        await _loadMedicationData();
+        await _data.loadAll();
       }
     } catch (e) {
       if (mounted) {
@@ -263,49 +178,53 @@ class _MedsPageState extends State<MedsPage>
         ).showSnackBar(SnackBar(content: Text('Kesalahan: $e')));
       }
     } finally {
-      if (mounted) setState(() {
-        _isMarking = false;
-        _markingTarget = null;
-      });
+      if (mounted)
+        setState(() {
+          _isMarking = false;
+          _markingTarget = null;
+        });
     }
   }
 
   bool _canMarkAsTaken() {
-    if (_nextMedication == null) return false;
-    if (_isMarking) return false;
+    final next = _data.nextMedication;
+    if (next == null || _isMarking) return false;
     try {
-      final scheduledTime = _nextMedication!['scheduled_time'] as TimeOfDay;
-      final now = DateTime.now();
-      final scheduledDateTime = DateTime(
-        now.year,
-        now.month,
-        now.day,
-        scheduledTime.hour,
-        scheduledTime.minute,
-      );
-      final status = _nextMedication!['status'] as String? ?? '';
-      if (status == 'taken' || status == 'late_taken') return false;
-
-      final isLate = _nextMedication!['is_late'] == true;
-      if (isLate) return true;
-
-      final earliestAllowed = scheduledDateTime.subtract(
-        const Duration(hours: 1),
-      );
-      return !now.isBefore(earliestAllowed);
+      final scheduledTime = next['scheduled_time'] as TimeOfDay;
+      final isLate = next['is_late'] == true;
+      final (canConsume, _) =
+          _data.medicationService.canConsumeMedicationNow(scheduledTime, isLate);
+      return canConsume;
     } catch (_) {
       return false;
     }
   }
 
-  void _snooze() {
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(
-        content: Text(
-          'Tunda diatur. Anda akan mendapat pengingat dalam 15 menit.',
+  Future<void> _snooze() async {
+    final medicationName =
+        _data.nextMedication?['medicines']?['name']?.toString() ?? 'obat';
+
+    try {
+      await NotificationService.instance.scheduleSnoozeReminder(
+        title: 'Pengingat Obat',
+        body: 'Waktunya minum $medicationName lagi.',
+        minutes: 15,
+      );
+
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text(
+            'Tunda diatur. Anda akan mendapat pengingat dalam 15 menit.',
+          ),
         ),
-      ),
-    );
+      );
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text('Gagal menunda pengingat: $e')));
+    }
   }
 
   // ─── Medication management ─────────────────────────────────────
@@ -320,10 +239,7 @@ class _MedsPageState extends State<MedsPage>
       backgroundColor: Colors.transparent,
       builder: (_) => const MedsModalInput(),
     ).then((_) {
-      if (mounted) {
-        setState(() => _isRefreshing = true);
-        _loadMedicationData();
-      }
+      if (mounted) _data.loadAll();
     });
   }
 
@@ -340,10 +256,7 @@ class _MedsPageState extends State<MedsPage>
         userMedicationId: medication['id']?.toString(),
       ),
     ).then((_) {
-      if (mounted) {
-        setState(() => _isRefreshing = true);
-        _loadMedicationData();
-      }
+      if (mounted) _data.loadAll();
     });
   }
 
@@ -368,19 +281,18 @@ class _MedsPageState extends State<MedsPage>
     if (confirm != true) return;
 
     try {
-      await _medicationService.deleteMedication(userMedicationId);
+      await _data.medicationService.deleteMedication(userMedicationId);
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Obat dihapus')),
-        );
-        setState(() => _isRefreshing = true);
-        _loadMedicationData();
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(const SnackBar(content: Text('Obat dihapus')));
+        await _data.loadAll();
       }
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Kesalahan: $e')),
-        );
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('Kesalahan: $e')));
       }
     }
   }
@@ -398,8 +310,9 @@ class _MedsPageState extends State<MedsPage>
     Map<String, dynamic> medication,
   ) {
     final medicine = medication['medicines'];
-    final schedules =
-        (medication['medication_schedules'] as List? ?? []).map((schedule) {
+    final schedules = (medication['medication_schedules'] as List? ?? []).map((
+      schedule,
+    ) {
       final time = schedule['time']?.toString() ?? '08:00:00';
       return _parseScheduleTime(time);
     }).toList();
@@ -476,8 +389,8 @@ class _MedsPageState extends State<MedsPage>
   // ─── Computed ──────────────────────────────────────────────────
 
   bool get _allTodayTaken {
-    if (_todaySchedule.isEmpty) return false;
-    return _todaySchedule.every((s) {
+    if (_data.todaySchedule.isEmpty) return false;
+    return _data.todaySchedule.every((s) {
       final st = s['status']?.toString() ?? '';
       return st == 'taken' || st == 'late_taken';
     });
@@ -529,10 +442,7 @@ class _MedsPageState extends State<MedsPage>
             const SizedBox(height: 24),
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                _shimmerBox(140, 18),
-                _shimmerBox(100, 18),
-              ],
+              children: [_shimmerBox(140, 18), _shimmerBox(100, 18)],
             ),
             const SizedBox(height: 12),
             _shimmerBox(double.infinity, 80, radius: 12),
@@ -557,17 +467,16 @@ class _MedsPageState extends State<MedsPage>
 
   @override
   Widget build(BuildContext context) {
-    super.build(context);
     final mq = MediaQuery.of(context);
     final navHeight = (mq.size.height * 0.09).clamp(60.0, 80.0);
     final bottomInset = mq.viewPadding.bottom;
 
     return Scaffold(
       backgroundColor: AppColors.background,
-      body: _isLoading
+      body: _data.isLoading
           ? _buildShimmerPlaceholders()
           : RefreshIndicator(
-              onRefresh: _loadMedicationData,
+              onRefresh: () => _data.loadAll(),
               child: SingleChildScrollView(
                 physics: const AlwaysScrollableScrollPhysics(),
                 padding: EdgeInsets.fromLTRB(
@@ -579,12 +488,6 @@ class _MedsPageState extends State<MedsPage>
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    if (_isRefreshing)
-                      const LinearProgressIndicator(
-                        color: AppColors.primary,
-                        backgroundColor: AppColors.primaryLight,
-                        minHeight: 2,
-                      ),
                     _buildGreeting(),
                     const SizedBox(height: 24),
                     _buildHeroSection(),
@@ -609,7 +512,7 @@ class _MedsPageState extends State<MedsPage>
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(
-              '${_timeBasedGreeting()}, $_greetingName',
+              '${_timeBasedGreeting()}, ${_data.greetingName}',
               style: const TextStyle(
                 fontSize: 20,
                 fontWeight: FontWeight.w700,
@@ -626,7 +529,7 @@ class _MedsPageState extends State<MedsPage>
                 ),
                 const SizedBox(width: 4),
                 Text(
-                  '$_dayStreak Streak Hari',
+                  '${_data.dayStreak} Streak Hari',
                   style: const TextStyle(
                     fontSize: 12,
                     fontWeight: FontWeight.w600,
@@ -671,7 +574,11 @@ class _MedsPageState extends State<MedsPage>
                 color: Colors.white.withOpacity(0.2),
                 borderRadius: BorderRadius.circular(16),
               ),
-              child: const Icon(Icons.celebration, color: Colors.white, size: 32),
+              child: const Icon(
+                Icons.celebration,
+                color: Colors.white,
+                size: 32,
+              ),
             ),
             const SizedBox(width: 16),
             Expanded(
@@ -703,13 +610,17 @@ class _MedsPageState extends State<MedsPage>
     }
 
     // Has next medication — hero reminder card
-    if (_nextMedication != null) {
+    if (_data.nextMedication != null) {
+      final next = _data.nextMedication!;
+      final timeStr =
+          '${(next['scheduled_time'] as TimeOfDay).hour.toString().padLeft(2, '0')}:${(next['scheduled_time'] as TimeOfDay).minute.toString().padLeft(2, '0')}';
+      final isLate = next['is_late'] == true;
       return _wrapShimmerIfMarking(
         _markingTarget == 'hero',
         Container(
           padding: const EdgeInsets.all(24),
           decoration: BoxDecoration(
-            gradient: (_nextMedication!['is_late'] == true)
+            gradient: isLate
                 ? const LinearGradient(
                     colors: [Color(0xFFE67E22), Color(0xFFF39C12)],
                     begin: Alignment.topLeft,
@@ -735,13 +646,7 @@ class _MedsPageState extends State<MedsPage>
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        (_nextMedication!['is_late'] == true
-                                ? 'TERLAMBAT • '
-                                : 'BERIKUTNYA • ') +
-                            (_nextMedication != null
-                                ? _formatTime(
-                                    '${_nextMedication!['scheduled_time'].hour.toString().padLeft(2, '0')}:${_nextMedication!['scheduled_time'].minute.toString().padLeft(2, '0')}')
-                                : ''),
+                        '${isLate ? 'TERLAMBAT • ' : 'BERIKUTNYA • '}${_formatTime(timeStr)}',
                         style: const TextStyle(
                           fontSize: 12,
                           fontWeight: FontWeight.w700,
@@ -751,7 +656,7 @@ class _MedsPageState extends State<MedsPage>
                       ),
                       const SizedBox(height: 8),
                       Text(
-                        _nextMedication!['is_late'] == true
+                        isLate
                             ? 'Obat\nterlewat!'
                             : 'Waktunya\nminum obat!',
                         style: const TextStyle(
@@ -762,7 +667,7 @@ class _MedsPageState extends State<MedsPage>
                       ),
                       const SizedBox(height: 8),
                       Text(
-                        _nextMedication!['is_late'] == true
+                        isLate
                             ? "Segera catat agar tidak\nterlewat sepenuhnya."
                             : "Mari jaga streak kesehatan\nmu tetap kuat. Kamu bisa! 🌟",
                         style: const TextStyle(
@@ -780,7 +685,11 @@ class _MedsPageState extends State<MedsPage>
                       color: Colors.white.withOpacity(0.2),
                       borderRadius: BorderRadius.circular(16),
                     ),
-                    child: const Icon(Icons.medication, color: Colors.white, size: 32),
+                    child: const Icon(
+                      Icons.medication,
+                      color: Colors.white,
+                      size: 32,
+                    ),
                   ),
                 ],
               ),
@@ -797,15 +706,19 @@ class _MedsPageState extends State<MedsPage>
                   children: [
                     Row(
                       children: [
-                        const Icon(Icons.medication, color: Colors.white, size: 24),
+                        const Icon(
+                          Icons.medication,
+                          color: Colors.white,
+                          size: 24,
+                        ),
                         const SizedBox(width: 12),
                         Expanded(
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
                               Text(
-                                _nextMedication!['medicines']?['name'] ??
-                                    _nextMedication!['medicine_name'] ??
+                                next['medicines']?['name'] ??
+                                    next['medicine_name'] ??
                                     'Obat',
                                 style: const TextStyle(
                                   fontSize: 16,
@@ -814,7 +727,7 @@ class _MedsPageState extends State<MedsPage>
                                 ),
                               ),
                               Text(
-                                '${_nextMedication!['dosage'] ?? '0'} • ${_getIntakeRuleLabel(_nextMedication!['intake_rule'])}',
+                                '${next['dosage'] ?? '0'} • ${_getIntakeRuleLabel(next['intake_rule'])}',
                                 style: const TextStyle(
                                   fontSize: 12,
                                   fontWeight: FontWeight.w400,
@@ -830,7 +743,11 @@ class _MedsPageState extends State<MedsPage>
                             color: Colors.white.withOpacity(0.2),
                             borderRadius: BorderRadius.circular(8),
                           ),
-                          child: const Icon(Icons.opacity, color: Colors.white, size: 20),
+                          child: const Icon(
+                            Icons.opacity,
+                            color: Colors.white,
+                            size: 20,
+                          ),
                         ),
                       ],
                     ),
@@ -856,7 +773,7 @@ class _MedsPageState extends State<MedsPage>
                             child: Opacity(
                               opacity: _canMarkAsTaken() ? 1.0 : 0.55,
                               child: Text(
-                                _nextMedication!['is_late'] == true
+                                isLate
                                     ? 'Minum (Terlambat)'
                                     : 'Minum',
                                 style: const TextStyle(
@@ -878,7 +795,9 @@ class _MedsPageState extends State<MedsPage>
                       decoration: BoxDecoration(
                         color: Colors.white.withOpacity(0.2),
                         borderRadius: BorderRadius.circular(24),
-                        border: Border.all(color: Colors.white.withOpacity(0.3)),
+                        border: Border.all(
+                          color: Colors.white.withOpacity(0.3),
+                        ),
                       ),
                       child: Material(
                         color: Colors.transparent,
@@ -908,7 +827,7 @@ class _MedsPageState extends State<MedsPage>
     }
 
     // No medications at all — empty state
-    if (_activeMedications.isEmpty) {
+    if (_data.activeMedications.isEmpty) {
       return Container(
         padding: const EdgeInsets.all(32),
         decoration: BoxDecoration(
@@ -930,8 +849,11 @@ class _MedsPageState extends State<MedsPage>
                 color: AppColors.chipBackground,
                 borderRadius: BorderRadius.circular(20),
               ),
-              child: const Icon(Icons.medication_outlined,
-                  color: AppColors.primary, size: 48),
+              child: const Icon(
+                Icons.medication_outlined,
+                color: AppColors.primary,
+                size: 48,
+              ),
             ),
             const SizedBox(height: 16),
             const Text(
@@ -1012,7 +934,7 @@ class _MedsPageState extends State<MedsPage>
           ),
         ),
         const SizedBox(height: 12),
-        if (_activeMedications.isEmpty)
+        if (_data.activeMedications.isEmpty)
           Container(
             width: double.infinity,
             padding: const EdgeInsets.all(20),
@@ -1033,19 +955,23 @@ class _MedsPageState extends State<MedsPage>
             ),
           )
         else
-          ..._activeMedications.map((med) => MedsListAction(
-                medication: med,
-                onEdit: () => _editMedication(med),
-                onDelete: () => _deleteMedication(med['id'] as String),
-              )),
+          ..._data.activeMedications.map(
+            (med) => MedsListAction(
+              medication: med,
+              onEdit: () => _editMedication(med),
+              onDelete: () => _deleteMedication(med['id'] as String),
+            ),
+          ),
         const SizedBox(height: 12),
         SizedBox(
           width: double.infinity,
           child: OutlinedButton.icon(
             onPressed: _showAddMedicationSheet,
             icon: const Icon(Icons.add, color: AppColors.primary),
-            label: const Text('Tambah Obat',
-                style: TextStyle(color: AppColors.primary)),
+            label: const Text(
+              'Tambah Obat',
+              style: TextStyle(color: AppColors.primary),
+            ),
             style: OutlinedButton.styleFrom(
               side: const BorderSide(color: AppColors.primary, width: 1.5),
               padding: const EdgeInsets.symmetric(vertical: 14),
@@ -1091,7 +1017,7 @@ class _MedsPageState extends State<MedsPage>
           ],
         ),
         const SizedBox(height: 12),
-        if (_todaySchedule.isEmpty)
+        if (_data.todaySchedule.isEmpty)
           Container(
             width: double.infinity,
             padding: const EdgeInsets.all(20),
@@ -1112,7 +1038,7 @@ class _MedsPageState extends State<MedsPage>
             ),
           )
         else
-          ..._todaySchedule.map((schedule) {
+          ..._data.todaySchedule.map((schedule) {
             final status = schedule['status'] as String? ?? '';
             final isTaken = status == 'taken';
             final isLateTaken = status == 'late_taken';
@@ -1127,8 +1053,7 @@ class _MedsPageState extends State<MedsPage>
                 color: Colors.transparent,
                 child: InkWell(
                   borderRadius: BorderRadius.circular(12),
-                  onTap:
-                      canTap ? () => _markScheduleAsTaken(schedule) : null,
+                  onTap: canTap ? () => _markScheduleAsTaken(schedule) : null,
                   child: Container(
                     margin: const EdgeInsets.only(bottom: 12),
                     padding: const EdgeInsets.all(12),
@@ -1139,10 +1064,10 @@ class _MedsPageState extends State<MedsPage>
                         color: isLateTaken
                             ? Colors.orange
                             : isTaken
-                                ? AppColors.primary
-                                : isOverdue
-                                    ? AppColors.danger
-                                    : Colors.transparent,
+                            ? AppColors.primary
+                            : isOverdue
+                            ? AppColors.danger
+                            : Colors.transparent,
                         width: 2,
                       ),
                       boxShadow: const [
@@ -1162,10 +1087,10 @@ class _MedsPageState extends State<MedsPage>
                             color: isLateTaken
                                 ? Colors.orange.withOpacity(0.1)
                                 : isTaken
-                                    ? AppColors.primary.withOpacity(0.1)
-                                    : isOverdue
-                                        ? AppColors.danger.withOpacity(0.1)
-                                        : AppColors.chipBackground,
+                                ? AppColors.primary.withOpacity(0.1)
+                                : isOverdue
+                                ? AppColors.danger.withOpacity(0.1)
+                                : AppColors.chipBackground,
                             borderRadius: BorderRadius.circular(10),
                           ),
                           child: Center(
@@ -1173,17 +1098,17 @@ class _MedsPageState extends State<MedsPage>
                               isLateTaken
                                   ? Icons.warning_amber_rounded
                                   : isTaken
-                                      ? Icons.check_circle
-                                      : isOverdue
-                                          ? Icons.close_rounded
-                                          : Icons.medication,
+                                  ? Icons.check_circle
+                                  : isOverdue
+                                  ? Icons.close_rounded
+                                  : Icons.medication,
                               color: isLateTaken
                                   ? Colors.orange
                                   : isTaken
-                                      ? AppColors.primary
-                                      : isOverdue
-                                          ? AppColors.danger
-                                          : AppColors.textSecondary,
+                                  ? AppColors.primary
+                                  : isOverdue
+                                  ? AppColors.danger
+                                  : AppColors.textSecondary,
                               size: 20,
                             ),
                           ),
@@ -1230,11 +1155,17 @@ class _MedsPageState extends State<MedsPage>
                           ),
                         ),
                         if (isLateTaken)
-                          const Icon(Icons.warning_amber_rounded,
-                              color: Colors.orange, size: 24)
+                          const Icon(
+                            Icons.warning_amber_rounded,
+                            color: Colors.orange,
+                            size: 24,
+                          )
                         else if (isTaken)
-                          const Icon(Icons.check_circle,
-                              color: AppColors.primary, size: 24)
+                          const Icon(
+                            Icons.check_circle,
+                            color: AppColors.primary,
+                            size: 24,
+                          )
                         else
                           Container(
                             width: 24,

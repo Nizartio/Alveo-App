@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'dart:convert';
 
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
@@ -8,6 +9,18 @@ import 'package:timezone/data/latest_all.dart' as tzdata;
 import 'package:timezone/timezone.dart' as tz;
 
 import '../../../../core/navigation/app_navigator.dart';
+
+/// Top-level background handler — must be a static or top-level function
+/// for Flutter to find it when the app is not running.
+@pragma('vm:entry-point')
+void notificationBackgroundHandler(NotificationResponse response) {
+  // Navigate to meds tab when user taps a notification from outside the app
+  appNavigatorKey.currentState?.pushNamedAndRemoveUntil(
+    '/home',
+    (route) => route.settings.name == '/home',
+    arguments: {'initialIndex': 1},
+  );
+}
 
 class NotificationService {
   NotificationService._();
@@ -47,6 +60,7 @@ class NotificationService {
     await _plugin.initialize(
       const InitializationSettings(android: androidSettings, iOS: iOSSettings),
       onDidReceiveNotificationResponse: _handleNotificationTap,
+      onDidReceiveBackgroundNotificationResponse: notificationBackgroundHandler,
     );
 
     await _requestPermissions();
@@ -60,6 +74,11 @@ class NotificationService {
           AndroidFlutterLocalNotificationsPlugin
         >();
     await androidPlugin?.requestNotificationsPermission();
+    try {
+      await androidPlugin?.requestExactAlarmsPermission();
+    } catch (_) {
+      // Not available on older Android versions — fine
+    }
 
     final iOSPlugin = _plugin
         .resolvePlatformSpecificImplementation<
@@ -86,11 +105,13 @@ class NotificationService {
       return;
     }
 
+    final todayStr = DateTime.now().toIso8601String().split('T')[0];
     final rows = await _supabase
         .from('notifications')
         .select('id')
         .eq('user_id', user.id)
-        .eq('sent', false);
+        .eq('sent', false)
+        .lte('date', todayStr);
 
     unreadCount.value = (rows as List).length;
   }
@@ -105,7 +126,9 @@ class NotificationService {
 
     final query = _supabase
         .from('notifications')
-        .select('*, medication_schedules(user_medications(reminder_minutes_before))')
+        .select(
+          '*, medication_schedules(user_medications(reminder_minutes_before))',
+        )
         .eq('user_id', user.id)
         .order('date', ascending: false)
         .order('time', ascending: false)
@@ -165,6 +188,27 @@ class NotificationService {
     await syncMedicationReminders();
   }
 
+  Future<void> scheduleSnoozeReminder({
+    required String title,
+    required String body,
+    int minutes = 15,
+  }) async {
+    final scheduledAt = tz.TZDateTime.now(
+      tz.local,
+    ).add(Duration(minutes: minutes));
+    final notificationId = _stableId(
+      'snooze_${DateTime.now().millisecondsSinceEpoch}',
+    );
+
+    await _safeSchedule(
+      id: notificationId,
+      title: title,
+      body: body,
+      scheduledAt: scheduledAt,
+      payload: jsonEncode({'route': '/medication'}),
+    );
+  }
+
   Future<void> syncMedicationReminders() async {
     final user = _supabase.auth.currentUser;
     if (user == null) {
@@ -173,11 +217,22 @@ class NotificationService {
       return;
     }
 
-    await _plugin.cancelAll();
+    try {
+      await _plugin.cancelAll();
+    } catch (_) {
+      // cancelAll can throw on Android 14+ if exact alarm permission is
+      // missing or if the OS blocks it. Non-fatal — we re-schedule below.
+    }
 
-    final notifications = await fetchNotifications(limit: 200, includeFuture: true);
+    final notifications = await fetchNotifications(
+      limit: 200,
+      includeFuture: true,
+    );
     final now = tz.TZDateTime.now(tz.local);
-    print('[NotifSync] Fetched ${notifications.length} notifications from DB. Now is $now');
+    const gracePeriod = Duration(hours: 1);
+    print(
+      '[NotifSync] Fetched ${notifications.length} notifications from DB. Now is $now',
+    );
 
     int scheduledExact = 0;
     int scheduledEarly = 0;
@@ -190,53 +245,79 @@ class NotificationService {
           notification['message']?.toString() ?? 'Waktunya minum obat';
       final reminderMinutes = _extractReminderMinutes(notification);
 
-      print('[NotifSync] Notification: id=${rawId.substring(0, 8)}... '
-          'date=${notification['date']} time=${notification['time']} '
-          'scheduledAt=$scheduledAt reminderMin=$reminderMinutes msg=$message');
+      print(
+        '[NotifSync] Notification: id=${rawId.substring(0, 8)}... '
+        'date=${notification['date']} time=${notification['time']} '
+        'scheduledAt=$scheduledAt reminderMin=$reminderMinutes msg=$message',
+      );
 
       // ── Exact-time notification ──
       if (!scheduledAt.isBefore(now)) {
-        await _plugin.zonedSchedule(
-          _stableId(rawId),
-          'Waktunya Minum Obat',
-          message,
-          scheduledAt,
-          _notificationDetails(),
-          androidScheduleMode: AndroidScheduleMode.exactAllowWhileIdle,
-          uiLocalNotificationDateInterpretation:
-              UILocalNotificationDateInterpretation.absoluteTime,
+        if (await _safeSchedule(
+          id: _stableId(rawId),
+          title: 'Waktunya Minum Obat',
+          body: message,
+          scheduledAt: scheduledAt,
           payload: jsonEncode({'route': '/medication'}),
-        );
-        scheduledExact++;
-        print('[NotifSync]   → Exact scheduled for $scheduledAt');
+        )) {
+          scheduledExact++;
+          print('[NotifSync]   → Exact scheduled for $scheduledAt');
+        }
+        await Future.delayed(const Duration(milliseconds: 30));
+      } else if (now.difference(scheduledAt) <= gracePeriod) {
+        final immediateAt = now.add(const Duration(seconds: 10));
+        if (await _safeSchedule(
+          id: _stableId(rawId),
+          title: 'Waktunya Minum Obat',
+          body: message,
+          scheduledAt: immediateAt,
+          payload: jsonEncode({'route': '/medication'}),
+        )) {
+          scheduledExact++;
+          print(
+            '[NotifSync]   → Immediate reminder scheduled for $immediateAt (late but within grace)',
+          );
+        }
+        await Future.delayed(const Duration(milliseconds: 30));
       } else {
         skippedPast++;
         print('[NotifSync]   → Exact SKIPPED (past: $scheduledAt < $now)');
       }
 
       // ── Early-reminder notification ──
-      final reminderTime = scheduledAt.subtract(Duration(minutes: reminderMinutes));
+      final reminderTime = scheduledAt.subtract(
+        Duration(minutes: reminderMinutes),
+      );
       if (!reminderTime.isBefore(now)) {
         final label = _reminderLabel(reminderMinutes);
-        await _plugin.zonedSchedule(
-          _stableId('${rawId}_early'),
-          'Pengingat $label',
-          '$label lagi: $message',
-          reminderTime,
-          _notificationDetails(),
-          androidScheduleMode: AndroidScheduleMode.exactAllowWhileIdle,
-          uiLocalNotificationDateInterpretation:
-              UILocalNotificationDateInterpretation.absoluteTime,
+        if (await _safeSchedule(
+          id: _stableId('${rawId}_early'),
+          title: 'Pengingat $label',
+          body: '$label lagi: $message',
+          scheduledAt: reminderTime,
           payload: jsonEncode({'route': '/medication'}),
-        );
-        scheduledEarly++;
-        print('[NotifSync]   → Early ($reminderMinutes min) scheduled for $reminderTime');
+        )) {
+          scheduledEarly++;
+          print(
+            '[NotifSync]   → Early ($reminderMinutes min) scheduled for $reminderTime',
+          );
+        }
+        await Future.delayed(const Duration(milliseconds: 30));
       } else {
-        print('[NotifSync]   → Early ($reminderMinutes min) SKIPPED (past: $reminderTime < $now)');
+        print(
+          '[NotifSync]   → Early ($reminderMinutes min) SKIPPED (past: $reminderTime < $now)',
+        );
       }
     }
 
-    print('[NotifSync] Done: $scheduledExact exact, $scheduledEarly early, $skippedPast skipped (past)');
+    print(
+      '[NotifSync] Done: $scheduledExact exact, $scheduledEarly early, $skippedPast skipped (past)',
+    );
+
+    // Debug: show how many are actually pending in the OS
+    final pending = await _plugin.pendingNotificationRequests();
+    print('[NotifSync] OS pending notifications: ${pending.length}');
+
     await refreshUnreadCount();
   }
 
@@ -301,13 +382,71 @@ class NotificationService {
     return '$minutes Menit';
   }
 
+  /// Schedule a notification with best-effort delivery. Tries:
+  ///   1. alarmClock (highest priority, survives battery optimization)
+  ///   2. exactAllowWhileIdle (accurate timing)
+  ///   3. inexactAllowWhileIdle (best-effort, may be delayed)
+  Future<bool> _safeSchedule({
+    required int id,
+    required String title,
+    required String body,
+    required tz.TZDateTime scheduledAt,
+    required String payload,
+  }) async {
+    // Try alarmClock first — highest reliability for user-visible reminders
+    try {
+      await _plugin.zonedSchedule(
+        id,
+        title,
+        body,
+        scheduledAt,
+        _notificationDetails(),
+        androidScheduleMode: AndroidScheduleMode.alarmClock,
+        uiLocalNotificationDateInterpretation:
+            UILocalNotificationDateInterpretation.absoluteTime,
+        payload: payload,
+      );
+      return true;
+    } on PlatformException catch (e1) {
+      // alarmClock blocked — try exactAllowWhileIdle
+      try {
+        await _plugin.zonedSchedule(
+          id,
+          title,
+          body,
+          scheduledAt,
+          _notificationDetails(),
+          androidScheduleMode: AndroidScheduleMode.exactAllowWhileIdle,
+          uiLocalNotificationDateInterpretation:
+              UILocalNotificationDateInterpretation.absoluteTime,
+          payload: payload,
+        );
+        return true;
+      } on PlatformException catch (e2) {
+        // exactAllowWhileIdle failed — fall back to inexact for any error
+        try {
+          await _plugin.zonedSchedule(
+            id,
+            title,
+            body,
+            scheduledAt,
+            _notificationDetails(),
+            androidScheduleMode: AndroidScheduleMode.inexactAllowWhileIdle,
+            uiLocalNotificationDateInterpretation:
+                UILocalNotificationDateInterpretation.absoluteTime,
+            payload: payload,
+          );
+          return true;
+        } catch (_) {
+          // Even inexact failed — skip this notification
+          print('[NotifSync] Inexact schedule also failed for $id');
+          return false;
+        }
+      }
+    }
+  }
+
   int _stableId(String rawId) {
-    final clean = rawId.replaceAll('-', '');
-    final hex = clean.length >= 7
-        ? clean.substring(0, 7)
-        : clean.padLeft(7, '0');
-    final value = int.parse(hex, radix: 16);
-    // Clamp to 31-bit signed int (Android notification ID limit)
-    return value & 0x7FFFFFFF;
+    return rawId.hashCode & 0x7FFFFFFF;
   }
 }

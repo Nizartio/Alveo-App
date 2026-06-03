@@ -4,10 +4,18 @@ enum DayStatus { none, completed, missed }
 
 class WeeklyAdherenceCalendar extends StatefulWidget {
   final Map<int, DayStatus> dayStatuses;
+  final DateTime visibleMonth;
+  final VoidCallback onPreviousMonth;
+  final VoidCallback onNextMonth;
+  final VoidCallback onPickMonthYear;
 
   const WeeklyAdherenceCalendar({
     super.key,
     this.dayStatuses = const {},
+    required this.visibleMonth,
+    required this.onPreviousMonth,
+    required this.onNextMonth,
+    required this.onPickMonthYear,
   });
 
   @override
@@ -16,38 +24,19 @@ class WeeklyAdherenceCalendar extends StatefulWidget {
 }
 
 class _WeeklyAdherenceCalendarState extends State<WeeklyAdherenceCalendar> {
-  late DateTime _currentMonth;
-  late DateTime _firstDayOfMonth;
-  late int _daysInMonth;
-  late int _prevMonthDays;
-  final DateTime _actualToday = DateTime.now(); // Untuk mendeteksi highlight hari ini secara akurat
+  final DateTime _actualToday = DateTime.now();
 
-  @override
-  void initState() {
-    super.initState();
-    _currentMonth = DateTime(_actualToday.year, _actualToday.month, 1);
-    _updateCalendarData();
-  }
-
-  // Fungsi untuk memperbarui kalkulasi tanggal saat bulan berpindah
-  void _updateCalendarData() {
-    _firstDayOfMonth = DateTime(_currentMonth.year, _currentMonth.month, 1);
-    _daysInMonth = DateTime(_currentMonth.year, _currentMonth.month + 1, 0).day;
-    _prevMonthDays = DateTime(_currentMonth.year, _currentMonth.month, 0).day;
-  }
+  DateTime get _currentMonth => widget.visibleMonth;
+  DateTime get _firstDayOfMonth => DateTime(_currentMonth.year, _currentMonth.month, 1);
+  int get _daysInMonth => DateTime(_currentMonth.year, _currentMonth.month + 1, 0).day;
+  int get _prevMonthDays => DateTime(_currentMonth.year, _currentMonth.month, 0).day;
 
   void _goToPreviousMonth() {
-    setState(() {
-      _currentMonth = DateTime(_currentMonth.year, _currentMonth.month - 1, 1);
-      _updateCalendarData();
-    });
+    widget.onPreviousMonth();
   }
 
   void _goToNextMonth() {
-    setState(() {
-      _currentMonth = DateTime(_currentMonth.year, _currentMonth.month + 1, 1);
-      _updateCalendarData();
-    });
+    widget.onNextMonth();
   }
 
   int get _startWeekday => (_firstDayOfMonth.weekday - 1) % 7;
@@ -92,7 +81,6 @@ class _WeeklyAdherenceCalendarState extends State<WeeklyAdherenceCalendar> {
     );
   }
 
-  // Widget _buildMonthTitle() {
   Widget _buildMonthTitle() {
     final monthName = _monthName(_currentMonth.month);
     return Row(
@@ -146,17 +134,14 @@ class _WeeklyAdherenceCalendarState extends State<WeeklyAdherenceCalendar> {
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: _weekLabels.map((label) {
-        final bool isFriday = label == 'Jum';
         return Expanded(
           child: Center(
             child: Text(
               label,
-              style: TextStyle(
+              style: const TextStyle(
                 fontSize: 12,
                 fontWeight: FontWeight.w600,
-                color: isFriday
-                    ? const Color(0xFF6B5CE7)
-                    : const Color(0xFFB0ABCC),
+                color: Color(0xFFB0ABCC),
               ),
             ),
           ),
@@ -166,8 +151,7 @@ class _WeeklyAdherenceCalendarState extends State<WeeklyAdherenceCalendar> {
   }
 
   Widget _buildCalendarGrid() {
-    final int totalCells =
-        ((_startWeekday + _daysInMonth) / 7).ceil() * 7;
+    final int totalCells = ((_startWeekday + _daysInMonth) / 7).ceil() * 7;
 
     final List<Widget> cells = [];
 
@@ -216,17 +200,31 @@ class _WeeklyAdherenceCalendarState extends State<WeeklyAdherenceCalendar> {
   }
 
   Widget _buildLegend() {
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.center,
+    return Column(
       children: [
-        _LegendDot(
-          color: const Color(0xFF6B5CE7),
-          label: 'Diminum ($_completedCount)',
+        Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            _LegendDot(
+              color: const Color(0xFF6B5CE7),
+              label: 'Diminum ($_completedCount)',
+            ),
+            const SizedBox(width: 24),
+            _LegendDot(
+              color: const Color(0xFFFF6B6B),
+              label: 'Terlewat / reset streak ($_missedCount)',
+            ),
+          ],
         ),
-        const SizedBox(width: 24),
-        _LegendDot(
-          color: const Color(0xFFFF6B6B),
-          label: 'Terlewat ($_missedCount)',
+        const SizedBox(height: 12),
+        Text(
+          'Hari merah menandakan dosis yang tidak tercatat pada hari itu. Jika itu memutus rangkaian hari berturut-turut, streak akan reset dari hari berikutnya.',
+          textAlign: TextAlign.center,
+          style: TextStyle(
+            fontSize: 11,
+            height: 1.4,
+            color: const Color(0xFF8E88AE).withOpacity(0.95),
+          ),
         ),
       ],
     );
@@ -234,8 +232,19 @@ class _WeeklyAdherenceCalendarState extends State<WeeklyAdherenceCalendar> {
 
   String _monthName(int month) {
     const names = [
-      '', 'Januari', 'Februari', 'Maret', 'April', 'Mei', 'Juni',
-      'Juli', 'Agustus', 'September', 'Oktober', 'November', 'Desember'
+      '',
+      'Januari',
+      'Februari',
+      'Maret',
+      'April',
+      'Mei',
+      'Juni',
+      'Juli',
+      'Agustus',
+      'September',
+      'Oktober',
+      'November',
+      'Desember',
     ];
     return names[month];
   }
@@ -277,7 +286,7 @@ class _DayCell extends StatelessWidget {
       }
     }
 
-    Widget child = Container(
+    final child = Container(
       width: 36,
       height: 36,
       decoration: BoxDecoration(

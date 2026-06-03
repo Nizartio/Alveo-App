@@ -4,7 +4,8 @@ import '../../../core/theme/app_colors.dart';
 
 /// Halaman Onboarding / Welcome Splash Utama
 class SplashPage extends StatelessWidget {
-  const SplashPage({super.key});
+  final bool showLoading;
+  const SplashPage({super.key, this.showLoading = false});
 
   @override
   Widget build(BuildContext context) {
@@ -87,89 +88,117 @@ class SplashPage extends StatelessWidget {
                           ),
                         ),
                         const SizedBox(height: 24),
-                        Text(
-                          'Selamat Datang di Alveo',
-                          textAlign: TextAlign.center,
-                          style: Theme.of(context).textTheme.headlineMedium
-                              ?.copyWith(
-                                fontWeight: FontWeight.w800,
-                                color: AppColors.primary,
+                        if (showLoading) ...[
+                          Text(
+                            'Memuat Alveo...',
+                            textAlign: TextAlign.center,
+                            style: Theme.of(context).textTheme.headlineSmall
+                                ?.copyWith(
+                                  fontWeight: FontWeight.w800,
+                                  color: AppColors.primary,
+                                ),
+                          ),
+                          const SizedBox(height: 12),
+                          Text(
+                            'Menyiapkan data akun dan notifikasi.',
+                            textAlign: TextAlign.center,
+                            style: Theme.of(context).textTheme.titleMedium
+                                ?.copyWith(
+                                  height: 1.4,
+                                  color: AppColors.textSecondary,
+                                ),
+                          ),
+                          const SizedBox(height: 22),
+                          const SizedBox(
+                            height: 28,
+                            width: 28,
+                            child: CircularProgressIndicator(strokeWidth: 3),
+                          ),
+                        ] else ...[
+                          Text(
+                            'Selamat Datang di Alveo',
+                            textAlign: TextAlign.center,
+                            style: Theme.of(context).textTheme.headlineMedium
+                                ?.copyWith(
+                                  fontWeight: FontWeight.w800,
+                                  color: AppColors.primary,
+                                ),
+                          ),
+                          const SizedBox(height: 12),
+                          Text(
+                            'Perjalananmu menuju pernapasan yang lebih baik dimulai di sini.',
+                            textAlign: TextAlign.center,
+                            style: Theme.of(context).textTheme.titleMedium
+                                ?.copyWith(
+                                  height: 1.4,
+                                  color: AppColors.textSecondary,
+                                ),
+                          ),
+                          const SizedBox(height: 24),
+                          SizedBox(
+                            height: 56,
+                            width: double.infinity,
+                            child: ElevatedButton(
+                              onPressed: () {
+                                Navigator.of(context).pushNamed('/register');
+                              },
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: AppColors.brandPurple,
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(28),
+                                ),
+                                elevation: 0,
                               ),
-                        ),
-                        const SizedBox(height: 12),
-                        Text(
-                          'Perjalananmu menuju pernapasan yang lebih baik dimulai di sini.',
-                          textAlign: TextAlign.center,
-                          style: Theme.of(context).textTheme.titleMedium
-                              ?.copyWith(
-                                height: 1.4,
-                                color: AppColors.textSecondary,
-                              ),
-                        ),
-                        const SizedBox(height: 24),
-                        SizedBox(
-                          height: 56,
-                          width: double.infinity,
-                          child: ElevatedButton(
-                            onPressed: () {
-                              Navigator.of(context).pushNamed('/register');
-                            },
-                            style: ElevatedButton.styleFrom(
-                              backgroundColor: AppColors.brandPurple,
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(28),
-                              ),
-                              elevation: 0,
-                            ),
-                            child: const Row(
-                              mainAxisAlignment: MainAxisAlignment.center,
-                              children: [
-                                Text(
-                                  'Mulai Sekarang',
-                                  style: TextStyle(
-                                    fontSize: 16,
-                                    fontWeight: FontWeight.w800,
-                                    color: AppColors.white,
+                              child: const Row(
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                children: [
+                                  Text(
+                                    'Mulai Sekarang',
+                                    style: TextStyle(
+                                      fontSize: 16,
+                                      fontWeight: FontWeight.w800,
+                                      color: AppColors.white,
+                                    ),
                                   ),
-                                ),
-                                SizedBox(width: 4),
-                                Icon(
-                                  Icons.arrow_circle_right_outlined,
-                                  color: AppColors.white,
-                                  size: 22,
-                                ),
-                              ],
-                            ),
-                          ),
-                        ),
-                        const SizedBox(height: 12),
-                        SizedBox(
-                          height: 56,
-                          width: double.infinity,
-                          child: OutlinedButton(
-                            onPressed: () {
-                              Navigator.of(context).pushNamed('/login');
-                            },
-                            style: OutlinedButton.styleFrom(
-                              side: const BorderSide(
-                                color: AppColors.textMutedSoft,
-                              ),
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(28),
-                              ),
-                              backgroundColor: AppColors.surfaceMutedAlt,
-                            ),
-                            child: const Text(
-                              'Saya sudah memiliki akun',
-                              style: TextStyle(
-                                fontSize: 16,
-                                fontWeight: FontWeight.w600,
-                                color: AppColors.textNavy,
+                                  SizedBox(width: 4),
+                                  Icon(
+                                    Icons.arrow_circle_right_outlined,
+                                    color: AppColors.white,
+                                    size: 22,
+                                  ),
+                                ],
                               ),
                             ),
                           ),
-                        ),
-                        const SizedBox(height: 12),
+                          const SizedBox(height: 12),
+                          SizedBox(
+                            height: 56,
+                            width: double.infinity,
+                            child: OutlinedButton(
+                              onPressed: () {
+                                Navigator.of(context).pushNamed('/login');
+                              },
+                              style: OutlinedButton.styleFrom(
+                                side: const BorderSide(
+                                  color: AppColors.textMutedSoft,
+                                ),
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(28),
+                                ),
+                                backgroundColor: AppColors.surfaceMutedAlt,
+                              ),
+                              child: const Text(
+                                'Saya sudah memiliki akun',
+                                style: TextStyle(
+                                  fontSize: 16,
+                                  fontWeight: FontWeight.w600,
+                                  color: AppColors.textNavy,
+                                ),
+                              ),
+                            ),
+                          ),
+                          const SizedBox(height: 12),
+                        ],
                       ],
                     ),
                   ),

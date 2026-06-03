@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../../../core/theme/app_colors.dart';
+import '../../medication/services/medication_service.dart';
 
 class ProfilePage extends StatefulWidget {
   const ProfilePage({super.key});
@@ -16,11 +17,22 @@ class _ProfilePageState extends State<ProfilePage> {
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
 
+  final _medicationService = MedicationService();
+
   String _displayName = 'Profile';
   String _email = '-';
   String? _avatarUrl;
   bool _isLoading = true;
   bool _isSaving = false;
+
+  // Stats
+  int _level = 1;
+  int _currentXp = 0;
+  int _nextThreshold = 0;
+  int _prevThreshold = 0;
+  int _streak = 0;
+  int _longestStreak = 0;
+  int _totalMeds = 0;
 
   @override
   void dispose() {
@@ -66,6 +78,14 @@ class _ProfilePageState extends State<ProfilePage> {
           (profile?['full_name'] ?? user.userMetadata?['full_name'])
               ?.toString();
 
+      // Fetch level progress and stats
+      final levelProgress = await _medicationService.fetchLevelProgress();
+      final userStats = await _supabase
+          .from('user_profile')
+          .select('current_streak, longest_streak, total_meds_taken')
+          .eq('user_id', user.id)
+          .maybeSingle();
+
       if (!mounted) return;
       setState(() {
         _displayName = (fullName == null || fullName.trim().isEmpty)
@@ -82,6 +102,13 @@ class _ProfilePageState extends State<ProfilePage> {
             ? ''
             : email.trim();
         _passwordController.clear();
+        _level = (levelProgress['level'] as int?) ?? 1;
+        _currentXp = (levelProgress['remainingXp'] as int?) ?? 0;
+        _nextThreshold = (levelProgress['nextThreshold'] as int?) ?? 0;
+        _prevThreshold = (levelProgress['currentThreshold'] as int?) ?? 0;
+        _streak = (userStats?['current_streak'] as int?) ?? 0;
+        _longestStreak = (userStats?['longest_streak'] as int?) ?? 0;
+        _totalMeds = (userStats?['total_meds_taken'] as int?) ?? 0;
         _isLoading = false;
       });
     } catch (_) {
@@ -104,13 +131,11 @@ class _ProfilePageState extends State<ProfilePage> {
 
       // Update full_name in user_profile
       if (newName.isNotEmpty && newName != _displayName) {
-        await _supabase
-            .from('user_profile')
-            .upsert({
-              'user_id': user.id,
-              'full_name': newName,
-              'updated_at': DateTime.now().toIso8601String(),
-            });
+        await _supabase.from('user_profile').upsert({
+          'user_id': user.id,
+          'full_name': newName,
+          'updated_at': DateTime.now().toIso8601String(),
+        });
       }
 
       // Update email if changed (Supabase sends confirmation to new email)
@@ -146,7 +171,10 @@ class _ProfilePageState extends State<ProfilePage> {
     } on AuthException catch (e) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Gagal: ${e.message}'), backgroundColor: Colors.red),
+        SnackBar(
+          content: Text('Gagal: ${e.message}'),
+          backgroundColor: Colors.red,
+        ),
       );
     } catch (e) {
       if (!mounted) return;
@@ -162,6 +190,37 @@ class _ProfilePageState extends State<ProfilePage> {
     await _supabase.auth.signOut();
     if (!mounted) return;
     Navigator.of(context).pushNamedAndRemoveUntil('/login', (route) => false);
+  }
+
+  Widget _statItem(
+    IconData icon,
+    String value,
+    String label,
+  ) {
+    return Expanded(
+      child: Column(
+        children: [
+          Icon(icon, color: Colors.white, size: 22),
+          const SizedBox(height: 4),
+          Text(
+            value,
+            style: const TextStyle(
+              color: Colors.white,
+              fontSize: 18,
+              fontWeight: FontWeight.w800,
+            ),
+          ),
+          Text(
+            label,
+            style: TextStyle(
+              color: Colors.white.withOpacity(0.7),
+              fontSize: 11,
+              fontWeight: FontWeight.w500,
+            ),
+          ),
+        ],
+      ),
+    );
   }
 
   String get _initials {
@@ -253,6 +312,84 @@ class _ProfilePageState extends State<ProfilePage> {
                             fontSize: 14,
                             color: AppColors.textSecondary,
                           ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(height: 20),
+                  // Stats card
+                  Container(
+                    padding: const EdgeInsets.all(20),
+                    decoration: BoxDecoration(
+                      gradient: AppColors.streakGradient,
+                      borderRadius: BorderRadius.circular(24),
+                    ),
+                    child: Column(
+                      children: [
+                        // Level badge
+                        Container(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 16,
+                            vertical: 8,
+                          ),
+                          decoration: BoxDecoration(
+                            color: Colors.white.withOpacity(0.2),
+                            borderRadius: BorderRadius.circular(20),
+                          ),
+                          child: Text(
+                            'Level $_level',
+                            style: const TextStyle(
+                              color: Colors.white,
+                              fontSize: 16,
+                              fontWeight: FontWeight.w800,
+                            ),
+                          ),
+                        ),
+                        const SizedBox(height: 16),
+                        // XP progress bar
+                        if (_nextThreshold > 0) ...[
+                          ClipRRect(
+                            borderRadius: BorderRadius.circular(4),
+                            child: LinearProgressIndicator(
+                              value: (_nextThreshold - _prevThreshold) > 0
+                                  ? _currentXp /
+                                        (_nextThreshold - _prevThreshold)
+                                  : 0,
+                              backgroundColor: Colors.white.withOpacity(0.3),
+                              color: Colors.white,
+                              minHeight: 8,
+                            ),
+                          ),
+                          const SizedBox(height: 8),
+                          Text(
+                            '$_currentXp / ${_nextThreshold - _prevThreshold} XP',
+                            style: TextStyle(
+                              color: Colors.white.withOpacity(0.8),
+                              fontSize: 12,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                        ],
+                        const SizedBox(height: 16),
+                        // Streak + stats row
+                        Row(
+                          children: [
+                            _statItem(
+                              Icons.local_fire_department,
+                              '$_streak',
+                              'Streak saat ini'
+                            ),
+                            _statItem(
+                              Icons.emoji_events,
+                              '$_longestStreak',
+                              'Streak terbaik'
+                            ),
+                            _statItem(
+                              Icons.medication,
+                              '$_totalMeds',
+                              'Total obat diminum'
+                            ),
+                          ],
                         ),
                       ],
                     ),

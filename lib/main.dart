@@ -4,6 +4,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import 'core/theme/app_colors.dart';
 import 'core/navigation/app_navigator.dart';
 import 'core/supabase_config.dart';
+import 'core/dashboard_data.dart';
 import 'features/auth/pages/login_page.dart';
 import 'features/auth/pages/register_page.dart';
 import 'features/notifications/pages/medication_notifications_page.dart';
@@ -46,9 +47,9 @@ class AlveoApp extends StatelessWidget {
         },
         '/profile': (_) => const ProfilePage(),
         '/medication_plan': (_) => const MedicationPlanPage(),
-        '/medication': (_) => const MedsPage(),
+        '/medication': (_) => MedsPage(data: DashboardData.instance),
         '/notifications': (_) => const MedicationNotificationsPage(),
-        '/stats': (_) => const StatsPage(),
+        '/stats': (_) => StatsPage(data: DashboardData.instance),
       },
     );
   }

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import 'core/dashboard_data.dart';
 import 'features/widgets/bottom_navbar.dart';
 import 'features/home/home_page.dart';
 import 'features/medication/pages/meds_page.dart';
@@ -21,12 +22,15 @@ class MainNavigationPage extends StatefulWidget {
 class _MainNavigationPageState extends State<MainNavigationPage> {
   late final PageController _pageController;
   int _currentIndex = 0;
+  late final DashboardData _data;
 
   @override
   void initState() {
     super.initState();
     _currentIndex = widget.initialIndex.clamp(0, 2);
     _pageController = PageController(initialPage: _currentIndex);
+    _data = DashboardData.instance;
+    _data.loadAll();
   }
 
   @override
@@ -78,7 +82,11 @@ class _MainNavigationPageState extends State<MainNavigationPage> {
               child: PageView(
                 controller: _pageController,
                 onPageChanged: (index) => setState(() => _currentIndex = index),
-                children: const [HomePage(), MedsPage(), StatsPage()],
+                children: [
+                  HomePage(data: _data),
+                  MedsPage(data: _data),
+                  StatsPage(data: _data),
+                ],
               ),
             ),
           ),

@@ -26,22 +26,36 @@ class _MedicationNotificationsPageState
 
   Future<void> _loadNotifications() async {
     try {
-      final daysAgo = switch (_selectedFilter) {
-        'today' => 0,       // cutoff = today, only today's
-        'yesterday' => 1,   // cutoff = yesterday, shows yesterday + today
-        'week' => 7,        // last 7 days
-        _ => null,          // all past
-      };
+      // Always fetch all past notifications (no future), filter client-side
       var notifications =
-          await _notificationService.fetchNotifications(daysAgo: daysAgo);
+          await _notificationService.fetchNotifications(limit: 200);
 
-      // For 'yesterday', also remove today's notifications
-      if (_selectedFilter == 'yesterday') {
-        final todayStr = DateTime.now().toIso8601String().split('T')[0];
-        notifications = notifications
-            .where((n) => (n['date']?.toString() ?? '') != todayStr)
-            .toList();
-      }
+      // Apply date filter
+      final now = DateTime.now();
+      final todayStr = now.toIso8601String().split('T')[0];
+      final yesterdayStr = now
+          .subtract(const Duration(days: 1))
+          .toIso8601String()
+          .split('T')[0];
+
+      notifications = switch (_selectedFilter) {
+        'today' => notifications
+            .where((n) => (n['date']?.toString() ?? '') == todayStr)
+            .toList(),
+        'yesterday' => notifications
+            .where((n) => (n['date']?.toString() ?? '') == yesterdayStr)
+            .toList(),
+        'week' => () {
+            final cutoff = now
+                .subtract(const Duration(days: 7))
+                .toIso8601String()
+                .split('T')[0];
+            return notifications
+                .where((n) => (n['date']?.toString() ?? '').compareTo(cutoff) >= 0)
+                .toList();
+          }(),
+        _ => notifications, // 'all' — already filtered to past by service
+      };
 
       if (!mounted) return;
       setState(() {
