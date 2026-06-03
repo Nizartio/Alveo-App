@@ -16,16 +16,38 @@ class WeeklyAdherenceCalendar extends StatefulWidget {
 }
 
 class _WeeklyAdherenceCalendarState extends State<WeeklyAdherenceCalendar> {
-  late DateTime _today;
+  late DateTime _currentMonth;
   late DateTime _firstDayOfMonth;
   late int _daysInMonth;
+  late int _prevMonthDays;
+  final DateTime _actualToday = DateTime.now(); // Untuk mendeteksi highlight hari ini secara akurat
 
   @override
   void initState() {
     super.initState();
-    _today = DateTime.now();
-    _firstDayOfMonth = DateTime(_today.year, _today.month, 1);
-    _daysInMonth = DateTime(_today.year, _today.month + 1, 0).day;
+    _currentMonth = DateTime(_actualToday.year, _actualToday.month, 1);
+    _updateCalendarData();
+  }
+
+  // Fungsi untuk memperbarui kalkulasi tanggal saat bulan berpindah
+  void _updateCalendarData() {
+    _firstDayOfMonth = DateTime(_currentMonth.year, _currentMonth.month, 1);
+    _daysInMonth = DateTime(_currentMonth.year, _currentMonth.month + 1, 0).day;
+    _prevMonthDays = DateTime(_currentMonth.year, _currentMonth.month, 0).day;
+  }
+
+  void _goToPreviousMonth() {
+    setState(() {
+      _currentMonth = DateTime(_currentMonth.year, _currentMonth.month - 1, 1);
+      _updateCalendarData();
+    });
+  }
+
+  void _goToNextMonth() {
+    setState(() {
+      _currentMonth = DateTime(_currentMonth.year, _currentMonth.month + 1, 1);
+      _updateCalendarData();
+    });
   }
 
   int get _startWeekday => (_firstDayOfMonth.weekday - 1) % 7;
@@ -39,9 +61,6 @@ class _WeeklyAdherenceCalendarState extends State<WeeklyAdherenceCalendar> {
   static const List<String> _weekLabels = [
     'Sen', 'Sel', 'Rab', 'Kam', 'Jum', 'Sab', 'Min'
   ];
-
-  int get _prevMonthDays =>
-      DateTime(_today.year, _today.month, 0).day;
 
   @override
   Widget build(BuildContext context) {
@@ -62,7 +81,7 @@ class _WeeklyAdherenceCalendarState extends State<WeeklyAdherenceCalendar> {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           _buildMonthTitle(),
-          const SizedBox(height: 16),
+          const SizedBox(height: 8),
           _buildWeekdayLabels(),
           const SizedBox(height: 8),
           _buildCalendarGrid(),
@@ -73,16 +92,53 @@ class _WeeklyAdherenceCalendarState extends State<WeeklyAdherenceCalendar> {
     );
   }
 
+  // Widget _buildMonthTitle() {
   Widget _buildMonthTitle() {
-    final monthName = _monthName(_today.month);
-    return Text(
-      '$monthName ${_today.year}',
-      style: const TextStyle(
-        fontSize: 16,
-        fontWeight: FontWeight.w600,
-        color: Color(0xFF9E9AB8),
-        letterSpacing: 0.5,
-      ),
+    final monthName = _monthName(_currentMonth.month);
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      children: [
+        Text(
+          '$monthName ${_currentMonth.year}',
+          style: const TextStyle(
+            fontSize: 16,
+            fontWeight: FontWeight.w600,
+            color: Color(0xFF9E9AB8),
+            letterSpacing: 0.5,
+          ),
+        ),
+        Row(
+          children: [
+            // Tombol Kiri (Bulan Sebelumnya)
+            InkWell(
+              onTap: _goToPreviousMonth,
+              borderRadius: BorderRadius.circular(100), // Agar efek ripple bundar rapi
+              child: const Padding(
+                padding: EdgeInsets.all(0), // Kontrol manual area sentuh tombol
+                child: Icon(
+                  Icons.chevron_left_rounded, 
+                  color: Color(0xFF9E9AB8),
+                  size: 24,
+                ),
+              ),
+            ),
+            const SizedBox(width: 12), // Jarak horizontal antar panah
+            // Tombol Kanan (Bulan Berikutnya)
+            InkWell(
+              onTap: _goToNextMonth,
+              borderRadius: BorderRadius.circular(100),
+              child: const Padding(
+                padding: EdgeInsets.all(0), // Kontrol manual area sentuh tombol
+                child: Icon(
+                  Icons.chevron_right_rounded, 
+                  color: Color(0xFF9E9AB8),
+                  size: 24,
+                ),
+              ),
+            ),
+          ],
+        ),
+      ],
     );
   }
 
@@ -128,7 +184,12 @@ class _WeeklyAdherenceCalendarState extends State<WeeklyAdherenceCalendar> {
         final int day = dayOffset + 1;
         final DayStatus status =
             widget.dayStatuses[day] ?? DayStatus.none;
-        final bool isToday = day == _today.day;
+            
+        // Validasi kecocokan hari ini (Hanya aktif jika kalender sedang membuka bulan & tahun berjalan saat ini)
+        final bool isToday = day == _actualToday.day &&
+            _currentMonth.month == _actualToday.month &&
+            _currentMonth.year == _actualToday.year;
+
         cells.add(_DayCell(
           day: day,
           status: status,
@@ -138,7 +199,7 @@ class _WeeklyAdherenceCalendarState extends State<WeeklyAdherenceCalendar> {
       }
     }
 
-  final List<Widget> rows = [];
+    final List<Widget> rows = [];
     for (int r = 0; r < cells.length / 7; r++) {
       rows.add(
         Padding(
