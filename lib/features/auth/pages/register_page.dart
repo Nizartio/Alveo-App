@@ -15,6 +15,9 @@ class _RegisterPageState extends State<RegisterPage> {
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
 
+  // 1. Tambahkan state untuk visibilitas kata sandi
+  bool _obscurePassword = true;
+
   @override
   void dispose() {
     _fullNameController.dispose();
@@ -146,11 +149,25 @@ class _RegisterPageState extends State<RegisterPage> {
                               const SizedBox(height: 16),
                               const _FieldLabel(text: 'Kata Sandi'),
                               const SizedBox(height: 8),
+                              // 2. Hubungkan state dan IconButton mata ke komponen _InputField
                               _InputField(
                                 controller: _passwordController,
                                 hintText: '••••••••',
                                 icon: Icons.lock_outline_rounded,
-                                obscureText: true,
+                                obscureText: _obscurePassword,
+                                suffixIcon: IconButton(
+                                  icon: Icon(
+                                    _obscurePassword
+                                        ? Icons.visibility_off_outlined
+                                        : Icons.visibility_outlined,
+                                    color: AppColors.iconMuted,
+                                  ),
+                                  onPressed: () {
+                                    setState(() {
+                                      _obscurePassword = !_obscurePassword;
+                                    });
+                                  },
+                                ),
                                 validator: (value) {
                                   if ((value ?? '').isEmpty) {
                                     return 'Kata sandi wajib diisi';
@@ -188,7 +205,6 @@ class _RegisterPageState extends State<RegisterPage> {
                                         }
 
                                         if (!mounted) return;
-                                        setState(() {});
                                         final name = _fullNameController.text
                                             .trim();
                                         final email = _emailController.text
@@ -209,8 +225,6 @@ class _RegisterPageState extends State<RegisterPage> {
 
                                           if (!mounted) return;
 
-                                          // signUp can succeed even when email confirmation is required.
-                                          // In that case, session is null and the user should log in after confirming.
                                           final session = res.session;
                                           final user = res.user;
 
@@ -345,6 +359,7 @@ class _InputField extends StatelessWidget {
     required this.hintText,
     required this.icon,
     this.obscureText = false,
+    this.suffixIcon, // 3. Tambahkan parameter opsional suffixIcon
     this.keyboardType,
     this.textCapitalization = TextCapitalization.none,
     this.validator,
@@ -354,6 +369,7 @@ class _InputField extends StatelessWidget {
   final String hintText;
   final IconData icon;
   final bool obscureText;
+  final Widget? suffixIcon; // Suffix icon ditampung di sini
   final TextInputType? keyboardType;
   final TextCapitalization textCapitalization;
   final String? Function(String?)? validator;
@@ -368,7 +384,7 @@ class _InputField extends StatelessWidget {
       validator: validator,
       style: const TextStyle(
         fontSize: 16,
-        fontWeight: FontWeight.w600,
+        fontWeight: FontWeight.w400,
         color: AppColors.textNavy,
       ),
       decoration: InputDecoration(
@@ -381,6 +397,7 @@ class _InputField extends StatelessWidget {
           fontWeight: FontWeight.w400,
         ),
         prefixIcon: Icon(icon, color: AppColors.iconMuted),
+        suffixIcon: suffixIcon, // 4. Pasangkan widget ke properti bawaan InputDecoration
         contentPadding: const EdgeInsets.symmetric(
           horizontal: 16,
           vertical: 18,
@@ -421,10 +438,10 @@ class _MascotCircle extends StatelessWidget {
     return Container(
       width: 140,
       height: 140,
-      decoration: BoxDecoration(
+      decoration: const BoxDecoration(
         shape: BoxShape.circle,
         color: AppColors.white,
-        boxShadow: const [
+        boxShadow: [
           BoxShadow(
             color: AppColors.softShadow,
             blurRadius: 24,
@@ -432,19 +449,13 @@ class _MascotCircle extends StatelessWidget {
           ),
         ],
       ),
-      child: Container(
-        decoration: const BoxDecoration(
-          shape: BoxShape.circle,
-          // gradient: AppColors.mascotInnerGradient,
-        ),
-        child: Center(
-          child: ClipOval(
-            child: Image.asset(
-              'lib/assets/app_icon.png',
-              fit: BoxFit.cover,
-              width: 120,
-              height: 120,
-            ),
+      child: Center(
+        child: ClipOval(
+          child: Image.asset(
+            'lib/assets/app_icon.png',
+            fit: BoxFit.cover,
+            width: 120,
+            height: 120,
           ),
         ),
       ),
