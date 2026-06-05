@@ -9,6 +9,7 @@ class GoalCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
+      height: 152,
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
         color: AppColors.white,
@@ -25,15 +26,19 @@ class GoalCard extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           const Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text(
-                'GOAL HARIAN',
-                style: TextStyle(
-                  color: Colors.grey,
-                  fontSize: 16,
+              Expanded(
+                child: Text(
+                  'GOAL HARIAN',
+                  style: TextStyle(
+                    color: Colors.grey,
+                    fontSize: 16,
+                    height: 1.2, 
+                  ),
                 ),
               ),
+              SizedBox(width: 8),
               Icon(
                 Icons.check_circle_outline,
                 color: AppColors.brandBlueAlt,
@@ -42,7 +47,7 @@ class GoalCard extends StatelessWidget {
             ],
           ),
 
-          const SizedBox(height: 28),
+          const Spacer(), 
 
           Text(
             '${(progress * 100).clamp(0, 100).toStringAsFixed(0)}%',
