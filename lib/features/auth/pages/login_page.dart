@@ -121,7 +121,11 @@ Future<void> _forgotPassword() async {
     }
 
     try {
-      await Supabase.instance.client.auth.resetPasswordForEmail(email);
+      // Ganti URL dengan deep link aplikasi Anda yang sudah didaftarkan di Supabase
+      await Supabase.instance.client.auth.resetPasswordForEmail(
+        email,
+        redirectTo: 'io.supabase.alveo://reset-callback/',
+      );
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(

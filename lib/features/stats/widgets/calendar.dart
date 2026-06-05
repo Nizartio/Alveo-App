@@ -202,14 +202,15 @@ class _WeeklyAdherenceCalendarState extends State<WeeklyAdherenceCalendar> {
   Widget _buildLegend() {
     return Column(
       children: [
-        Row(
-          mainAxisAlignment: MainAxisAlignment.center,
+        Wrap(
+          alignment: WrapAlignment.center,
+          spacing: 24,
+          runSpacing: 12,
           children: [
             _LegendDot(
               color: const Color(0xFF6B5CE7),
               label: 'Diminum ($_completedCount)',
             ),
-            const SizedBox(width: 24),
             _LegendDot(
               color: const Color(0xFFFF6B6B),
               label: 'Terlewat / reset streak ($_missedCount)',
