@@ -15,7 +15,7 @@ class _LoginPageState extends State<LoginPage> {
   final _formKey = GlobalKey<FormState>();
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
-  
+
   bool _obscurePassword = true;
   bool _isLoading = false;
 
@@ -33,39 +33,78 @@ class _LoginPageState extends State<LoginPage> {
     }
   }
 
-  Future<void> _forgotPassword() async {
+Future<void> _forgotPassword() async {
     final emailController = TextEditingController();
     final result = await showDialog<bool>(
       context: context,
       builder: (ctx) => AlertDialog(
-        title: const Text('Lupa Kata Sandi'),
+        backgroundColor: AppColors.white,
+
+        insetPadding: const EdgeInsets.symmetric(horizontal: 36),
+        titlePadding: const EdgeInsets.fromLTRB(24, 36, 24, 20),
+        contentPadding: const EdgeInsets.fromLTRB(24, 0, 24, 20),
+        actionsPadding: const EdgeInsets.fromLTRB(24, 0, 24, 36),
+        
+        surfaceTintColor: Colors.transparent,
+        
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(28),
+        ),
+        
+        title: Text(
+          'Lupa Kata Sandi',
+          style: TextStyle(
+            fontSize: 20,
+            fontWeight: FontWeight.w800,
+            color: AppColors.primary,
+          ),
+        ),
+
         content: Column(
           mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             const Text(
               'Masukkan email Anda. Kami akan mengirimkan tautan untuk mengatur ulang kata sandi.',
-              style: TextStyle(fontSize: 14, color: AppColors.textSecondary),
-            ),
-            const SizedBox(height: 16),
-            TextField(
-              controller: emailController,
-              keyboardType: TextInputType.emailAddress,
-              decoration: const InputDecoration(
-                hintText: 'you@example.com',
-                labelText: 'Email',
-                border: OutlineInputBorder(),
+              style: TextStyle(
+                fontSize: 16, 
+                color: AppColors.textMuted,
+                height: 1.4,
               ),
+            ),
+
+            const SizedBox(height: 20),
+
+            // const _FieldLabel(text: 'Email'),
+
+            // const SizedBox(height: 8),
+
+            _InputField(
+              controller: emailController,
+              hintText: 'you@example.com',
+              icon: Icons.mail_outline_rounded,
+              keyboardType: TextInputType.emailAddress,
             ),
           ],
         ),
+
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(ctx, false),
+            style: TextButton.styleFrom(
+              foregroundColor: AppColors.textSecondary,
+            ),
             child: const Text('Batal'),
           ),
           TextButton(
             onPressed: () => Navigator.pop(ctx, true),
-            child: const Text('Kirim'),
+            style: TextButton.styleFrom(
+              foregroundColor: AppColors.primary,
+            ),
+            child: const Text(
+              'Kirim', 
+              style: TextStyle(fontWeight: FontWeight.bold),
+            ),
           ),
         ],
       ),
@@ -75,9 +114,9 @@ class _LoginPageState extends State<LoginPage> {
     final email = emailController.text.trim();
     if (email.isEmpty) {
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Email tidak boleh kosong')),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text('Email tidak boleh kosong')));
       return;
     }
 
@@ -171,7 +210,10 @@ class _LoginPageState extends State<LoginPage> {
                       const SizedBox(height: 20),
                       Container(
                         width: double.infinity,
-                        padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 36),
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 24,
+                          vertical: 36,
+                        ),
                         decoration: BoxDecoration(
                           color: AppColors.white,
                           borderRadius: BorderRadius.circular(28),
@@ -306,14 +348,12 @@ class _LoginPageState extends State<LoginPage> {
                                             ? const SizedBox(
                                                 width: 22,
                                                 height: 22,
-                                                child:
-                                                    CircularProgressIndicator(
+                                                child: CircularProgressIndicator(
                                                   strokeWidth: 2,
                                                   valueColor:
                                                       AlwaysStoppedAnimation<
-                                                          Color>(
-                                                    Colors.white,
-                                                  ),
+                                                        Color
+                                                      >(Colors.white),
                                                 ),
                                               )
                                             : const Text(

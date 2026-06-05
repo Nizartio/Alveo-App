@@ -14,6 +14,7 @@ class StreakCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
+      height: 152, 
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
         gradient: AppColors.streakGradient,
@@ -34,22 +35,29 @@ class StreakCard extends StatelessWidget {
             child: const Icon(
               Icons.local_fire_department,
               color: AppColors.white,
+              size: 24,
             ),
           ),
-          const SizedBox(height: 8),
+          
+          const Spacer(),
 
           Text(
             '$streakDays Hari',
-            style: TextStyle(
+            style: const TextStyle(
               color: AppColors.white,
               fontSize: 28,
               fontWeight: FontWeight.bold,
             ),
           ),
 
+          const SizedBox(height: 4),
+
           const Text(
             'STREAK 🔥',
-            style: TextStyle(color: AppColors.white70, fontSize: 16),
+            style: TextStyle(
+              color: AppColors.white70, 
+              fontSize: 16,
+            ),
           ),
         ],
       ),
